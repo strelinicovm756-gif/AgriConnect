@@ -1,19 +1,57 @@
-function App() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900">
-      <div className="rounded-2xl bg-white p-8 shadow-2xl transition-all hover:scale-105">
-        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
-          AgriConnect v4
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Tailwind CSS v4 funcționează fără fișiere de config!
-        </p>
-        <button className="mt-4 rounded-lg bg-green-500 px-6 py-2 font-semibold text-white hover:bg-green-600">
-          Succes!
-        </button>
-      </div>
-    </div>
-  )
-}
+import { useState, useEffect } from "react";
+import { supabase } from "./services/supabaseClient";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import DetailsPage from "./pages/DetailsPage";
+import { Toaster } from "react-hot-toast"; 
 
-export default App
+export default function App() {
+  const [session, setSession] = useState(null);
+  const [currentPage, setCurrentPage] = useState('home'); 
+
+
+
+
+
+   useEffect(() => {
+  if (session && currentPage === 'login') {
+    // Îi dăm un mic răgaz de 500ms să se așeze pagina
+    const timer = setTimeout(() => {
+      toast.success(`Salutare! Te-ai conectat ca ${session.user.email}`, {
+        id: 'login-success', // Previne duplicarea notificării
+        duration: 10000,
+        style: {
+          background: '#064e3b', // emerald-900
+          color: '#fff',
+          border: '1px solid #10b981'
+        }
+      });
+      setCurrentPage('home');
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }
+}, [session, currentPage]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+
+  const navigateTo = (page) => setCurrentPage(page);
+
+  return (
+    <div className="min-h-screen bg-slate-900">
+      {/* 2. ADAUGĂ ASTA AICI (Esențial pentru a vedea mesajele) */}
+      <Toaster position="top-center" reverseOrder={false} />
+
+      {currentPage === 'home' && <HomePage session={session} onNavigate={navigateTo} />}
+      {currentPage === 'login' && <LoginPage onNavigate={navigateTo} />}
+      {currentPage === 'detalii' && <DetailsPage session={session} onNavigate={navigateTo} />}
+    </div>
+  );
+}

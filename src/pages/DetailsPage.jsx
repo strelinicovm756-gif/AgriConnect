@@ -185,9 +185,8 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session, produ
   if (!product) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
+    <div className="min-h-screen bg-white">
       {/* Navbar */}
-
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Product Card */}

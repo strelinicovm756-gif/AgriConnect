@@ -37,15 +37,28 @@ export function Navbar({ session, onNavigate, hideDropdown = false, onAddProduct
     }
   };
 
+  // const handleLogout = async () => {
+  //   const { error } = await supabase.auth.signOut();
+  //   if (!error) {
+  //     setShowDropdown(false);
+  //     setProfileName('');
+  //     toast.success('Te-ai deconectat!');
+  //     onNavigate('home'); // <--- Redirecționarea care lipsea
+  //   }
+  // };
+
+
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      setShowDropdown(false);
-      setProfileName('');
-      toast.success('Te-ai deconectat!');
-      onNavigate('home'); // <--- Redirecționarea care lipsea
-    }
-  };
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    toast.error('Eroare la deconectare');
+    return;
+  }
+  setShowDropdown(false);
+  setProfileName('');
+  toast.success('Te-ai deconectat!');
+  onNavigate('home');
+};
 
   // Închide dropdown la click afară
   useEffect(() => {

@@ -102,6 +102,10 @@ export default function ProfilePage({ session, onNavigate }) {
         bio: ''
     });
 
+
+
+    
+
     useEffect(() => {
         if (session) {
             loadProfile();
@@ -110,6 +114,17 @@ export default function ProfilePage({ session, onNavigate }) {
             setLoading(false);
         }
     }, [session]);
+
+    useEffect(() => {
+        if (!session) {
+            onNavigate('home');
+        }
+    }, [session, onNavigate]);
+
+    // Dacă nu există sesiune, nu renderiza nimic
+    if (!session) {
+        return null;
+    }
 
     const formatPhoneDisplay = (phone) => {
         if (!phone || phone.length !== 12) return phone;
@@ -417,9 +432,6 @@ export default function ProfilePage({ session, onNavigate }) {
 
     return (
         <div className="bg-white">
-            {/* Navbar */}
-            <Navbar session={session} onNavigate={onNavigate} hideDropdown={true} />
-
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid md:grid-cols-3 gap-10">
                     {/* Sidebar */}

@@ -326,12 +326,6 @@ export default function ImageGalleryManager({
       </div>
 
       {/* Avertisment */}
-      {images.length === 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-          <FontAwesomeIcon icon={faCloudArrowUp} className="mr-2" />
-          Produsele cu fotografii primesc cu 3x mai multe vizualizări!
-        </div>
-      )}
     </div>
   );
 }

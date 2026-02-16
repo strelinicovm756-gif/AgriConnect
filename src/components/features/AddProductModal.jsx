@@ -9,7 +9,10 @@ import {
   faEgg, faJar, faWheatAwn, faTimes,
   faTriangleExclamation,
   faCircleCheck,
-  faLocationDot
+  faLocationDot,
+  faLocationCrosshairs,
+  faCheckCircle,
+  faExclamationCircle
 } from '@fortawesome/free-solid-svg-icons';
 
 function Alert({ variant = 'default', title, children, className = '' }) {
@@ -82,6 +85,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
   const [loading, setLoading] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(true);
   const [galleryImages, setGalleryImages] = useState([]);
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -136,7 +140,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
       }
 
       if (!profile) {
-        toast.error('Profil lipsă! Creează-l din pagina de profil.');
+        toast.error('Profilul este incomplet. Accesează profilul și completează formularul.');
         onClose();
         return;
       }
@@ -170,6 +174,105 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
     }
   };
 
+  const handleDetectLocation = async () => {
+    if (!navigator.geolocation) {
+      toast.error('Browserul tău nu suportă geolocalizare', {
+        icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+      });
+      return;
+    }
+
+    setDetectingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          
+          // Reverse Geocoding folosind Nominatim (OpenStreetMap)
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=ro&zoom=18`
+          );
+          
+          const data = await response.json();
+          
+          // Extrage strada și localitatea (fără țară)
+          const address = data.address;
+          let locationParts = [];
+          
+          // Adaugă strada dacă există
+          if (address.road) {
+            locationParts.push(address.road);
+          } else if (address.street) {
+            locationParts.push(address.street);
+          }
+          
+          // Adaugă localitatea
+          if (address.city) {
+            locationParts.push(address.city);
+          } else if (address.town) {
+            locationParts.push(address.town);
+          } else if (address.village) {
+            locationParts.push(address.village);
+          } else if (address.municipality) {
+            locationParts.push(address.municipality);
+          } else if (address.county) {
+            locationParts.push(address.county);
+          }
+          
+          const locationName = locationParts.join(', ');
+          
+          if (locationName) {
+            setFormData({ ...formData, location: locationName });
+            toast.success(`Locație detectată: ${locationName}`, {
+              icon: <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-500" />
+            });
+          } else {
+            toast.error('Nu am putut determina locația exactă', {
+              icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-orange-500" />
+            });
+          }
+          
+        } catch (error) {
+          console.error('Eroare reverse geocoding:', error);
+          toast.error('Eroare la determinarea locației', {
+            icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+          });
+        } finally {
+          setDetectingLocation(false);
+        }
+      },
+      (error) => {
+        console.error('Eroare geolocalizare:', error);
+        
+        let errorMessage = 'Nu am putut detecta locația';
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Permisiunea pentru locație a fost refuzată. Activează-o în setările browserului.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Informațiile despre locație nu sunt disponibile.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Timpul de așteptare pentru detectarea locației a expirat.';
+            break;
+        }
+        
+        toast.error(errorMessage, { 
+          duration: 5000,
+          icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+        });
+        setDetectingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -192,7 +295,17 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Completează corect toate câmpurile');
+      toast.error('Completează corect toate câmpurile', {
+        icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+      });
+      return;
+    }
+
+    const hasUploadingImages = galleryImages.some(img => img.isUploading);
+    if (hasUploadingImages) {
+      toast.error('Așteaptă finalizarea încărcării imaginilor!', {
+        icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-orange-500" />
+      });
       return;
     }
 
@@ -208,7 +321,17 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
       if (profileError) throw profileError;
 
       if (!profile?.phone || !profile?.location) {
-        toast.error('Completează telefon și locație în profil!');
+        toast.error('Completează telefon și locație în profil!', {
+          icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+        });
+        onClose();
+        return;
+      }
+
+      if (!profile?.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name)) {
+        toast.error('Completează un nume valid în profil!', {
+          icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+        });
         onClose();
         return;
       }
@@ -242,7 +365,10 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
 
       if (error) throw error;
 
-      toast.success('Produs adăugat cu succes!', { duration: 4000 });
+      toast.success('Produs adăugat cu succes!', { 
+        duration: 4000,
+        icon: <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-500" />
+      });
 
       // Reset form
       setFormData({
@@ -263,7 +389,9 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
 
     } catch (error) {
       console.error('Eroare:', error);
-      toast.error('Eroare la adăugarea produsului: ' + error.message);
+      toast.error('Eroare la adăugarea produsului: ' + error.message, {
+        icon: <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />
+      });
     } finally {
       setLoading(false);
     }
@@ -303,7 +431,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
               </h3>
 
               <div className="space-y-5">
-                {/* GALERIE IMAGINI - Component Reutilizabil */}
+                {/* GALERIE IMAGINI */}
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-3">
                     Fotografii Produs (Max 4)
@@ -496,31 +624,52 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
-                    Locație <span className="text-gray-500 text-xs">(opțional)</span>
-                  </label>
-                  <div className="relative">
-                    <FontAwesomeIcon
-                      icon={faLocationDot}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
-                    <input
-                      type="text"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="Se folosește locația din profil dacă nu completezi"
-                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                    />
+                  
+                  <div className="space-y-2">
+                    {/* Input */}
+                    <div className="relative">
+                      <FontAwesomeIcon
+                        icon={faLocationDot}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                      <input
+                        type="text"
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        placeholder="Se folosește locația din profil dacă nu completezi"
+                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+
+                    {/* Buton Detectare Locație */}
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={loading || detectingLocation}
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                    >
+                      {detectingLocation ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-emerald-600"></div>
+                          <span>Detectare locație...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon 
+                            icon={faLocationCrosshairs} 
+                            className="group-hover:scale-110 transition-transform" 
+                          />
+                          <span>Folosește locația curentă</span>
+                        </>
+                      )}
+                    </button>
+
+                    <p className="text-gray-500 text-xs">
+                      Locația ajută cumpărătorii să găsească produse din zona lor
+                    </p>
                   </div>
-                  <p className="text-gray-500 text-xs mt-1">
-                    Locația ajută cumpărătorii să găsească produse din zona lor
-                  </p>
                 </div>
 
-                <Alert variant="info" title="Sfat pentru vânzători">
-                  Produsele cu fotografii clare și descrieri detaliate primesc cu 3x mai multe vizualizări.
-                  Menționează calitatea, originea și condițiile de livrare.
-                </Alert>
               </div>
             </div>
 

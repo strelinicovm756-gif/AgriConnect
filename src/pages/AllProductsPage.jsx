@@ -407,55 +407,8 @@ export default function AllProductsPage({ session, onNavigate, initialCategory =
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
-      {/* Navbar - AVATAR ACTUALIZAT */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div
-              onClick={() => onNavigate('home')}
-              className="flex items-center gap-2 cursor-pointer group"
-            >
-              <div className="text-emerald-600 text-2xl">
-                <FontAwesomeIcon icon={faLeaf} />
-              </div>
-              <h1 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition">
-                AgriConnect
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {session ? (
-                <button
-                  onClick={() => onNavigate('profil')}
-                  className="flex items-center gap-2 hover:bg-gray-50 px-3 py-2 rounded-xl transition group"
-                >
-                  {/* AVATAR CU GRADIENT IDENTIC */}
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-110"
-                    style={{
-                      background: `linear-gradient(135deg, ${getColorForName(profileName || session.user.email)} 0%, ${getColorForName(profileName || session.user.email, true)} 100%)`,
-                      borderColor: getColorForName(profileName || session.user.email) + '50'
-                    }}
-                  >
-                    <span className="text-white text-sm font-black uppercase">
-                      {profileName?.charAt(0) || session.user.email?.charAt(0) || '?'}
-                    </span>
-                  </div>
-                </button>
-              ) : (
-                <Button
-                  onClick={() => onNavigate('login')}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  Autentificare
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <div className="bg-white">
+    
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">

@@ -49,7 +49,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
   return (
     <div className="flex flex-col h-full">
 
-
+      
       <div className="relative h-48 bg-gray-100 rounded-t-xl overflow-hidden">
         {product.image_url ? (
           <>

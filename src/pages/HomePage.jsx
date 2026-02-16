@@ -40,20 +40,16 @@ export default function HomePage({ session, onNavigate }) {
 
   const heroImages = [
     {
-      url: 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=800&h=600&fit=crop',
+      url: 'src/assets/Rosii.jpg',
       alt: 'Roșii proaspete'
     },
     {
-      url: 'https://images.unsplash.com/photo-1628773822503-930a7eaecf80?w=800&h=600&fit=crop',
-      alt: 'Brânză artizanală'
+      url: 'src/assets/castravete.jpg',
+      alt: 'Castraveți proaspeți'
     },
     {
-      url: 'https://images.unsplash.com/photo-1587049352846-4a222e784738?w=800&h=600&fit=crop',
+      url: 'src/assets/Miere.jpeg',
       alt: 'Miere naturală'
-    },
-    {
-      url: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=800&h=600&fit=crop',
-      alt: 'Legume organice'
     }
   ];
 
@@ -171,13 +167,9 @@ export default function HomePage({ session, onNavigate }) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* NAVBAR - ÎNLOCUIT CU COMPONENTA */}
-      <Navbar session={session} onNavigate={onNavigate}
-      onAddProduct={() => setShowAddProductModal(true)} />
       
-
       {/* Hero Section cu Carousel */}
-      <div className="bg-gradient-to-b from-emerald-50 to-white">
+      <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             {/* Carousel Imagini */}
@@ -325,10 +317,12 @@ export default function HomePage({ session, onNavigate }) {
                 </div>
                 <button
                   onClick={() => onNavigate('toate-produsele', null, { sortBy: 'newest' })}
-                  className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-2"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
                 >
-                  Vezi tot
-                  <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+                  <span>Vezi tot</span>
+                  <div className="bg-white/20 w-5 h-5 rounded-full flex items-center justify-center">
+                    <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                  </div>
                 </button>
               </div>
 
@@ -364,12 +358,16 @@ export default function HomePage({ session, onNavigate }) {
                   </div>
                   <button
                     onClick={() => onNavigate('toate-produsele', null, { category: cat.id })}
-                    className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-2"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
                   >
-                    Vezi tot
-                    <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+                    <span>Vezi tot</span>
+                    <div className="bg-white/20 w-5 h-5 rounded-full flex items-center justify-center">
+                      <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                    </div>
                   </button>
                 </div>
+
+
 
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {getProductsByCategory(cat.id).map((product) => (
@@ -419,7 +417,7 @@ export default function HomePage({ session, onNavigate }) {
                     </div>
                     <h4 className="text-lg font-semibold mb-2">Fără Comisioane</h4>
                     <p className="text-emerald-100 text-sm">
-                      Platformă gratuită, fără taxe ascunse pentru nimeni
+                      Platformă gratuită
                     </p>
                   </div>
                 </div>
@@ -433,7 +431,6 @@ export default function HomePage({ session, onNavigate }) {
                   <h3 className="text-3xl font-bold text-gray-900 mb-4">Ești producător?</h3>
                   <p className="text-gray-600 mb-6 max-w-2xl mx-auto text-lg">
                     Adaugă-ți produsele gratuit și ajunge la mii de cumpărători din zona ta.
-                    Fără comisioane, fără taxe ascunse!
                   </p>
                   <Button
                     onClick={() => setShowAddProductModal(true)}

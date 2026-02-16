@@ -94,7 +94,7 @@ export default function ProfilePage({ session, onNavigate }) {
     const [myProducts, setMyProducts] = useState([]);
     const [loadingProducts, setLoadingProducts] = useState(false);
     const [editingProductId, setEditingProductId] = useState(null);
-    
+
     const [formData, setFormData] = useState({
         full_name: '',
         phone: '',
@@ -179,17 +179,19 @@ export default function ProfilePage({ session, onNavigate }) {
 
             console.log('Creare profil pentru user:', session.user.id);
 
+            // VERIFICĂ MAI ÎNTÂI DACĂ EXISTĂ
             const { data: existingProfile, error: checkError } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', session.user.id)
                 .maybeSingle();
 
-            if (checkError) {
+            if (checkError && checkError.code !== 'PGRST116') {
                 console.error('Eroare verificare profil:', checkError);
                 throw checkError;
             }
 
+            // DACĂ EXISTĂ DEJA, ÎNCARCĂ-L
             if (existingProfile) {
                 console.log('Profilul există deja, se încarcă...');
                 setProfile(existingProfile);
@@ -199,9 +201,12 @@ export default function ProfilePage({ session, onNavigate }) {
                     location: existingProfile.location || '',
                     bio: existingProfile.bio || ''
                 });
+                setLoading(false);
                 return;
             }
 
+            // DOAR ACUM CREEAZĂ PROFIL NOU
+            console.log('Creez profil nou...');
             const { data, error } = await supabase
                 .from('profiles')
                 .insert({
@@ -229,7 +234,15 @@ export default function ProfilePage({ session, onNavigate }) {
             toast.success('Profil creat! Completează-ți datele.');
         } catch (error) {
             console.error('Eroare crearea profilului:', error);
-            toast.error('Eroare: ' + error.message);
+
+            // Mesaj specific pentru duplicate key
+            if (error.code === '23505') {
+                toast.error('Profilul există deja. Se reîncarcă...');
+                // Încearcă să încarce profilul existent
+                loadProfile();
+            } else {
+                toast.error('Eroare: ' + error.message);
+            }
         } finally {
             setLoading(false);
         }
@@ -403,7 +416,7 @@ export default function ProfilePage({ session, onNavigate }) {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
+        <div className="bg-white">
             {/* Navbar */}
             <Navbar session={session} onNavigate={onNavigate} hideDropdown={true} />
 
@@ -465,26 +478,33 @@ export default function ProfilePage({ session, onNavigate }) {
                             {/* Toggle products */}
                             {productsCount > 0 && (
                                 <div className="mb-4">
-                                    <Button
+                                    <button
                                         id="toggle-products-button"
                                         onClick={handleToggleProducts}
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full flex items-center justify-center gap-2"
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 group"
                                     >
-                                        <FontAwesomeIcon icon={showProducts ? faChevronUp : faChevronDown} />
-                                        {showProducts ? 'Ascunde anunțurile' : `Vezi anunțurile (${productsCount})`}
-                                    </Button>
+                                        <span>
+                                            {showProducts ? 'Ascunde anunțurile' : `Vezi anunțurile (${productsCount})`}
+                                        </span>
+                                        <div className="bg-white/20 w-5 h-5 rounded-full flex items-center justify-center">
+                                            <FontAwesomeIcon
+                                                icon={showProducts ? faChevronUp : faChevronDown}
+                                                className="text-[10px]"
+                                            />
+                                        </div>
+                                    </button>
                                 </div>
                             )}
 
                             {/* Buton Logout - Ghost Style */}
                             <button
                                 onClick={handleLogout}
-                                className="w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl font-medium transition flex items-center justify-center gap-2 border border-transparent hover:border-red-200"
+                                className="w-full bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95 group"
                             >
-                                <FontAwesomeIcon icon={faRightFromBracket} />
-                                Deconectare
+                                <span>Deconectare</span>
+                                <div className="bg-white/20 w-5 h-5 rounded-full flex items-center justify-center">
+                                    <FontAwesomeIcon icon={faRightFromBracket} className="text-[10px]" />
+                                </div>
                             </button>
                         </div>
                     </div>

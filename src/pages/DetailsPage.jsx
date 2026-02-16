@@ -187,22 +187,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session, produ
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Button 
-              variant="ghost" 
-              onClick={() => onNavigateBack ? onNavigateBack() : onNavigate('home')} // SCHIMBAT
-              className="text-gray-600 hover:text-emerald-600 flex items-center gap-2"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-              Înapoi
-            </Button>
-            <h1 className="text-lg font-bold text-gray-900">Detalii Produs</h1>
-            <div className="w-32"></div>
-          </div>
-        </div>
-      </nav>
+
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Product Card */}

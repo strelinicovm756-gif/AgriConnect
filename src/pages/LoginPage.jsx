@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { supabase } from "../services/supabaseClient";
 import toast from "react-hot-toast";
+import { Metronome } from 'ldrs/react';
+import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye,

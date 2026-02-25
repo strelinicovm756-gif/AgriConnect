@@ -1,13 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "./services/supabaseClient";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import DetailsPage from "./pages/DetailsPage";
 import ProfilePage from "./pages/ProfilePage";
 import AllProductsPage from "./pages/AllProductsPage";
-import { Navbar } from "./components/layout/Navbar"; // IMPORTĂ NAVBAR AICI
+import { Navbar } from "./components/layout/Navbar";
 import { Toaster } from "react-hot-toast";
-import toast from 'react-hot-toast';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -18,6 +17,10 @@ export default function App() {
   const [currentSearch, setCurrentSearch] = useState(null);
   const [currentSortBy, setCurrentSortBy] = useState('newest');
 
+  // Search state centralizat - shared între Navbar și pagini
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchLocation, setSearchLocation] = useState('');
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
@@ -27,7 +30,7 @@ export default function App() {
   const navigateTo = (page, param = null, options = {}) => {
     if (page !== currentPage) setPreviousPage(currentPage);
     setCurrentPage(page);
-    
+
     if (page === 'detalii' && param) setCurrentProductId(param);
     else if (page === 'toate-produsele') {
       setCurrentCategory(options.category || null);
@@ -41,35 +44,51 @@ export default function App() {
     setCurrentProductId(null);
   };
 
+  const handleSearch = () => {
+    if (currentPage === 'home') {
+      document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white"> {/* Am schimbat în bg-white ca să nu ai dungi negre la navbar */}
+    <div className="min-h-screen bg-white">
       <Toaster position="top-center" />
 
-      {/* NAVBAR GLOBAL: Apare pe toate paginile în afară de Login */}
       {currentPage !== 'login' && (
-        <Navbar 
-          session={session} 
-          onNavigate={navigateTo} 
-          // Exemplu: onAddProduct={() => navigateTo('adauga')}
+        <Navbar
+          session={session}
+          currentPage={currentPage}
+          onNavigate={navigateTo}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          searchLocation={searchLocation}
+          setSearchLocation={setSearchLocation}
+          onSearch={handleSearch}
         />
       )}
 
-      {/* PAGINILE - Acum fără Navbar în interiorul lor */}
       <main>
-        {currentPage === 'home' && <HomePage session={session} onNavigate={navigateTo} />}
+        {currentPage === 'home' && (
+          <HomePage
+            session={session}
+            onNavigate={navigateTo}
+            searchQuery={searchQuery}
+            searchLocation={searchLocation}
+          />
+        )}
         {currentPage === 'login' && <LoginPage onNavigate={navigateTo} />}
         {currentPage === 'detalii' && (
-          <DetailsPage 
-            session={session} 
-            onNavigate={navigateTo} 
-            onNavigateBack={navigateBack} 
-            productId={currentProductId} 
+          <DetailsPage
+            session={session}
+            onNavigate={navigateTo}
+            onNavigateBack={navigateBack}
+            productId={currentProductId}
           />
         )}
         {currentPage === 'profil' && <ProfilePage session={session} onNavigate={navigateTo} />}
         {currentPage === 'toate-produsele' && (
-          <AllProductsPage 
-            session={session} 
+          <AllProductsPage
+            session={session}
             onNavigate={navigateTo}
             initialCategory={currentCategory}
             initialSearch={currentSearch}

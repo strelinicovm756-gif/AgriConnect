@@ -4,7 +4,8 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { ProductCard } from '../components/features/ProductCard';
-import { Navbar } from '../components/layout/Navbar';
+import { Metronome } from 'ldrs/react';
+import 'ldrs/react/Metronome.css';
 import EditProductModal from '../components/features/EditProductModal';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -423,7 +424,7 @@ export default function ProfilePage({ session, onNavigate }) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center relative overflow-hidden">
                 <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600 mb-4"></div>
+                   <Metronome size="40" speed="1.6" color="#059669" />
                     <p className="text-emerald-600">Se încarcă profilul...</p>
                 </div>
             </div>
@@ -872,7 +873,7 @@ export default function ProfilePage({ session, onNavigate }) {
 
                             {loadingProducts ? (
                                 <div className="text-center py-12">
-                                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600 mb-4"></div>
+                                   <Metronome size="40" speed="1.6" color="#059669" />
                                     <p className="text-gray-600">Se încarcă anunțurile...</p>
                                 </div>
                             ) : myProducts.length > 0 ? (

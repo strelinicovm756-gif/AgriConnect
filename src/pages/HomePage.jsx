@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "../services/supabaseClient";
-import { Navbar } from "../components/layout/Navbar";
 import { ProductCard } from "../components/features/ProductCard";
 import { Button } from "../components/ui/Button";
 import AddProductModal from "../components/features/AddProductModal";
 import toast from 'react-hot-toast';
+import { Metronome } from 'ldrs/react';
+import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot,
@@ -14,15 +15,12 @@ import {
   faEgg,
   faJar,
   faWheatAwn,
-  faBoxesStacked,
   faLocationDot,
   faMagnifyingGlass,
-  faFilter,
   faPlus,
   faLeaf,
   faCircleCheck,
   faHandshake,
-  faRightToBracket,
   faArrowRight,
   faTruck,
   faSeedling,
@@ -30,11 +28,9 @@ import {
   faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 
-export default function HomePage({ session, onNavigate }) {
+export default function HomePage({ session, onNavigate, searchQuery = '', searchLocation = '' }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchLocation, setSearchLocation] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -167,140 +163,61 @@ export default function HomePage({ session, onNavigate }) {
 
   return (
     <div className="min-h-screen bg-white">
+
+      {/* Hero Section*/}
+    <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
+      {heroImages.map((image, index) => (
+        <div
+          key={index}
+          className={`absolute inset-0 transition-opacity duration-1000 ${
+            index === currentSlide ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {/* Imaginea ocupă acum TOT ecranul (ZONA ROȘIE din schița ta) */}
+          <img
+            src={image.url}
+            alt={image.alt}
+            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-[2000ms]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-black/30 to-transparent"></div>
+
+          {/* Conținutul text centrat la max-w-7xl pentru a se alinia cu produsele de mai jos */}
+          <div className="absolute inset-0 flex items-center">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className="max-w-2xl text-white">
+                <h2 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
+                  {index === 0 ? "Produse proaspete direct de la producător" : image.alt}
+                </h2>
+                <p className="text-lg md:text-xl text-gray-200 mb-6 font-light">
+                  Susținem micii antreprenori locali. Calitate garantată fără intermediari.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Navigare Carousel - Mutate spre marginile ecranului */}
+      <button
+        onClick={prevSlide}
+        className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/40 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-10"
+      >
+        <FontAwesomeIcon icon={faChevronLeft} />
+      </button>
+      <button
+        onClick={nextSlide}
+        className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/40 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-10"
+      >
+        <FontAwesomeIcon icon={faChevronRight} />
+      </button>
+    </div>
       
-      {/* Hero Section cu Carousel */}
-      <div className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {/* Carousel Imagini */}
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[400px] md:h-[500px]">
-              {heroImages.map((image, index) => (
-                <div
-                  key={index}
-                  className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
-                    }`}
-                >
-                  <img
-                    src={image.url}
-                    alt={image.alt}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                  <div className="absolute bottom-4 left-4 text-white">
-                    <p className="text-lg font-semibold">{image.alt}</p>
-                  </div>
-                </div>
-              ))}
-
-              <button
-                onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition"
-              >
-                <FontAwesomeIcon icon={faChevronLeft} className="text-gray-700" />
-              </button>
-              <button
-                onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition"
-              >
-                <FontAwesomeIcon icon={faChevronRight} className="text-gray-700" />
-              </button>
-
-              <div className="absolute bottom-4 right-4 flex gap-2">
-                {heroImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`w-2 h-2 rounded-full transition-all ${index === currentSlide ? 'bg-white w-8' : 'bg-white/50'
-                      }`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Search Section */}
-            <div>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Produse proaspete direct de la producător
-              </h2>
-              <p className="text-gray-600 text-lg mb-8">
-                Descoperă legume, fructe, lactate și produse bio de la fermierii din zona ta.
-                Fără intermediari, doar prospețime garantată.
-              </p>
-
-              {/* Search Card */}
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-                <div className="space-y-4">
-                  <div className="relative">
-                    <FontAwesomeIcon
-                      icon={faMagnifyingGlass}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Caută produs..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <FontAwesomeIcon
-                      icon={faLocationDot}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Locație (ex: Chișinău)..."
-                      value={searchLocation}
-                      onChange={(e) => setSearchLocation(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                    />
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg transition shadow-md flex items-center justify-center gap-2"
-                  >
-                    <FontAwesomeIcon icon={faMagnifyingGlass} />
-                    Caută produse
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Category Links */}
-      <div className="bg-white py-8 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center gap-4 flex-wrap">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  document.getElementById(`category-${cat.id}`)?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all hover:scale-105 ${cat.color}`}
-              >
-                <div className="w-12 h-12 flex items-center justify-center">
-                  <FontAwesomeIcon icon={cat.icon} className="text-2xl" />
-                </div>
-                <span className="text-sm font-medium">{cat.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Products Section */}
-      <main id="products-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main id="products-section" 
+      className="relative z-10 -mt-16 bg-white rounded-t-[40px] px-4 sm:px-6 lg:px-8 py-12">
         {loading ? (
           <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600 mb-4"></div>
+            <Metronome size="40" speed="1.6" color="#059669" />
             <p className="text-gray-600">Se încarcă produsele...</p>
           </div>
         ) : (

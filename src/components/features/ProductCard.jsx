@@ -138,15 +138,6 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
                 </p>
                 <span className="text-gray-900 font-semibold text-lg">lei</span>
               </div>
-              <p className="text-gray-500 text-sm mt-0.5">
-                per <span className="font-medium text-gray-700">{product.unit}</span>
-                {product.quantity && (
-                  <>
-                    <span className="mx-1.5 text-gray-400">•</span>
-                    <span className="font-medium text-gray-700">{formatPrice(product.quantity)} {product.unit}</span> disponibil
-                  </>
-                )}
-              </p>
             </div>
           ) : (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">

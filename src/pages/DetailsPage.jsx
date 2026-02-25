@@ -4,6 +4,8 @@ import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import ProductMapModal from "../components/features/ProductMapModal";
 import toast from 'react-hot-toast';
+import { Metronome } from 'ldrs/react';
+import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot, faAppleWhole, faCow, faDrumstickBite,
@@ -175,7 +177,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session, produ
     return (
       <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600 mb-4"></div>
+          <Metronome size="40" speed="1.6" color="#059669" />
           <p className="text-gray-600">Se încarcă...</p>
         </div>
       </div>

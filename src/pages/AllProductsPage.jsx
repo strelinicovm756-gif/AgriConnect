@@ -3,6 +3,8 @@ import { supabase } from '../services/supabaseClient';
 import { ProductCard } from '../components/features/ProductCard';
 import { Button } from '../components/ui/Button';
 import toast from 'react-hot-toast';
+import { Metronome } from 'ldrs/react';
+import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot,
@@ -553,8 +555,8 @@ export default function AllProductsPage({ session, onNavigate, initialCategory =
           <div className="lg:col-span-3">
             {loading ? (
               <div className="text-center py-20">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600 mb-4"></div>
-                <p className="text-gray-600">Se încarcă produsele...</p>
+                <Metronome size="40" speed="1.6" color="#059669"  />
+<p className="text-gray-600">Se încarcă produsele...</p>
               </div>
             ) : products.length > 0 ? (
               <>

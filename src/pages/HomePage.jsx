@@ -4,7 +4,6 @@ import { ProductCard } from "../components/features/ProductCard";
 import { Button } from "../components/ui/Button";
 import AddProductModal from "../components/features/AddProductModal";
 import toast from 'react-hot-toast';
-
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -67,29 +66,26 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
     }
   };
 
- const scroll = (direction, ref, key) => {
-  if (!ref?.current) return;
+  const scroll = (direction, ref) => {
+    if (!ref?.current) return;
+    const container = ref.current;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const scrollAmount = container.clientWidth * 0.8;
 
-  const container = ref.current;
-  const maxScroll = container.scrollWidth - container.clientWidth;
-  const scrollAmount = container.clientWidth * 0.8;
-
-  if (direction === 'right') {
-    if (container.scrollLeft >= maxScroll - 10) {
-      // suntem la capat intaore la inceput 
-      container.scrollTo({ left: 0, behavior: 'smooth' });
+    if (direction === 'right') {
+      if (container.scrollLeft >= maxScroll - 10) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
     } else {
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      if (container.scrollLeft <= 10) {
+        container.scrollTo({ left: maxScroll, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      }
     }
-  } else {
-    if (container.scrollLeft <= 10) {
-      // Suntem la inceput duce la capta
-      container.scrollTo({ left: maxScroll, behavior: 'smooth' });
-    } else {
-      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    }
-  }
-};
+  };
 
   const handleSearch = () => {
     let filtered = products;
@@ -150,25 +146,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroImages.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroImages.length) % heroImages.length);
 
-  /*Butoane rotunde mici din headerul secțiunii (desktop)*/
-  const NavButtons = ({ onLeft, onRight }) => (
-    <div className="hidden sm:flex gap-2">
-      <button
-        onClick={onLeft}
-        className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all"
-      >
-        <FontAwesomeIcon icon={faChevronLeft} className="text-sm" />
-      </button>
-      <button
-        onClick={onRight}
-        className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all"
-      >
-        <FontAwesomeIcon icon={faChevronRight} className="text-sm" />
-      </button>
-    </div>
-  );
-
-  /*Pill button vertical care imbraca marginile caruselului*/
+  /* Pill button vertical care imbracă marginile caruselului */
   const PillNavButton = ({ direction, onClick, ariaLabel }) => (
     <button
       onClick={onClick}
@@ -197,10 +175,13 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
     </button>
   );
 
+  /* Clasa unificată pentru toate cardurile din carusel */
+  const cardClass = "min-w-[320px] w-[320px] snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex-shrink-0";
+
   return (
     <div className="min-h-screen bg-white">
 
-      {/*Hero Section full-width*/}
+      {/* Hero Section full-width */}
       <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
         {heroImages.map((image, index) => (
           <div
@@ -258,7 +239,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
         </div>
       </div>
 
-      {/*Products Section suprapus pe hero*/}
+      {/* Products Section suprapus pe hero */}
       <main
         id="products-section"
         className="relative z-10 -mt-16 bg-white rounded-t-[40px] px-4 sm:px-6 lg:px-8 py-12 shadow-xl"
@@ -270,7 +251,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
           </div>
         ) : (
           <>
-            {/*Produse Noi Carusel*/}
+            {/* Produse Noi — Carusel */}
             <section className="mb-16">
               <div className="flex justify-between items-center mb-6">
                 <div>
@@ -301,10 +282,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   {getNewProducts().map((product) => (
-                    <div
-                      key={product.id}
-                      className="lg:min-w-[25%] sm:min-w-[300px] snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex-shrink-0"
-                    >
+                    <div key={product.id} className={cardClass}>
                       <ProductCard
                         product={product}
                         session={session}
@@ -322,7 +300,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               </div>
             </section>
 
-            {/*Categorii — fiecare cu carusel propriu*/}
+            {/* Categorii — fiecare cu carusel propriu */}
             {categories.filter(cat => getProductsByCategory(cat.id).length > 0).map((cat) => (
               <section key={cat.id} id={`category-${cat.id}`} className="mb-16">
                 <div className="flex justify-between items-center mb-6">
@@ -360,10 +338,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                   >
                     {getProductsByCategory(cat.id).map((product) => (
-                      <div
-                        key={product.id}
-                        className="min-w-[280px] sm:min-w-[300px] snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex-shrink-0"
-                      >
+                      <div key={product.id} className={cardClass}>
                         <ProductCard
                           product={product}
                           session={session}
@@ -382,7 +357,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               </section>
             ))}
 
-            {/*Info Banner*/}
+            {/* Info Banner */}
             <section className="my-16">
               <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl p-8 md:p-12 shadow-xl">
                 <div className="grid md:grid-cols-3 gap-8 text-white">
@@ -411,7 +386,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               </div>
             </section>
 
-            {/*CTA for Producers*/}
+            {/* CTA for Producers */}
             {session && products.length > 0 && (
               <section className="mb-16">
                 <div className="bg-gray-50 rounded-3xl p-8 md:p-12 text-center border border-gray-200">
@@ -433,7 +408,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
         )}
       </main>
 
-      {/*Footer*/}
+      {/* Footer */}
       <footer className="bg-gray-50 border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">

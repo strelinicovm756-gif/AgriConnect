@@ -23,6 +23,7 @@
     "ldrs": "^1.1.9",
     "lucide-react": "^0.564.0",
     "mapbox-gl": "^3.18.1",
+    "motion": "^12.34.3",
     "radix-ui": "^1.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

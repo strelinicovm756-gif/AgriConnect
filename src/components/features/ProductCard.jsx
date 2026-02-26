@@ -50,7 +50,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
     <div className="flex flex-col h-full">
 
       
-      <div className="relative h-48 bg-gray-100 rounded-t-xl overflow-hidden">
+      <div className="relative h-36 bg-gray-100 rounded-t-xl overflow-hidden">
         {product.image_url ? (
           <>
             <img
@@ -123,7 +123,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
 
         {/* Descriere scurtă */}
         {product.description && (
-          <p className="text-gray-500 text-sm mb-3 line-clamp-2">
+          <p className="text-gray-500 text-sm mb-3 line-clamp-1">
             {product.description}
           </p>
         )}

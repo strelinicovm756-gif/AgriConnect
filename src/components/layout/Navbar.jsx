@@ -1,24 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../services/supabaseClient";
 import toast from "react-hot-toast";
+import { X } from "@/components/animate-ui/icons/x";
+import { Search } from "@/components/animate-ui/icons/search";
+import { SearchAlert } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus, faUser, faRightFromBracket, faChevronDown, faLeaf,
-  faMagnifyingGlass, faXmark, faCarrot, faAppleWhole, faCow,
+  faMagnifyingGlass, faCarrot, faAppleWhole, faCow,
   faDrumstickBite, faEgg, faJar, faWheatAwn, faTractor, faBox,
   faArrowRight, faLocationDot
 } from '@fortawesome/free-solid-svg-icons';
-
-const ALL_CATEGORIES = [
-  { id: 'Legume', name: 'Legume', icon: faCarrot },
-  { id: 'Fructe', name: 'Fructe', icon: faAppleWhole },
-  { id: 'Lactate', name: 'Lactate', icon: faCow },
-  { id: 'Carne', name: 'Carne', icon: faDrumstickBite },
-  { id: 'Ouă', name: 'Ouă', icon: faEgg },
-  { id: 'Miere', name: 'Miere', icon: faJar },
-  { id: 'Cereale', name: 'Cereale', icon: faWheatAwn },
-  { id: 'Servicii', name: 'Servicii & Utilaje', icon: faTractor },
-];
 
 const CATEGORY_ICONS = {
   'Legume': faCarrot,
@@ -39,6 +31,8 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [matchedCategories, setMatchedCategories] = useState([]);
+  const [matchedLocations, setMatchedLocations] = useState([]);
+  const [activeLocation, setActiveLocation] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
 
   const dropdownRef = useRef(null);
@@ -46,44 +40,36 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
   const overlayRef = useRef(null);
   const isAllProducts = currentPage === 'toate-produsele';
 
-  // Load profile
   useEffect(() => {
     if (session) loadProfileName();
     else { setProfileName(''); setIsLoadingProfile(false); }
   }, [session]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const clickOut = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
-      // Close overlay when clicking outside the popup
-      if (showOverlay && overlayRef.current && !overlayRef.current.contains(e.target)) {
-        closeOverlay();
-      }
+      if (showOverlay && overlayRef.current && !overlayRef.current.contains(e.target)) closeOverlay();
     };
     document.addEventListener('mousedown', clickOut);
     return () => document.removeEventListener('mousedown', clickOut);
   }, [showOverlay]);
 
-  // ESC key
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') closeOverlay(); };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
   }, []);
 
-  // Focus input when overlay opens
   useEffect(() => {
-    if (showOverlay) {
-      setTimeout(() => searchInputRef.current?.focus(), 50);
-    }
+    if (showOverlay) setTimeout(() => searchInputRef.current?.focus(), 50);
   }, [showOverlay]);
 
-  // Live search with debounce
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setMatchedCategories([]);
+      setMatchedLocations([]);
+      setActiveLocation(null);
       return;
     }
     const timer = setTimeout(() => doSearch(searchQuery), 200);
@@ -91,21 +77,39 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
   }, [searchQuery]);
 
   const doSearch = async (q) => {
-    setIsSearching(true);
-    try {
-      const { data } = await supabase
-        .from('products_with_user')
-        .select('*')
-        .eq('status', 'active')
-        .ilike('name', `%${q}%`)
-        .limit(12);
+  setIsSearching(true);
+  try {
+    // Caută după nume
+    const { data: byName } = await supabase
+      .from('products_with_user')
+      .select('*')
+      .eq('status', 'active')
+      .ilike('name', `%${q}%`)
+      .limit(12);
 
-      const results = data || [];
+    // Caută după locație
+    const { data: byLocation } = await supabase
+      .from('products_with_user')
+      .select('*')
+      .eq('status', 'active')
+      .ilike('location', `%${q}%`)
+      .limit(12);
+
+    // Combină și elimină duplicatele după id
+    const combined = [...(byName || []), ...(byLocation || [])];
+    const unique = combined.filter((item, index, self) =>
+      index === self.findIndex(p => p.id === item.id)
+    );
+
+      const results = unique.slice(0, 12);
       setSearchResults(results);
+      setActiveLocation(null);
 
-      // Extract unique matched categories
       const cats = [...new Set(results.map(p => p.category))].filter(Boolean);
       setMatchedCategories(cats);
+
+      const locs = [...new Set(results.map(p => p.location))].filter(Boolean);
+      setMatchedLocations(locs);
     } catch (e) {
       console.error(e);
     } finally {
@@ -136,6 +140,8 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
     setSearchQuery('');
     setSearchResults([]);
     setMatchedCategories([]);
+    setMatchedLocations([]);
+    setActiveLocation(null);
   };
 
   const handleSelectProduct = (productId) => {
@@ -161,6 +167,10 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
     return colors[hash % colors.length];
   };
 
+  const filteredResults = activeLocation
+    ? searchResults.filter(p => p.location === activeLocation)
+    : searchResults;
+
   const hasResults = searchQuery.trim() && (searchResults.length > 0 || isSearching);
   const noResults = searchQuery.trim() && !isSearching && searchResults.length === 0;
 
@@ -179,22 +189,17 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
             </h1>
           </div>
 
-          {/* Search trigger — hidden on toate-produsele */}
+          {/* Search trigger */}
           {!isAllProducts && (
             <>
-              {/* Desktop */}
               <button
                 onClick={() => setShowOverlay(true)}
                 className="hidden md:flex flex-1 max-w-2xl mx-auto items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-300 hover:bg-white transition-all group shadow-sm"
               >
-                <FontAwesomeIcon icon={faMagnifyingGlass} className="text-gray-400 group-hover:text-emerald-500 transition-colors flex-shrink-0" />
-                <span className="flex-1">Caută produse, categorii...</span>
-                <kbd className="hidden lg:inline-flex items-center gap-1 text-xs bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-md text-gray-400 font-mono">
-                  ESC
-                </kbd>
+                <Search animateOnHover color="#c2c2c2" strokeWidth={2} size={20} />
+                <span className="flex-1">Caută produse, localitate, categorii...</span>
               </button>
 
-              {/* Mobile icon */}
               <button
                 onClick={() => setShowOverlay(true)}
                 className="md:hidden ml-auto flex-shrink-0 w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition"
@@ -258,52 +263,43 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
         </div>
       </nav>
 
-      {/*BACKDROP*/}
+      {/* BACKDROP */}
       {showOverlay && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[99] animate-fadeIn" />
       )}
 
-      {/*SEARCH POPUP*/}
+      {/* SEARCH POPUP */}
       {showOverlay && (
         <div
           ref={overlayRef}
-          className="fixed top-10 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-white rounded-[20px] shadow-2xl z-[100] overflow-hidden animate-fadeIn"
+          className="fixed top-10 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-white rounded-[20px] shadow-2xl z-[100] overflow-hidden animate-fadeIn flex flex-col"
         >
           {/* Input row */}
-          <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
-            <FontAwesomeIcon icon={faMagnifyingGlass} className="text-gray-400 text-lg flex-shrink-0" />
-            <form
-              onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(); }}
-              className="flex-1"
-            >
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 flex-shrink-0">
+            <Search color="#c2c2c2" strokeWidth={2} size={20} />
+            <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(); }} className="flex-1">
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Caută produse, categorii..."
+                placeholder="Caută produse, localitate, categorii..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="outline-none text-lg w-full py-1 text-gray-900 placeholder-gray-400 bg-transparent"
               />
             </form>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-gray-400 hover:text-gray-600 transition flex-shrink-0 w-7 h-7 flex items-center justify-center hover:bg-gray-100 rounded-full"
-              >
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            )}
+              <div className="w-px h-5 bg-gray-200 mx-1 flex-shrink-0" />
             <button
               onClick={closeOverlay}
-              className="flex-shrink-0 ml-1 text-gray-400 hover:text-gray-700 transition w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full"
+              className="flex-shrink-0 text-gray-500 hover:text-gray-800 transition w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full"
+              title="Închide"
             >
-              <FontAwesomeIcon icon={faXmark} className="text-lg" />
+              <X animateOnHover color="#c2c2c2" strokeWidth={2} size={24} />
             </button>
           </div>
 
-          {/* Body — empty when no query */}
+          {/* Stare goala */}
           {!searchQuery.trim() && (
-            <div className="px-6 py-8 text-center text-gray-400">
+            <div className="h-[60vh] flex flex-col items-center justify-center text-gray-400">
               <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl mb-3 opacity-30" />
               <p className="text-sm">Începe să scrii pentru a căuta produse</p>
             </div>
@@ -311,15 +307,13 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
 
           {/* Loading */}
           {isSearching && (
-            <div className="flex gap-0">
-              {/* Left skeleton */}
+            <div className="flex h-[60vh]">
               <div className="w-1/4 border-r border-gray-100 p-6 space-y-3">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="h-8 bg-gray-100 rounded-xl animate-pulse" />
                 ))}
               </div>
-              {/* Right skeleton */}
-              <div className="flex-1 p-6 grid grid-cols-4 gap-4">
+              <div className="flex-1 p-6 grid grid-cols-4 gap-4 content-start">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="h-40 bg-gray-100 rounded-2xl animate-pulse" />
                 ))}
@@ -327,13 +321,15 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
             </div>
           )}
 
-          {/* Results */}
+          {/* Rezultate */}
           {!isSearching && hasResults && (
             <div className="flex h-[60vh]">
 
-              {/* Left — Categories */}
+              {/* Stanga - Categorii + Localitati */}
               <div className="w-1/4 border-r border-gray-100 overflow-y-auto flex-shrink-0">
                 <div className="p-5">
+
+                  {/* Categorii */}
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
                     Categorii ({matchedCategories.length})
                   </p>
@@ -358,7 +354,41 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
                     ))}
                   </div>
 
-                  {/* Ver toate results link */}
+                  {/* Localitati */}
+                  {matchedLocations.length > 0 && (
+                    <div className="mt-6">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                        Localități ({matchedLocations.length})
+                      </p>
+                      <div className="space-y-1">
+                        {matchedLocations.map(loc => (
+                          <button
+                            key={loc}
+                            onClick={() => setActiveLocation(activeLocation === loc ? null : loc)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group ${
+                              activeLocation === loc
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-700'
+                            }`}
+                          >
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                              activeLocation === loc
+                                ? 'bg-emerald-100'
+                                : 'bg-gray-50 group-hover:bg-emerald-100'
+                            }`}>
+                              <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600 text-xs" />
+                            </div>
+                            <span className="font-medium truncate">{loc}</span>
+                            <span className="ml-auto text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 flex-shrink-0">
+                              {searchResults.filter(p => p.location === loc).length}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Buton vezi toate */}
                   <button
                     onClick={handleSearchSubmit}
                     className="mt-6 w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition"
@@ -369,16 +399,15 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
                 </div>
               </div>
 
-              {/* Right — Products grid */}
+              {/* Dreapta - Grid produse filtrate */}
               <div className="flex-1 overflow-y-auto">
                 <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {searchResults.map(product => (
+                  {filteredResults.map(product => (
                     <button
                       key={product.id}
                       onClick={() => handleSelectProduct(product.id)}
                       className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-200 text-left group"
                     >
-                      {/* Image */}
                       <div className="h-28 bg-gray-50 overflow-hidden relative">
                         {product.image_url ? (
                           <img
@@ -394,14 +423,11 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
                             />
                           </div>
                         )}
-                        {/* Category badge on image */}
                         <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                           <FontAwesomeIcon icon={CATEGORY_ICONS[product.category] || faBox} className="text-emerald-600 text-[9px]" />
                           {product.category}
                         </span>
                       </div>
-
-                      {/* Info */}
                       <div className="p-2.5">
                         <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
                         <p className="text-xs text-gray-400 truncate mt-0.5 flex items-center gap-1">
@@ -421,9 +447,9 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
 
           {/* No results */}
           {noResults && (
-            <div className="px-6 py-12 text-center">
-              <div className="text-4xl mb-3">🔍</div>
-              <p className="text-gray-600 font-medium">Niciun produs găsit pentru „{searchQuery}"</p>
+            <div className="h-[60vh] flex flex-col items-center justify-center text-center">
+              <SearchAlert color="#c2c2c2" strokeWidth={2} size={48} />
+              <p className="text-gray-600 font-medium mt-4">Niciun produs găsit pentru „{searchQuery}"</p>
               <p className="text-gray-400 text-sm mt-1">Încearcă un alt termen de căutare</p>
             </div>
           )}
@@ -435,10 +461,6 @@ export function Navbar({ session, onNavigate, onAddProduct, currentPage }) {
         .animate-dropdown { animation: dropdown 0.18s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-fadeIn { animation: fadeIn 0.15s ease-out; }
-        @keyframes slideDown {
-         from { opacity: 0; transform: translate(-50%, -12px); } 
-  to { opacity: 1; transform: translate(-50%, 0); }  }
-        .animate-slideDown { animation: slideDown 0.2s ease-out; }
       `}</style>
     </>
   );

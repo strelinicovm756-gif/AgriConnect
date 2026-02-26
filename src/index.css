@@ -23,6 +23,11 @@ html, body, #root {
   }
 }
 
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
 }

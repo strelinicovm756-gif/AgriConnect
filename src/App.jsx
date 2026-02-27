@@ -85,6 +85,9 @@ export default function App() {
             productId={currentProductId}
           />
         )}
+
+
+      {/*test*/}
         {currentPage === 'profil' && <ProfilePage session={session} onNavigate={navigateTo} />}
         {currentPage === 'toate-produsele' && (
           <AllProductsPage

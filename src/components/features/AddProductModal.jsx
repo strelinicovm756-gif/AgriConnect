@@ -402,10 +402,10 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
   const hasUploadingImages = galleryImages.some(img => img.isUploading);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-3xl w-full my-8 shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl max-w-3xl w-full my-8 shadow-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-6 flex justify-between items-center rounded-t-3xl">
+         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-6 flex justify-between items-center rounded-t-3xl flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-900">
             Adaugă Produs Nou
           </h2>
@@ -423,8 +423,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
             <p className="text-gray-600">Verificare profil...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-8 max-h-[calc(90vh-100px)] overflow-y-auto">
-            {/* SECȚIUNEA 1: Informații de Bază */}
+          <form onSubmit={handleSubmit} className="p-6 space-y-8 overflow-y-auto flex-grow">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
                 Informații de bază

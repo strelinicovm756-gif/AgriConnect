@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./services/supabaseClient";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -10,16 +11,11 @@ import { Toaster } from "react-hot-toast";
 
 export default function App() {
   const [session, setSession] = useState(null);
-  const [currentPage, setCurrentPage] = useState('home');
-  const [previousPage, setPreviousPage] = useState('home');
-  const [currentProductId, setCurrentProductId] = useState(null);
-  const [currentCategory, setCurrentCategory] = useState(null);
-  const [currentSearch, setCurrentSearch] = useState(null);
-  const [currentSortBy, setCurrentSortBy] = useState('newest');
-
-  // Search state centralizat - shared între Navbar și pagini
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -27,37 +23,53 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Înlocuiește vechiul navigateTo(page, param, options) cu URL-uri reale
   const navigateTo = (page, param = null, options = {}) => {
-    if (page !== currentPage) setPreviousPage(currentPage);
-    setCurrentPage(page);
-
-    if (page === 'detalii' && param) setCurrentProductId(param);
-    else if (page === 'toate-produsele') {
-      setCurrentCategory(options.category || null);
-      setCurrentSearch(options.search || null);
-      setCurrentSortBy(options.sortBy || 'newest');
+    switch (page) {
+      case 'home':
+        navigate('/');
+        break;
+      case 'login':
+        navigate('/login');
+        break;
+      case 'profil':
+        navigate('/profil');
+        break;
+      case 'detalii':
+        navigate(`/produs/${param}`);
+        break;
+      case 'toate-produsele': {
+        const params = new URLSearchParams();
+        if (options.category) params.set('categorie', options.category);
+        if (options.search) params.set('cautare', options.search);
+        if (options.sortBy && options.sortBy !== 'newest') params.set('sortare', options.sortBy);
+        navigate(`/produse${params.toString() ? '?' + params.toString() : ''}`);
+        break;
+      }
+      default:
+        navigate('/');
     }
   };
 
-  const navigateBack = () => {
-    setCurrentPage(previousPage);
-    setCurrentProductId(null);
-  };
+  // Înlocuiește navigateBack cu browser back
+  const navigateBack = () => navigate(-1);
 
   const handleSearch = () => {
-    if (currentPage === 'home') {
+    if (location.pathname === '/') {
       document.getElementById('products-section')?.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const isLoginPage = location.pathname === '/login';
 
   return (
     <div className="min-h-screen bg-white">
       <Toaster position="top-center" />
 
-      {currentPage !== 'login' && (
+      {!isLoginPage && (
         <Navbar
           session={session}
-          currentPage={currentPage}
+          currentPage={location.pathname}
           onNavigate={navigateTo}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -68,37 +80,70 @@ export default function App() {
       )}
 
       <main>
-        {currentPage === 'home' && (
-          <HomePage
-            session={session}
-            onNavigate={navigateTo}
-            searchQuery={searchQuery}
-            searchLocation={searchLocation}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <HomePage
+                session={session}
+                onNavigate={navigateTo}
+                searchQuery={searchQuery}
+                searchLocation={searchLocation}
+              />
+            }
           />
-        )}
-        {currentPage === 'login' && <LoginPage onNavigate={navigateTo} />}
-        {currentPage === 'detalii' && (
-          <DetailsPage
-            session={session}
-            onNavigate={navigateTo}
-            onNavigateBack={navigateBack}
-            productId={currentProductId}
-          />
-        )}
 
-
-      {/*test*/}
-        {currentPage === 'profil' && <ProfilePage session={session} onNavigate={navigateTo} />}
-        {currentPage === 'toate-produsele' && (
-          <AllProductsPage
-            session={session}
-            onNavigate={navigateTo}
-            initialCategory={currentCategory}
-            initialSearch={currentSearch}
-            initialSortBy={currentSortBy}
+          <Route
+            path="/login"
+            element={<LoginPage onNavigate={navigateTo} />}
           />
-        )}
+
+          <Route
+            path="/profil"
+            element={<ProfilePage session={session} onNavigate={navigateTo} />}
+          />
+
+          <Route
+            path="/produs/:id"
+            element={
+              <DetailsPage
+                session={session}
+                onNavigate={navigateTo}
+                onNavigateBack={navigateBack}
+              />
+            }
+          />
+
+          <Route
+            path="/produse"
+            element={
+              <AllProductsPageWrapper
+                session={session}
+                onNavigate={navigateTo}
+              />
+            }
+          />
+
+          {/* Orice altă rută → acasă */}
+          <Route path="*" element={<HomePage session={session} onNavigate={navigateTo} searchQuery={searchQuery} searchLocation={searchLocation} />} />
+        </Routes>
       </main>
     </div>
+  );
+}
+
+// Wrapper care citește query params din URL și le pasează AllProductsPage
+function AllProductsPageWrapper({ session, onNavigate }) {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+
+  return (
+    <AllProductsPage
+      session={session}
+      onNavigate={onNavigate}
+      initialCategory={params.get('categorie') || null}
+      initialSearch={params.get('cautare') || null}
+      initialSortBy={params.get('sortare') || 'newest'}
+    />
   );
 }

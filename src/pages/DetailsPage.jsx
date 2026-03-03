@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { supabase } from "../services/supabaseClient";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
@@ -17,7 +18,8 @@ import {
   faChevronLeft, faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 
-export default function DetailsPage({ onNavigate, onNavigateBack, session, productId }) {
+export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
+  const { id: productId } = useParams(); // citit din URL: /produs/:id
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showMapModal, setShowMapModal] = useState(false);

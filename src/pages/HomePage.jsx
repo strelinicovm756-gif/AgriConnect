@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from "../services/supabaseClient";
+import NearbyFarmersMap from "../components/features/NearbyFarmersMap";
 import { ProductCard } from "../components/features/ProductCard";
 import { Button } from "../components/ui/Button";
 import AddProductModal from "../components/features/AddProductModal";
@@ -239,10 +240,16 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
         </div>
       </div>
 
+
+      {/* Furnizori langa tine */}
+      <div className="relative z-10 -mt-16 bg-gray-50 rounded-t-[40px] shadow-xl pt-10 pb-10">
+        <NearbyFarmersMap products={products} onNavigate={onNavigate} />
+      </div>
+
       {/* Products Section suprapus pe hero */}
       <main
         id="products-section"
-        className="relative z-10 -mt-16 bg-white rounded-t-[40px] px-4 sm:px-6 lg:px-8 py-12 shadow-xl"
+        className="relative z-10 -mt-16 bg-white px-4 sm:px-6 lg:px-8 py-12 shadow-xl rounded-t-[40px]"
       >
         {loading ? (
           <div className="text-center py-20">
@@ -259,7 +266,6 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                     <FontAwesomeIcon icon={faSeedling} className="text-emerald-600" />
                     Produse Noi
                   </h3>
-                  <p className="text-gray-600 text-sm mt-1">Ultimele adăugate de producători</p>
                 </div>
                 <button
                   onClick={() => onNavigate('toate-produsele', null, { sortBy: 'newest' })}
@@ -309,9 +315,6 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                       <FontAwesomeIcon icon={cat.icon} className="text-emerald-600" />
                       {cat.name}
                     </h3>
-                    <p className="text-gray-600 text-sm mt-1">
-                      {getProductsByCategory(cat.id).length} produse disponibile
-                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <button

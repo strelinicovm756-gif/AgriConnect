@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { getColorForName } from '../../lib/utils';
 import { supabase } from "../../services/supabaseClient";
 import toast from "react-hot-toast";
 import { X } from "@/components/animate-ui/icons/x";
@@ -144,11 +145,6 @@ export function Navbar({ session, onNavigate, currentPage }) {
     onNavigate('toate-produsele', null, { search: searchQuery });
   };
 
-  const getColorForName = (name) => {
-    const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4', '#f43f5e'];
-    const hash = (name || 'U').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    return colors[hash % colors.length];
-  };
 
   const filteredResults = activeLocation ? searchResults.filter(p => p.location === activeLocation) : searchResults;
   const hasResults = searchQuery.trim() && (searchResults.length > 0 || isSearching);

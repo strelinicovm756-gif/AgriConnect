@@ -1,3 +1,4 @@
+import { getColorForName } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,7 +12,6 @@ import {
   faWheatAwn,
   faBox,
   faLocationDot,
-  faEye,
   faCalendarDays,
   faImages,
   faLock
@@ -39,18 +39,12 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
 
   const config = categoryConfig[product.category] || categoryConfig['Altele'];
 
-  const getColorForName = (name) => {
-    if (!name) return '#10b981';
-    const colors = ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#ef4444', '#06b6d4', '#84cc16'];
-    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return colors[hash % colors.length];
-  };
 
   return (
     <div className="flex flex-col h-full">
 
       
-      <div className="relative h-40 bg-gray-100 rounded-t-xl overflow-hidden">
+      <div className="relative h-36 bg-gray-100 rounded-t-xl overflow-hidden">
         {product.image_url ? (
           <>
             <img
@@ -84,26 +78,21 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
           </div>
         )}
 
-        {/* Badge categorie + VERIFICAT peste imagine */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+        {/* Badge categorie */}
+        <div className="absolute top-3 left-3">
           <span className="bg-white/95 backdrop-blur-sm text-gray-900 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-md">
             <FontAwesomeIcon icon={config.icon} className={`text-xs ${config.iconColor}`} />
             {product.category}
           </span>
-          {product.seller_verified && (
-            <span className="bg-emerald-600/95 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-md w-fit">
-              ✓ VERIFICAT
-            </span>
-          )}
         </div>
       </div>
 
       {/* Content - spacing optimizat */}
-      <div className="flex flex-col h-full p-4 bg-white rounded-b-xl">
+      <div className="flex flex-col flex-grow p-4 bg-white rounded-b-xl">
         {/* Titlu - min-height pentru aliniament */}
         <h3
           className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 hover:text-emerald-600 transition-colors"
-          style={{ minHeight: '2.8rem' }}
+          style={{ minHeight: '3.5rem' }}
         >
           {product.name}
         </h3>
@@ -114,12 +103,15 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
           {product.location}
         </p>
 
-        {/* Badge NEGOCIABIL — VERIFICAT e acum pe imagine */}
-        {product.is_negotiable && (
-          <div className="mb-2">
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-              NEGOCIABIL
-            </span>
+        {/* Badge-uri - spacing redus */}
+        {(product.seller_verified || product.is_negotiable) && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {product.seller_verified && (
+              <Badge variant="success">VERIFICAT</Badge>
+            )}
+            {product.is_negotiable && (
+              <Badge variant="info">NEGOCIABIL</Badge>
+            )}
           </div>
         )}
 
@@ -130,64 +122,68 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
           </p>
         )}
 
-        {/* Spacer — impinge pret+buton la baza */}
-        <div className="flex-grow" />
-
-        {/* Pret + Vanzator + Buton — grupate la baza cardului */}
-        <div className="mt-3">
-          {/* Pret */}
-          <div className="mb-2">
-            {session ? (
-              <div className="flex items-baseline gap-1.5">
-                <p className="text-emerald-600 font-bold text-2xl leading-none">
+        {/* Preț - spacing optimizat */}
+        <div className="mb-3">
+          {session ? (
+            <div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-emerald-600 font-bold text-3xl">
                   {formatPrice(product.price)}
                 </p>
-                <span className="text-gray-600 font-semibold text-base">lei</span>
-                {product.unit && (
-                  <span className="text-gray-400 text-xs">/ {product.unit}</span>
-                )}
+                <span className="text-gray-900 font-semibold text-lg">lei</span>
               </div>
-            ) : (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
-                <p className="text-gray-500 text-xs flex items-center gap-1.5">
-                  <FontAwesomeIcon icon={faLock} className="text-gray-400" />
-                  Autentifică-te pentru preț
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Vanzator — fara background, curat */}
-          {session && product.seller_name && (
-            <div className="mb-3 flex items-center gap-2 py-2 border-t border-gray-100">
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-black text-white uppercase"
-                style={{ background: getColorForName(product.seller_name) }}
-              >
-                {product.seller_name?.charAt(0) || '?'}
-              </div>
-              <p className="text-gray-600 text-xs font-medium truncate flex-1">{product.seller_name}</p>
-              {product.seller_rating > 0 && (
-                <span className="text-gray-400 text-xs flex-shrink-0">★ {product.seller_rating.toFixed(1)}</span>
-              )}
+            </div>
+          ) : (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <p className="text-gray-600 text-sm flex items-center gap-2">
+                <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+                Autentifică-te pentru a vedea prețul
+              </p>
             </div>
           )}
-
-          {/* Buton — full width, aliniat la baza */}
-          <button
-            onClick={() => onViewDetails(product.id)}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-sm hover:shadow-emerald-200/60 hover:shadow-md"
-          >
-            {session ? "Vezi detalii" : "Autentifică-te"}
-          </button>
         </div>
 
-        {/* Footer cu statistici - spacing redus */}
-        <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between text-xs text-gray-500">
-          <span className="flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faEye} />
-            {product.views_count || 0}
-          </span>
+        {/* Informații vânzător - spacing redus */}
+        {session && product.seller_name && (
+          <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center border-2 flex-shrink-0"
+                style={{
+                  background: getColorForName(product.seller_name),
+                  borderColor: getColorForName(product.seller_name) + '50'
+                }}
+              >
+                <span className="text-white text-sm font-black uppercase">
+                  {product.seller_name?.charAt(0) || '?'}
+                </span>
+              </div>
+
+              <div className="flex-grow min-w-0">
+                <p className="text-gray-900 text-sm font-semibold truncate">{product.seller_name}</p>
+                {product.seller_rating > 0 && (
+                  <p className="text-gray-500 text-xs">
+                    Rating: {product.seller_rating.toFixed(1)}/5.0
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Buton */}
+        <div className="mt-auto">
+          <Button
+            variant={session ? "primary" : "secondary"}
+            onClick={() => onViewDetails(product.id)}
+            className="w-full"
+          >
+            {session ? "Vezi detalii" : "Autentifică-te"}
+          </Button>
+        </div>
+
+        {/* Footer cu data */}
+        <div className="mt-3 pt-3 border-t border-gray-200 flex justify-end text-xs text-gray-500">
           <span className="flex items-center gap-1.5">
             <FontAwesomeIcon icon={faCalendarDays} />
             {new Date(product.created_at).toLocaleDateString('ro-RO', {

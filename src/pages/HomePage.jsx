@@ -7,199 +7,379 @@ import AddProductModal from "../components/features/AddProductModal";
 import toast from 'react-hot-toast';
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
+import { getColorForName } from '../lib/utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot, faAppleWhole, faCow, faDrumstickBite, faEgg, faJar,
   faWheatAwn, faPlus, faLeaf, faCircleCheck, faHandshake,
-  faArrowRight, faTruck, faSeedling, faChevronLeft, faChevronRight
+  faArrowRight, faTruck, faSeedling, faChevronLeft, faChevronRight,
+  faTractor, faFlask, faStar, faMapMarkerAlt, faShieldHalved,
+  faWrench, faDroplet, faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
 
+// ── Categorii B2C ──────────────────────────────────────────────
+const B2C_CATEGORIES = [
+  { id: 'Legume',  name: 'Legume',   icon: faCarrot,        color: 'text-orange-500' },
+  { id: 'Fructe',  name: 'Fructe',   icon: faAppleWhole,    color: 'text-red-500' },
+  { id: 'Lactate', name: 'Lactate',  icon: faCow,           color: 'text-blue-400' },
+  { id: 'Carne',   name: 'Carne',    icon: faDrumstickBite, color: 'text-rose-600' },
+  { id: 'Ouă',     name: 'Ouă',      icon: faEgg,           color: 'text-yellow-500' },
+  { id: 'Miere',   name: 'Miere',    icon: faJar,           color: 'text-amber-500' },
+  { id: 'Cereale', name: 'Cereale',  icon: faWheatAwn,      color: 'text-yellow-600' },
+];
+
+// ── Categorii B2B ──────────────────────────────────────────────
+const B2B_CATEGORIES = [
+  { id: 'Servicii Teren',      name: 'Servicii Teren',      icon: faTractor },
+  { id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faFlask   },
+  { id: 'Echipamente',         name: 'Echipamente',         icon: faWrench  },
+  { id: 'Sisteme de Irigare',  name: 'Sisteme de Irigare',  icon: faDroplet },
+];
+const B2B_IDS = B2B_CATEGORIES.map(c => c.id);
+
+// Pill Nav Button
+function PillNavButton({ direction, onClick, ariaLabel }) {
+  return (
+    <button 
+      onClick={onClick} 
+      aria-label={ariaLabel}
+      className={`absolute top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-9 h-24 backdrop-blur-sm border shadow-md transition-all duration-200 active:scale-95 hover:shadow-lg hover:w-11
+        ${direction === 'left' ? 'left-0' : 'right-0'}
+        /* Fundal și Text în tema Emerald */
+        bg-white/80 border-emerald-100 text-emerald-600 
+        hover:bg-emerald-600 hover:text-white hover:border-emerald-600`}
+      style={{ 
+        borderRadius: direction === 'left' ? '0 9999px 9999px 0' : '9999px 0 0 9999px' 
+      }}>
+      <FontAwesomeIcon 
+        icon={direction === 'left' ? faChevronLeft : faChevronRight} 
+        className="text-xs" 
+      />
+    </button>
+  );
+}
+
+// Verified Farmer Card
+function FarmerCard({ farmer, onNavigate }) {
+  const color = getColorForName(farmer.full_name);
+  return (
+    <button onClick={() => onNavigate('producator', farmer.id)}
+      className="min-w-[180px] w-[180px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:border-emerald-200 hover:-translate-y-1 transition-all duration-300 text-left group">
+      <div className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-black mb-3 shadow-sm relative"
+        style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
+        {(farmer.full_name || '?').charAt(0).toUpperCase()}
+        {farmer.is_verified && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm">
+            <FontAwesomeIcon icon={faCircleCheck} className="text-white text-[8px]" />
+          </div>
+        )}
+      </div>
+      <p className="font-bold text-gray-900 text-sm leading-tight mb-1 group-hover:text-emerald-700 transition-colors truncate">
+        {farmer.full_name || 'Producător'}
+      </p>
+      {farmer.location && (
+        <p className="text-gray-400 text-xs flex items-center gap-1 mb-2 truncate">
+          <FontAwesomeIcon icon={faMapMarkerAlt} className="text-[9px]" />{farmer.location}
+        </p>
+      )}
+      {farmer.rating > 0 && (
+        <div className="flex items-center gap-1">
+          <FontAwesomeIcon icon={faStar} className="text-yellow-400 text-[10px]" />
+          <span className="text-xs font-semibold text-gray-700">{Number(farmer.rating).toFixed(1)}</span>
+        </div>
+      )}
+    </button>
+  );
+}
+
+const CARD_B2C = "min-w-[320px] w-[320px] snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex-shrink-0";
+const CARD_B2B = "min-w-[320px] w-[320px] snap-start bg-white rounded-2xl border border-gray-300 overflow-hidden hover:shadow-lg hover:border-gray-400 transition-all duration-300 flex-shrink-0";
+
+const heroImages = [
+  { url: 'src/assets/Rosii.jpg',      alt: 'Roșii proaspete' },
+  { url: 'src/assets/castravete.jpg', alt: 'Castraveți proaspeți' },
+  { url: 'src/assets/Miere.jpeg',     alt: 'Miere naturală' },
+];
+
+// ── B2C Collapsible Block ──────────────────────────────────────
+function B2CBlock({ b2cProducts, getNewProducts, getByCategory, session, onNavigate, handleViewDetails, handleContactClick, scroll, onExpandChange }) {
+  const ALL_TAB = '__new__';
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [activeTab, setActiveTab] = useState(ALL_TAB);
+  const carouselRef = useRef(null);
+
+  const toggle = () => {
+    const next = !isExpanded;
+    setIsExpanded(next);
+    onExpandChange?.(next);
+  };
+
+  const availableCats = B2C_CATEGORIES.filter(cat => getByCategory(cat.id).length > 0);
+  const tabs = [
+    { id: ALL_TAB, name: 'Produse Noi', icon: faSeedling, color: 'text-emerald-600' },
+    ...availableCats,
+  ];
+
+  const activeProducts = activeTab === ALL_TAB ? getNewProducts() : getByCategory(activeTab);
+  const activeCat = B2C_CATEGORIES.find(c => c.id === activeTab);
+
+  const viewAll = activeTab === ALL_TAB
+    ? () => onNavigate('toate-produsele', null, { sortBy: 'newest', type: 'b2c' })
+    : () => onNavigate('toate-produsele', null, { category: activeTab });
+
+  return (
+    <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-[0_-15px_30px_-5px_rgba(0,0,0,0.1),0_-8px_10px_-6px_rgba(0,0,0,0.1)]">
+
+      {/* Header — identic cu harta */}
+      <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+        <button onClick={toggle} className="w-full flex items-center justify-between group text-left">
+          <div className="text-left">
+            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <FontAwesomeIcon icon={activeCat?.icon || faSeedling} className={activeCat?.color || 'text-emerald-600'} />
+              Produse Alimentare
+              <span className={`ml-4 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-0' : 'rotate-180'}`}>
+                <FontAwesomeIcon icon={faChevronDown} />
+              </span>
+            </h3>
+          </div>
+        </button>
+      </div>
+
+      {/* Conținut animat */}
+      <div
+        className="overflow-hidden"
+        style={{
+          transition: 'height 0.5s ease-in-out, opacity 0.5s ease-in-out',
+          height: isExpanded ? '680px' : '0px',
+          opacity: isExpanded ? 1 : 0,
+        }}
+      >
+        <div className="px-4 sm:px-6 lg:px-8 pt-2 pb-12">
+          {/* Tab-uri + Vezi tot */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex gap-2 flex-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {tabs.map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold flex-shrink-0 transition-all duration-200
+                      ${isActive ? 'bg-emerald-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'}`}>
+                    <FontAwesomeIcon icon={tab.icon} className={`text-xs ${isActive ? 'text-white' : tab.color || 'text-emerald-500'}`} />
+                    {tab.name}
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={viewAll}
+              className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all hover:scale-105 active:scale-95">
+              <span>Vezi tot</span>
+              <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+            </button>
+          </div>
+
+          {/* Carusel */}
+          <div className="relative">
+            <PillNavButton direction="left" onClick={() => scroll('left', carouselRef)} ariaLabel="Stânga" />
+            <div ref={carouselRef}
+              className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory px-10"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {activeProducts.length > 0 ? activeProducts.map(p => (
+                <div key={p.id} className={CARD_B2C}>
+                  <ProductCard product={p} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
+                </div>
+              )) : (
+                <div className="flex-1 py-14 flex items-center justify-center text-gray-400 min-w-[200px]">
+                  <p className="text-sm">Niciun produs momentan.</p>
+                </div>
+              )}
+            </div>
+            <PillNavButton direction="right" onClick={() => scroll('right', carouselRef)} ariaLabel="Dreapta" />
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  );
+}
+
+// ── B2B Collapsible Block ──────────────────────────────────────
+function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleContactClick, scroll, b2bRef, b2cExpanded }) {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  if (b2bProducts.length === 0) return null;
+
+  return (
+    <div
+      className="relative z-10 bg-white rounded-t-[40px] shadow-[0_-20px_40px_-10px_rgba(0,0,0,0.15)]"
+      style={{ marginTop: b2cExpanded ? '-25px' : '-25px', transition: 'margin-top 0.5s ease-in-out' }}
+    >
+
+      {/* Header — identic cu harta */}
+      <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+        <button onClick={() => setIsExpanded(p => !p)} className="w-full flex items-center justify-between group text-left">
+          <div className="text-left">
+            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <FontAwesomeIcon icon={faTractor} className="text-emerald-600" />
+              Servicii & Utilități
+              <span className={`ml-[38px] text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-0' : 'rotate-180'}`}>
+                <FontAwesomeIcon icon={faChevronDown} />
+              </span>
+            </h3>
+          </div>
+        </button>
+      </div>
+
+      {/* Conținut animat */}
+      <div
+        className="overflow-hidden"
+        style={{
+          transition: 'height 0.5s ease-in-out, opacity 0.5s ease-in-out',
+          height: isExpanded ? '680px' : '0px',
+          opacity: isExpanded ? 1 : 0,
+        }}
+      >
+        <div className="px-4 sm:px-6 lg:px-8 pt-2 pb-6">
+          {/* Pills + Vezi tot */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex gap-2 flex-wrap flex-1">
+              {B2B_CATEGORIES.map(cat => (
+                <button key={cat.id} onClick={() => onNavigate('toate-produsele', null, { category: cat.id })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-700 hover:text-white hover:border-gray-700 transition-all">
+                  <FontAwesomeIcon icon={cat.icon} className="text-[10px]" />
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => onNavigate('toate-produsele', null, { type: 'b2b' })}
+              className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white shadow-sm transition-all hover:scale-105 active:scale-95">
+              <span>Vezi tot</span>
+              <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+            </button>
+          </div>
+
+          {/* Carusel */}
+          <div className="relative">
+            <PillNavButton direction="left" onClick={() => scroll('left', b2bRef)} ariaLabel="Stânga" />
+            <div ref={b2bRef}
+              className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory px-10"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {b2bProducts.slice(0, 8).map(p => (
+                <div key={p.id} className={CARD_B2B}>
+                  <ProductCard product={p} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
+                </div>
+              ))}
+            </div>
+            <PillNavButton direction="right" onClick={() => scroll('right', b2bRef)} ariaLabel="Dreapta" />
+          </div>
+        </div>
+      </div>
+
+      <div className="h-10" />
+    </div>
+  );
+}
+
+// ── Main ───────────────────────────────────────────────────────
 export default function HomePage({ session, onNavigate, searchQuery = '', searchLocation = '' }) {
   const [products, setProducts] = useState([]);
+  const [verifiedFarmers, setVerifiedFarmers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const newProductsRef = useRef(null);
-  const categoryRefs = useRef({});
-  const scrollPositions = useRef({});
+  const farmersRef = useRef(null);
+  const b2bRef = useRef(null);
+  const [b2cExpanded, setB2cExpanded] = useState(true);
 
-  const heroImages = [
-    { url: 'src/assets/Rosii.jpg', alt: 'Roșii proaspete' },
-    { url: 'src/assets/castravete.jpg', alt: 'Castraveți proaspeți' },
-    { url: 'src/assets/Miere.jpeg', alt: 'Miere naturală' },
-  ];
-
-  const categories = [
-    { id: 'Legume', name: 'Legume', icon: faCarrot },
-    { id: 'Fructe', name: 'Fructe', icon: faAppleWhole },
-    { id: 'Lactate', name: 'Lactate', icon: faCow },
-    { id: 'Carne', name: 'Carne', icon: faDrumstickBite },
-    { id: 'Ouă', name: 'Ouă', icon: faEgg },
-    { id: 'Miere', name: 'Miere', icon: faJar },
-    { id: 'Cereale', name: 'Cereale', icon: faWheatAwn },
-  ];
-
-  useEffect(() => { fetchProducts(); }, []);
-
+  useEffect(() => { fetchProducts(); fetchVerifiedFarmers(); }, []);
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
-    return () => clearInterval(timer);
+    const t = setInterval(() => setCurrentSlide(p => (p + 1) % heroImages.length), 5000);
+    return () => clearInterval(t);
   }, []);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('products_with_user')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .from('products_with_user').select('*')
+        .eq('status', 'active').order('created_at', { ascending: false });
       if (error) throw error;
       setProducts(data || []);
-    } catch (error) {
-      console.error('Eroare la încărcarea produselor:', error);
-      toast.error('Eroare la încărcarea produselor');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error('Eroare la încărcarea produselor'); }
+    finally { setLoading(false); }
+  };
+
+  const fetchVerifiedFarmers = async () => {
+    try {
+      const { data } = await supabase
+        .from('profiles').select('id, full_name, location, rating, is_verified, avatar_url')
+        .eq('is_verified', true).order('rating', { ascending: false }).limit(12);
+      setVerifiedFarmers(data || []);
+    } catch { }
   };
 
   const scroll = (direction, ref) => {
     if (!ref?.current) return;
-    const container = ref.current;
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    const scrollAmount = container.clientWidth * 0.8;
-
+    const c = ref.current;
+    const max = c.scrollWidth - c.clientWidth;
+    const amt = c.clientWidth * 0.8;
     if (direction === 'right') {
-      if (container.scrollLeft >= maxScroll - 10) {
-        container.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      }
+      c.scrollLeft >= max - 10 ? c.scrollTo({ left: 0, behavior: 'smooth' }) : c.scrollBy({ left: amt, behavior: 'smooth' });
     } else {
-      if (container.scrollLeft <= 10) {
-        container.scrollTo({ left: maxScroll, behavior: 'smooth' });
-      } else {
-        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-      }
+      c.scrollLeft <= 10 ? c.scrollTo({ left: max, behavior: 'smooth' }) : c.scrollBy({ left: -amt, behavior: 'smooth' });
     }
   };
 
-  const handleSearch = () => {
-    let filtered = products;
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    if (searchLocation.trim()) {
-      filtered = filtered.filter(p =>
-        p.location.toLowerCase().includes(searchLocation.toLowerCase())
-      );
-    }
-    return filtered;
+  const applySearch = (list) => {
+    let r = list;
+    if (searchQuery.trim()) r = r.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (searchLocation.trim()) r = r.filter(p => p.location?.toLowerCase().includes(searchLocation.toLowerCase()));
+    return r;
   };
 
-  const getProductsByCategory = (categoryId) => {
-    return handleSearch().filter(p => p.category === categoryId).slice(0, 8);
-  };
-
-  const getNewProducts = () => {
-    return handleSearch().slice(0, 8);
-  };
+  const searched = applySearch(products);
+  const b2cProducts = searched.filter(p => !B2B_IDS.includes(p.category));
+  const b2bProducts = searched.filter(p => B2B_IDS.includes(p.category));
+  const getByCategory = (id) => b2cProducts.filter(p => p.category === id).slice(0, 8);
+  const getNewProducts = () => b2cProducts.slice(0, 8);
 
   const handleViewDetails = async (productId) => {
     if (session) {
-      try {
-        await supabase.rpc('increment_product_views', { product_id: productId });
-      } catch (error) {
-        console.error('Eroare la incrementare views:', error);
-      }
+      try { await supabase.rpc('increment_product_views', { product_id: productId }); } catch { }
       onNavigate('detalii', productId);
-    } else {
-      onNavigate('login');
-    }
+    } else { onNavigate('login'); }
   };
 
   const handleContactClick = async (product) => {
     try {
       await supabase.rpc('increment_product_contacts', { product_id: product.id });
       if (product.seller_phone) {
-        const phoneNumber = product.seller_phone.replace(/\s/g, '');
+        const phone = product.seller_phone.replace(/\s/g, '');
         toast.success(
           <div>
             <p className="font-bold">Contact: {product.seller_name}</p>
-            <a href={`tel:${phoneNumber}`} className="text-emerald-400 underline text-lg">
-              {product.seller_phone}
-            </a>
+            <a href={`tel:${phone}`} className="text-emerald-400 underline text-lg">{product.seller_phone}</a>
           </div>,
           { duration: 10000 }
         );
       }
-    } catch (error) {
-      console.error('Eroare:', error);
-    }
+    } catch { }
   };
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroImages.length);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroImages.length) % heroImages.length);
-
-  /* Pill button vertical care imbracă marginile caruselului */
-  const PillNavButton = ({ direction, onClick, ariaLabel }) => (
-    <button
-      onClick={onClick}
-      aria-label={ariaLabel}
-      className={`
-        absolute top-1/2 -translate-y-1/2 z-10
-        ${direction === 'left' ? 'left-0' : 'right-0'}
-        flex items-center justify-center
-        w-9 h-24
-        bg-white/80 backdrop-blur-sm
-        border border-gray-200
-        text-gray-500 shadow-md
-        transition-all duration-200
-        hover:bg-emerald-600 hover:text-white hover:border-emerald-600
-        hover:shadow-lg hover:shadow-emerald-200/50 hover:w-11
-        active:scale-95
-      `}
-      style={{
-        borderRadius: direction === 'left' ? '0 9999px 9999px 0' : '9999px 0 0 9999px',
-      }}
-    >
-      <FontAwesomeIcon
-        icon={direction === 'left' ? faChevronLeft : faChevronRight}
-        className="text-xs"
-      />
-    </button>
-  );
-
-  /* Clasa unificată pentru toate cardurile din carusel */
-  const cardClass = "min-w-[320px] w-[320px] snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex-shrink-0";
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50/50 via-white to-gray-50">
 
-      {/* Hero Section full-width */}
+      {/* ── HERO ─────────────────────────────────────────────── */}
       <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
-        {heroImages.map((image, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
-          >
-            <img
-              src={image.url}
-              alt={image.alt}
-              className="w-full h-full object-cover transition-transform duration-[2000ms]"
-            />
+        {heroImages.map((img, i) => (
+          <div key={i} className={`absolute inset-0 transition-opacity duration-1000 ${i === currentSlide ? 'opacity-100' : 'opacity-0'}`}>
+            <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-black/30 to-transparent" />
             <div className="absolute inset-0 flex items-center">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                 <div className="max-w-2xl text-white">
                   <h2 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
-                    {index === 0 ? 'Produse proaspete direct de la producător' : image.alt}
+                    {i === 0 ? 'Produse proaspete direct de la producător' : img.alt}
                   </h2>
                   <p className="text-lg md:text-xl text-gray-200 mb-6 font-light">
                     Susținem micii antreprenori locali. Calitate garantată fără intermediari.
@@ -209,230 +389,149 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             </div>
           </div>
         ))}
-
-        {/* Pill buttons pentru hero */}
-        <button
-          onClick={prevSlide}
-          aria-label="Imaginea anterioară"
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-28 bg-black/30 backdrop-blur-sm text-white transition-all duration-200 hover:bg-black/50 active:scale-95"
-          style={{ borderRadius: '0 9999px 9999px 0' }}
-        >
+        <button onClick={() => setCurrentSlide(p => (p - 1 + heroImages.length) % heroImages.length)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-28 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-all active:scale-95"
+          style={{ borderRadius: '0 9999px 9999px 0' }}>
           <FontAwesomeIcon icon={faChevronLeft} className="text-sm" />
         </button>
-        <button
-          onClick={nextSlide}
-          aria-label="Imaginea următoare"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-28 bg-black/30 backdrop-blur-sm text-white transition-all duration-200 hover:bg-black/50 active:scale-95"
-          style={{ borderRadius: '9999px 0 0 9999px' }}
-        >
+        <button onClick={() => setCurrentSlide(p => (p + 1) % heroImages.length)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-28 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-all active:scale-95"
+          style={{ borderRadius: '9999px 0 0 9999px' }}>
           <FontAwesomeIcon icon={faChevronRight} className="text-sm" />
         </button>
-
-        {/* Dots indicator */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
           {heroImages.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              className={`transition-all duration-300 rounded-full ${i === currentSlide ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50'}`}
-            />
+            <button key={i} onClick={() => setCurrentSlide(i)}
+              className={`transition-all duration-300 rounded-full ${i === currentSlide ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50'}`} />
           ))}
         </div>
       </div>
 
-
-      {/* Furnizori langa tine */}
-      <div className="relative z-10 -mt-16 bg-gray-50 rounded-t-[40px] shadow-xl pt-10 pb-10">
+      {/* ── HARTA ─────────────────────────────────────────────── */}
+      <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl pt-10 pb-10">
         <NearbyFarmersMap products={products} onNavigate={onNavigate} />
       </div>
 
-      {/* Products Section suprapus pe hero */}
-      <main
-        id="products-section"
-        className="relative z-10 -mt-16 bg-white px-4 sm:px-6 lg:px-8 py-12 shadow-xl rounded-t-[40px]"
-      >
-        {loading ? (
-          <div className="text-center py-20">
-            <Metronome size="40" speed="1.6" color="#059669" />
-            <p className="text-gray-600 mt-4">Se încarcă produsele...</p>
-          </div>
-        ) : (
-          <>
-            {/* Produse Noi — Carusel */}
-            <section className="mb-16">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <FontAwesomeIcon icon={faSeedling} className="text-emerald-600" />
-                    Produse Noi
-                  </h3>
+      {/* ── LOADING ───────────────────────────────────────────── */}
+      {loading && (
+        <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl py-20 flex flex-col items-center gap-4">
+          <Metronome size="40" speed="1.6" color="#059669" />
+          <p className="text-gray-500 text-sm">Se încarcă produsele...</p>
+        </div>
+      )}
+
+      {!loading && (
+        <>
+          {/* ── FERMIERI VERIFICAȚI — în main alb ─────────────── */}
+          {verifiedFarmers.length > 0 && (
+            <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faShieldHalved} className="text-emerald-600 text-base" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Fermieri Verificați</h3>
                 </div>
-                <button
-                  onClick={() => onNavigate('toate-produsele', null, { sortBy: 'newest' })}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center gap-2 shadow-md transition-all"
-                >
-                  <span>Vezi tot</span>
+                <button onClick={() => onNavigate('toate-produsele')}
+                  className="px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all hover:scale-105 active:scale-95">
+                  <span>Toți fermierii</span>
                   <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                 </button>
               </div>
-
               <div className="relative">
-                <PillNavButton
-                  direction="left"
-                  onClick={() => scroll('left', newProductsRef)}
-                  ariaLabel="Derulează la stânga"
-                />
-                <div
-                  ref={newProductsRef}
-                  className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory scrollbar-hide px-10"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  {getNewProducts().map((product) => (
-                    <div key={product.id} className={cardClass}>
-                      <ProductCard
-                        product={product}
-                        session={session}
-                        onViewDetails={handleViewDetails}
-                        onContactClick={handleContactClick}
-                      />
+                <PillNavButton direction="left" onClick={() => scroll('left', farmersRef)} ariaLabel="Stânga" />
+                <div ref={farmersRef} className="flex overflow-x-auto gap-4 pb-3 snap-x snap-mandatory px-10"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {verifiedFarmers.map(f => <FarmerCard key={f.id} farmer={f} onNavigate={onNavigate} />)}
+                </div>
+                <PillNavButton direction="right" onClick={() => scroll('right', farmersRef)} ariaLabel="Dreapta" />
+              </div>
+            </div>
+          )}
+
+          {/* ── B2C — Produse Alimentare (collapsible) ─────────── */}
+          <B2CBlock
+            b2cProducts={b2cProducts}
+            getNewProducts={getNewProducts}
+            getByCategory={getByCategory}
+            session={session}
+            onNavigate={onNavigate}
+            handleViewDetails={handleViewDetails}
+            handleContactClick={handleContactClick}
+            scroll={scroll}
+            onExpandChange={setB2cExpanded}
+          />
+
+          {/* ── B2B — Servicii & Utilități (collapsible) ─── */}
+          <B2BBlock
+            b2bProducts={b2bProducts}
+            session={session}
+            onNavigate={onNavigate}
+            handleViewDetails={handleViewDetails}
+            handleContactClick={handleContactClick}
+            scroll={scroll}
+            b2bRef={b2bRef}
+            b2cExpanded={b2cExpanded}
+          />
+
+          {/* ── INFO BANNER ───────────────────────────────────── */}
+          <div className="px-4 sm:px-6 lg:px-8">
+            <section className="my-12">
+              <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl p-8 md:p-12 shadow-xl">
+                <div className="grid md:grid-cols-3 gap-8 text-white">
+                  {[
+                    { icon: faTruck,       title: 'Direct de la Sursă',     desc: 'Fără intermediari, produse proaspete direct de la producător' },
+                    { icon: faCircleCheck, title: 'Producători Verificați', desc: 'Toți vânzătorii sunt verificați pentru calitate și autenticitate' },
+                    { icon: faHandshake,   title: 'Fără Comisioane',        desc: 'Platformă gratuită pentru toți producătorii locali' },
+                  ].map(({ icon, title, desc }) => (
+                    <div key={title} className="text-center">
+                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <FontAwesomeIcon icon={icon} className="text-3xl" />
+                      </div>
+                      <h4 className="text-lg font-semibold mb-2">{title}</h4>
+                      <p className="text-emerald-100 text-sm">{desc}</p>
                     </div>
                   ))}
                 </div>
-                <PillNavButton
-                  direction="right"
-                  onClick={() => scroll('right', newProductsRef)}
-                  ariaLabel="Derulează la dreapta"
-                />
               </div>
             </section>
 
-            {/* Categorii — fiecare cu carusel propriu */}
-            {categories.filter(cat => getProductsByCategory(cat.id).length > 0).map((cat) => (
-              <section key={cat.id} id={`category-${cat.id}`} className="mb-16">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                      <FontAwesomeIcon icon={cat.icon} className="text-emerald-600" />
-                      {cat.name}
-                    </h3>
+            {/* ── CTA ─────────────────────────────────────────── */}
+            {session && (
+              <section className="mb-12">
+                <div className="bg-white rounded-3xl p-8 md:p-12 text-center border border-gray-200 shadow-sm">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FontAwesomeIcon icon={faPlus} className="text-emerald-600 text-2xl" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => onNavigate('toate-produsele', null, { category: cat.id })}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
-                    >
-                      <span>Vezi tot</span>
-                      <div className="bg-white/20 w-5 h-5 rounded-full flex items-center justify-center">
-                        <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <PillNavButton
-                    direction="left"
-                    onClick={() => scroll('left', { current: categoryRefs.current[cat.id] })}
-                    ariaLabel={`${cat.name} - derulează la stânga`}
-                  />
-                  <div
-                    ref={el => categoryRefs.current[cat.id] = el}
-                    className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory scrollbar-hide px-10"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                  >
-                    {getProductsByCategory(cat.id).map((product) => (
-                      <div key={product.id} className={cardClass}>
-                        <ProductCard
-                          product={product}
-                          session={session}
-                          onViewDetails={handleViewDetails}
-                          onContactClick={handleContactClick}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <PillNavButton
-                    direction="right"
-                    onClick={() => scroll('right', { current: categoryRefs.current[cat.id] })}
-                    ariaLabel={`${cat.name} - derulează la dreapta`}
-                  />
-                </div>
-              </section>
-            ))}
-
-            {/* Info Banner */}
-            <section className="my-16">
-              <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl p-8 md:p-12 shadow-xl">
-                <div className="grid md:grid-cols-3 gap-8 text-white">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <FontAwesomeIcon icon={faTruck} className="text-3xl" />
-                    </div>
-                    <h4 className="text-lg font-semibold mb-2">Direct de la Sursă</h4>
-                    <p className="text-emerald-100 text-sm">Fără intermediari, produse proaspete direct de la producător</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <FontAwesomeIcon icon={faCircleCheck} className="text-3xl" />
-                    </div>
-                    <h4 className="text-lg font-semibold mb-2">Producători Verificați</h4>
-                    <p className="text-emerald-100 text-sm">Toți vânzătorii sunt verificați pentru calitate și autenticitate</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <FontAwesomeIcon icon={faHandshake} className="text-3xl" />
-                    </div>
-                    <h4 className="text-lg font-semibold mb-2">Fără Comisioane</h4>
-                    <p className="text-emerald-100 text-sm">Platformă gratuită</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* CTA for Producers */}
-            {session && products.length > 0 && (
-              <section className="mb-16">
-                <div className="bg-gray-50 rounded-3xl p-8 md:p-12 text-center border border-gray-200">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-4">Ești producător?</h3>
-                  <p className="text-gray-600 mb-6 max-w-2xl mx-auto text-lg">
+                  <h3 className="text-3xl font-bold text-gray-900 mb-3">Ești producător?</h3>
+                  <p className="text-gray-500 mb-6 max-w-xl mx-auto">
                     Adaugă-ți produsele gratuit și ajunge la mii de cumpărători din zona ta.
                   </p>
-                  <Button
-                    onClick={() => setShowAddProductModal(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg font-semibold shadow-lg transition-all hover:scale-105"
-                  >
+                  <Button onClick={() => setShowAddProductModal(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all hover:scale-105">
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
                     Adaugă un produs acum
                   </Button>
                 </div>
               </section>
             )}
-          </>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-              <FontAwesomeIcon icon={faLeaf} className="text-emerald-600 text-xl" />
-              <span className="text-lg font-bold text-gray-900">AgriConnect</span>
-            </div>
-            <p className="text-gray-600 text-sm">
-              Sprijină economia locală. Cumpără direct de la producător.
-            </p>
           </div>
+        </>
+      )}
+
+      {/* ── FOOTER ───────────────────────────────────────────── */}
+      <footer className="bg-gray-50 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <FontAwesomeIcon icon={faLeaf} className="text-emerald-600 text-xl" />
+            <span className="text-lg font-bold text-gray-900">AgriConnect</span>
+          </div>
+          <p className="text-gray-500 text-sm">Sprijină economia locală. Cumpără direct de la producător.</p>
         </div>
       </footer>
 
-      {/* Modal */}
-      <AddProductModal
-        isOpen={showAddProductModal}
-        onClose={() => setShowAddProductModal(false)}
-        session={session}
-        onSuccess={fetchProducts}
-      />
+      <AddProductModal isOpen={showAddProductModal} onClose={() => setShowAddProductModal(false)}
+        session={session} onSuccess={fetchProducts} />
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }

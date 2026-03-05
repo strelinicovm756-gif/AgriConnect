@@ -82,7 +82,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
     const [mapReady, setMapReady] = useState(false);
     const [radiusKm, setRadiusKm] = useState(20);
     const [radiusIndex, setRadiusIndex] = useState(2);
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const requestLocation = () => {
         if (!navigator.geolocation) { setLocationStatus('denied'); return; }
@@ -251,7 +251,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                         <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                             <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600" />
                             Furnizori langa tine
-                            <span className={`ml-1 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-0' : 'rotate-180'}`}>
+                            <span className={`ml-5 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-0' : 'rotate-180'}`}>
                                 <FontAwesomeIcon icon={faChevronDown} />
                             </span>
                         </h3>

@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import DetailsPage from "./pages/DetailsPage";
 import ProfilePage from "./pages/ProfilePage";
 import AllProductsPage from "./pages/AllProductsPage";
+import ProducerPublicProfile from './pages/ProducerPublicProfile';
 import { Navbar } from "./components/layout/Navbar";
 import { Toaster } from "react-hot-toast";
 
@@ -35,6 +36,9 @@ export default function App() {
       case 'profil':
         navigate('/profil');
         break;
+      case 'producator':
+        navigate(`/producator/${param}`);
+        break;
       case 'detalii':
         navigate(`/produs/${param}`);
         break;
@@ -43,6 +47,7 @@ export default function App() {
         if (options.category) params.set('categorie', options.category);
         if (options.search) params.set('cautare', options.search);
         if (options.sortBy && options.sortBy !== 'newest') params.set('sortare', options.sortBy);
+        if (options.type) params.set('tip', options.type);
         navigate(`/produse${params.toString() ? '?' + params.toString() : ''}`);
         break;
       }
@@ -89,6 +94,16 @@ export default function App() {
                 onNavigate={navigateTo}
                 searchQuery={searchQuery}
                 searchLocation={searchLocation}
+              />
+            }
+          />
+
+          <Route
+            path="/producator/:id"
+            element={
+              <ProducerPublicProfile
+                session={session}
+                onNavigate={navigateTo}
               />
             }
           />
@@ -144,6 +159,7 @@ function AllProductsPageWrapper({ session, onNavigate }) {
       initialCategory={params.get('categorie') || null}
       initialSearch={params.get('cautare') || null}
       initialSortBy={params.get('sortare') || 'newest'}
+      initialType={params.get('tip') || null}
     />
   );
 }

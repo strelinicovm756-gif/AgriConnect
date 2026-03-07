@@ -1,32 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from "../services/supabaseClient";
 import NearbyFarmersMap from "../components/features/NearbyFarmersMap";
 import { ProductCard } from "../components/features/ProductCard";
 import { Button } from "../components/ui/Button";
 import AddProductModal from "../components/features/AddProductModal";
+import B2BProviderCarousel from "../components/features/B2BProviderCarousel";
+import B2CProviderCarousel from "../components/features/B2CProviderCarousel";
 import toast from 'react-hot-toast';
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
 import { getColorForName } from '../lib/utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faCarrot, faAppleWhole, faCow, faDrumstickBite, faEgg, faJar,
-  faWheatAwn, faPlus, faLeaf, faCircleCheck, faHandshake,
+  faPlus, faLeaf, faCircleCheck, faHandshake,
   faArrowRight, faTruck, faSeedling, faChevronLeft, faChevronRight,
   faTractor, faFlask, faStar, faMapMarkerAlt, faShieldHalved,
   faWrench, faDroplet, faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
-
-// ── Categorii B2C ──────────────────────────────────────────────
-const B2C_CATEGORIES = [
-  { id: 'Legume',  name: 'Legume',   icon: faCarrot,        color: 'text-orange-500' },
-  { id: 'Fructe',  name: 'Fructe',   icon: faAppleWhole,    color: 'text-red-500' },
-  { id: 'Lactate', name: 'Lactate',  icon: faCow,           color: 'text-blue-400' },
-  { id: 'Carne',   name: 'Carne',    icon: faDrumstickBite, color: 'text-rose-600' },
-  { id: 'Ouă',     name: 'Ouă',      icon: faEgg,           color: 'text-yellow-500' },
-  { id: 'Miere',   name: 'Miere',    icon: faJar,           color: 'text-amber-500' },
-  { id: 'Cereale', name: 'Cereale',  icon: faWheatAwn,      color: 'text-yellow-600' },
-];
 
 // ── Categorii B2B ──────────────────────────────────────────────
 const B2B_CATEGORIES = [
@@ -102,10 +92,8 @@ const heroImages = [
 ];
 
 // ── B2C Collapsible Block ──────────────────────────────────────
-function B2CBlock({ b2cProducts, getNewProducts, getByCategory, session, onNavigate, handleViewDetails, handleContactClick, scroll, onExpandChange }) {
-  const ALL_TAB = '__new__';
+function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleViewDetails, handleContactClick, scroll, onExpandChange }) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [activeTab, setActiveTab] = useState(ALL_TAB);
   const carouselRef = useRef(null);
 
   const toggle = () => {
@@ -114,18 +102,8 @@ function B2CBlock({ b2cProducts, getNewProducts, getByCategory, session, onNavig
     onExpandChange?.(next);
   };
 
-  const availableCats = B2C_CATEGORIES.filter(cat => getByCategory(cat.id).length > 0);
-  const tabs = [
-    { id: ALL_TAB, name: 'Produse Noi', icon: faSeedling, color: 'text-emerald-600' },
-    ...availableCats,
-  ];
-
-  const activeProducts = activeTab === ALL_TAB ? getNewProducts() : getByCategory(activeTab);
-  const activeCat = B2C_CATEGORIES.find(c => c.id === activeTab);
-
-  const viewAll = activeTab === ALL_TAB
-    ? () => onNavigate('toate-produsele', null, { sortBy: 'newest', type: 'b2c' })
-    : () => onNavigate('toate-produsele', null, { category: activeTab });
+  const activeProducts = getNewProducts();
+  const viewAll = () => onNavigate('toate-produsele', null, { sortBy: 'newest', type: 'b2c' });
 
   return (
     <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-[0_-15px_30px_-5px_rgba(0,0,0,0.1),0_-8px_10px_-6px_rgba(0,0,0,0.1)]">
@@ -135,7 +113,7 @@ function B2CBlock({ b2cProducts, getNewProducts, getByCategory, session, onNavig
         <button onClick={toggle} className="w-full flex items-center justify-between group text-left">
           <div className="text-left">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <FontAwesomeIcon icon={activeCat?.icon || faSeedling} className={activeCat?.color || 'text-emerald-600'} />
+              <FontAwesomeIcon icon={faSeedling} className="text-emerald-600" />
               Produse Alimentare
               <span className={`ml-4 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-0' : 'rotate-180'}`}>
                 <FontAwesomeIcon icon={faChevronDown} />
@@ -150,26 +128,13 @@ function B2CBlock({ b2cProducts, getNewProducts, getByCategory, session, onNavig
         className="overflow-hidden"
         style={{
           transition: 'height 0.5s ease-in-out, opacity 0.5s ease-in-out',
-          height: isExpanded ? '680px' : '0px',
+          height: isExpanded ? '680px' : '35px',
           opacity: isExpanded ? 1 : 0,
         }}
       >
         <div className="px-4 sm:px-6 lg:px-8 pt-2 pb-12">
-          {/* Tab-uri + Vezi tot */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex gap-2 flex-1 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-              {tabs.map(tab => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold flex-shrink-0 transition-all duration-200
-                      ${isActive ? 'bg-emerald-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'}`}>
-                    <FontAwesomeIcon icon={tab.icon} className={`text-xs ${isActive ? 'text-white' : tab.color || 'text-emerald-500'}`} />
-                    {tab.name}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Vezi tot */}
+          <div className="flex justify-end mb-5">
             <button onClick={viewAll}
               className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all hover:scale-105 active:scale-95">
               <span>Vezi tot</span>
@@ -239,17 +204,8 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
         }}
       >
         <div className="px-4 sm:px-6 lg:px-8 pt-2 pb-6">
-          {/* Pills + Vezi tot */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex gap-2 flex-wrap flex-1">
-              {B2B_CATEGORIES.map(cat => (
-                <button key={cat.id} onClick={() => onNavigate('toate-produsele', null, { category: cat.id })}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:bg-gray-700 hover:text-white hover:border-gray-700 transition-all">
-                  <FontAwesomeIcon icon={cat.icon} className="text-[10px]" />
-                  {cat.name}
-                </button>
-              ))}
-            </div>
+          {/* Vezi tot */}
+          <div className="flex justify-end mb-5">
             <button onClick={() => onNavigate('toate-produsele', null, { type: 'b2b' })}
               className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white shadow-sm transition-all hover:scale-105 active:scale-95">
               <span>Vezi tot</span>
@@ -340,8 +296,53 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   const searched = applySearch(products);
   const b2cProducts = searched.filter(p => !B2B_IDS.includes(p.category));
   const b2bProducts = searched.filter(p => B2B_IDS.includes(p.category));
-  const getByCategory = (id) => b2cProducts.filter(p => p.category === id).slice(0, 8);
+
   const getNewProducts = () => b2cProducts.slice(0, 8);
+
+  const b2bProviders = useMemo(() => {
+    const map = {};
+    b2bProducts.forEach(p => {
+      if (!map[p.user_id]) {
+        map[p.user_id] = {
+          id: p.user_id,
+          name: p.seller_name || 'Prestator',
+          phone: p.seller_phone,
+          location: p.location,
+          rating: p.seller_rating,
+          verified: p.seller_verified,
+          services: [],
+        };
+      }
+      const svc = p.subcategory || p.category;
+      if (svc && !map[p.user_id].services.includes(svc)) {
+        map[p.user_id].services.push(svc);
+      }
+    });
+    return Object.values(map);
+  }, [b2bProducts]);
+
+  const b2cProviders = useMemo(() => {
+    const map = {};
+    b2cProducts.forEach(p => {
+      if (!map[p.user_id]) {
+        map[p.user_id] = {
+          id: p.user_id,
+          name: p.seller_name || 'Producător',
+          phone: p.seller_phone,
+          location: p.location,
+          rating: p.seller_rating,
+          verified: p.seller_verified,
+          categories: [],
+          productsCount: 0,
+        };
+      }
+      map[p.user_id].productsCount += 1;
+      if (p.category && !map[p.user_id].categories.includes(p.category)) {
+        map[p.user_id].categories.push(p.category);
+      }
+    });
+    return Object.values(map);
+  }, [b2cProducts]);
 
   const handleViewDetails = async (productId) => {
     if (session) {
@@ -453,7 +454,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
           <B2CBlock
             b2cProducts={b2cProducts}
             getNewProducts={getNewProducts}
-            getByCategory={getByCategory}
+
             session={session}
             onNavigate={onNavigate}
             handleViewDetails={handleViewDetails}
@@ -473,6 +474,35 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             b2bRef={b2bRef}
             b2cExpanded={b2cExpanded}
           />
+
+          {/* ── PRESTATORI B2B ────────────────────────────────── */}
+          {b2bProviders.length > 0 && (
+            <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
+              <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faHandshake} className="text-emerald-600" />
+                    Prestatori de Servicii
+                  </h3>
+                </div>
+                <B2BProviderCarousel providers={b2bProviders} onNavigate={onNavigate} />
+              </div>
+            </div>
+          )}
+
+          {/* ── PRESTATORI B2C (animate-ui FlipCard) ─────────── */}
+          {b2cProviders.length > 0 && (
+            <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
+              <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
+                <div className="flex items-center gap-2 mb-6">
+                  <FontAwesomeIcon icon={faSeedling} className="text-emerald-600 text-xl" />
+                  <h3 className="text-2xl font-bold text-gray-900">Producători Alimentari</h3>
+                  <span className="ml-2 text-xs text-gray-400 italic">(animate-ui FlipCard)</span>
+                </div>
+                <B2CProviderCarousel providers={b2cProviders} onNavigate={onNavigate} />
+              </div>
+            </div>
+          )}
 
           {/* ── INFO BANNER ───────────────────────────────────── */}
           <div className="px-4 sm:px-6 lg:px-8">
@@ -500,9 +530,6 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             {session && (
               <section className="mb-12">
                 <div className="bg-white rounded-3xl p-8 md:p-12 text-center border border-gray-200 shadow-sm">
-                  <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <FontAwesomeIcon icon={faPlus} className="text-emerald-600 text-2xl" />
-                  </div>
                   <h3 className="text-3xl font-bold text-gray-900 mb-3">Ești producător?</h3>
                   <p className="text-gray-500 mb-6 max-w-xl mx-auto">
                     Adaugă-ți produsele gratuit și ajunge la mii de cumpărători din zona ta.

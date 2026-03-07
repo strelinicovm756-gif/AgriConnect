@@ -1,0 +1,133 @@
+import { easeOut, motion } from 'motion/react';
+import * as React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faStar, faMapMarkerAlt, faCircleCheck,
+  faTractor, faFlask, faWrench, faDroplet, faHandshake,
+} from '@fortawesome/free-solid-svg-icons';
+import { getColorForName } from '../../../../lib/utils';
+
+const CATEGORY_ICON = {
+  'Servicii Teren':      faTractor,
+  'Protecția Plantelor': faFlask,
+  'Echipamente':         faWrench,
+  'Sisteme de Irigare':  faDroplet,
+};
+function svcIcon(svc) {
+  for (const [key, icon] of Object.entries(CATEGORY_ICON)) {
+    if (svc?.includes(key.split(' ')[0])) return icon;
+  }
+  return faHandshake;
+}
+
+const cardVariants = {
+  front: { rotateY: 0,   transition: { duration: 0.5, ease: easeOut } },
+  back:  { rotateY: 180, transition: { duration: 0.5, ease: easeOut } },
+};
+
+export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
+  const [isFlipped, setIsFlipped] = React.useState(false);
+  const color = getColorForName(provider.name);
+
+  const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window;
+
+  const handleClick    = () => { if (isTouchDevice) setIsFlipped(f => !f); };
+  const handleEnter    = () => { if (!isTouchDevice) setIsFlipped(true); };
+  const handleLeave    = () => { if (!isTouchDevice) setIsFlipped(false); };
+
+  return (
+    <div
+      className="mt-2 relative w-40 h-60 md:w-60 md:h-80 perspective-1000 cursor-pointer mx-auto"
+      onClick={handleClick}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+    >
+      {/* ── FRONT: alb curat ── */}
+      <motion.div
+        className="absolute inset-0 backface-hidden rounded-2xl border border-gray-200 bg-white flex flex-col items-center justify-center px-4 py-6 gap-3 text-center"
+        animate={isFlipped ? 'back' : 'front'}
+        variants={cardVariants}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {/* Avatar */}
+        <div className="relative">
+          <div
+            className="size-20 md:size-24 rounded-full flex items-center justify-center text-white text-3xl font-black shadow-lg"
+            style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}
+          >
+            {(provider.name || '?').charAt(0).toUpperCase()}
+          </div>
+          {provider.verified && (
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-sm border-2 border-white">
+              <FontAwesomeIcon icon={faCircleCheck} className="text-white text-[10px]" />
+            </div>
+          )}
+        </div>
+
+        <h2 className="text-base font-bold text-gray-900 leading-tight line-clamp-2">
+          {provider.name}
+        </h2>
+
+        {provider.rating > 0 && (
+          <div className="flex items-center gap-1.5">
+            <FontAwesomeIcon icon={faStar} className="text-yellow-400 text-sm" />
+            <span className="text-sm font-bold text-gray-700">
+              {Number(provider.rating).toFixed(1)}
+            </span>
+          </div>
+        )}
+
+        {provider.location && (
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold">
+            <FontAwesomeIcon icon={faMapMarkerAlt} className="text-[10px]" />
+            {provider.location}
+          </span>
+        )}
+
+        <p className="text-[10px] text-gray-300 mt-auto">Hover pentru detalii</p>
+      </motion.div>
+
+      {/* ── BACK: întunecat cu butoane ── */}
+      <motion.div
+        className="absolute inset-0 backface-hidden rounded-2xl bg-gray-900 flex flex-col p-5 gap-4"
+        animate={isFlipped ? 'front' : 'back'}
+        variants={cardVariants}
+        style={{ transformStyle: 'preserve-3d', rotateY: 180 }}
+      >
+        {/* Services */}
+        <div className="flex-1">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+            Servicii Oferite
+          </p>
+          <ul className="space-y-2">
+            {provider.services?.slice(0, 4).map(svc => (
+              <li key={svc} className="flex items-center gap-2 text-sm text-white">
+                <FontAwesomeIcon icon={svcIcon(svc)} className="text-emerald-400 text-xs flex-shrink-0" />
+                <span className="truncate">{svc}</span>
+              </li>
+            ))}
+            {(!provider.services || provider.services.length === 0) && (
+              <li className="text-sm text-gray-500 italic">Servicii generale</li>
+            )}
+          </ul>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); onRequestOffer(); }}
+            className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Solicită Ofertă
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onNavigate(); }}
+            className="w-full py-2.5 rounded-xl border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white text-sm font-semibold transition-all"
+          >
+            Vezi Profil Complet
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

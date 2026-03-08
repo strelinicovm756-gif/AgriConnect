@@ -11,7 +11,7 @@ import {
   faPlus, faUser, faRightFromBracket, faChevronDown, faLeaf,
   faMagnifyingGlass, faCarrot, faAppleWhole, faCow,
   faDrumstickBite, faEgg, faJar, faWheatAwn, faTractor, faBox,
-  faArrowRight, faLocationDot
+  faArrowRight, faLocationDot, faShieldHalved, faBell, faCheckDouble
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -38,11 +38,16 @@ export function Navbar({ session, onNavigate, currentPage }) {
   const [activeLocation, setActiveLocation] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [notifs, setNotifs] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
   const searchInputRef = useRef(null);
   const overlayRef = useRef(null);
-  const isAllProducts = currentPage === 'toate-produsele';
+  const isAllProducts = currentPage === '/produse';
 
   useEffect(() => {
     if (session) loadProfileName();
@@ -52,11 +57,22 @@ export function Navbar({ session, onNavigate, currentPage }) {
   useEffect(() => {
     const clickOut = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
+      if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifDropdown(false);
       if (showOverlay && overlayRef.current && !overlayRef.current.contains(e.target)) closeOverlay();
     };
     document.addEventListener('mousedown', clickOut);
     return () => document.removeEventListener('mousedown', clickOut);
   }, [showOverlay]);
+
+  useEffect(() => {
+    if (!session) { setNotifs([]); setUnreadCount(0); return; }
+    loadNotifs();
+    const channel = supabase
+      .channel('notifs_' + session.user.id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'annonce_notifications', filter: `id_profiles=eq.${session.user.id}` }, () => loadNotifs())
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [session]);
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') closeOverlay(); };
@@ -103,10 +119,46 @@ export function Navbar({ session, onNavigate, currentPage }) {
 
   const loadProfileName = async () => {
     try {
-      const { data } = await supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle();
+      const { data } = await supabase.from('profiles').select('full_name, role').eq('id', session.user.id).maybeSingle();
       if (data?.full_name) setProfileName(data.full_name);
+      if (data?.role) setUserRole(data.role);
     } catch (e) { console.error(e); }
     finally { setIsLoadingProfile(false); }
+  };
+
+  const loadNotifs = async () => {
+    if (!session) return;
+    const [{ data }, { count }] = await Promise.all([
+      supabase.from('annonce_notifications').select('*').eq('id_profiles', session.user.id).order('created_at', { ascending: false }).limit(5),
+      supabase.from('annonce_notifications').select('*', { count: 'exact', head: true }).eq('id_profiles', session.user.id).eq('is_read', false),
+    ]);
+    setNotifs(data || []);
+    setUnreadCount(count || 0);
+  };
+
+  const relativeTime = (dateStr) => {
+    const m = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+    if (m < 1) return 'acum';
+    if (m < 60) return `acum ${m} min`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `acum ${h}h`;
+    return `acum ${Math.floor(h / 24)}z`;
+  };
+
+  const markAsRead = async (notif) => {
+    setShowNotifDropdown(false);
+    if (!notif.is_read) {
+      await supabase.from('annonce_notifications').update({ is_read: true }).eq('id', notif.id);
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      setNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+    }
+    if (notif.id_produit) onNavigate('detalii', notif.id_produit);
+  };
+
+  const markAllAsRead = async () => {
+    await supabase.from('annonce_notifications').update({ is_read: true }).eq('id_profiles', session.user.id).eq('is_read', false);
+    setUnreadCount(0);
+    setNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
   };
 
   const handleLogout = async () => {
@@ -203,6 +255,64 @@ export function Navbar({ session, onNavigate, currentPage }) {
                   <FontAwesomeIcon icon={faPlus} className="text-xs" />
                 </button>
 
+                {/* Clopot notificări */}
+                <div className="relative" ref={notifRef}>
+                  <button
+                    onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                    className="relative w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-xl transition"
+                  >
+                    <FontAwesomeIcon icon={faBell} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {showNotifDropdown && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-dropdown">
+                      <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
+                        <p className="text-sm font-bold text-gray-900">Notificări</p>
+                        {unreadCount > 0 && (
+                          <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">{unreadCount} noi</span>
+                        )}
+                      </div>
+
+                      {notifs.length === 0 ? (
+                        <div className="px-5 py-8 text-center text-gray-400">
+                          <FontAwesomeIcon icon={faBell} className="text-2xl mb-2 opacity-30" />
+                          <p className="text-sm">Nicio notificare</p>
+                        </div>
+                      ) : (
+                        <div>
+                          {notifs.map(n => (
+                            <button
+                              key={n.id}
+                              onClick={() => markAsRead(n)}
+                              className={`w-full text-left px-5 py-3.5 flex gap-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0 ${!n.is_read ? 'bg-blue-50/40' : ''}`}
+                            >
+                              <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
+                              <div className="flex-1 min-w-0">
+                                {n.title && <p className="text-sm font-bold text-gray-900 truncate">{n.title}</p>}
+                                <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{n.content}</p>
+                                <p className="text-[10px] text-gray-400 mt-1">{relativeTime(n.created_at)}</p>
+                              </div>
+                            </button>
+                          ))}
+                          {unreadCount > 0 && (
+                            <div className="px-5 py-3 border-t border-gray-100">
+                              <button onClick={markAllAsRead} className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition py-1">
+                                <FontAwesomeIcon icon={faCheckDouble} />
+                                Marchează toate ca citite
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Avatar + dropdown */}
                 <div className="relative" ref={dropdownRef}>
                   <button onClick={() => setShowDropdown(!showDropdown)} className="flex items-center gap-1.5 hover:bg-gray-50 p-1.5 rounded-xl transition">
@@ -228,6 +338,17 @@ export function Navbar({ session, onNavigate, currentPage }) {
                           </div>
                           <span className="text-sm font-medium">Profilul meu</span>
                         </button>
+                        {(userRole === 'admin' || userRole === 'super_admin') && (
+                          <button onClick={() => { onNavigate('admin'); setShowDropdown(false); }} className="w-full p-2.5 text-left hover:bg-purple-50 rounded-xl flex items-center gap-3 group mt-1">
+                            <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                              <FontAwesomeIcon icon={faShieldHalved} />
+                            </div>
+                            <div>
+                              <span className="text-sm font-medium">Administrare</span>
+                              <p className="text-xs text-gray-400">{userRole === 'super_admin' ? 'Super Admin' : 'Moderator'}</p>
+                            </div>
+                          </button>
+                        )}
                         <button onClick={handleLogout} className="w-full p-2.5 text-left hover:bg-red-50 rounded-xl flex items-center gap-3 group mt-1">
                           <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all">
                             <FontAwesomeIcon icon={faRightFromBracket} />

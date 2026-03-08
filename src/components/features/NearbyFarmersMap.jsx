@@ -66,7 +66,7 @@ function radiusToZoom(radiusKm) {
     return 7;
 }
 
-const RADIUS_STEPS = [5, 10, 20];
+const RADIUS_STEPS = [5, 10, 15, 25];
 
 export default function NearbyFarmersMap({ products = [], onNavigate }) {
     const mapContainerRef = useRef(null);

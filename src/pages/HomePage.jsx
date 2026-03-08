@@ -497,7 +497,6 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                 <div className="flex items-center gap-2 mb-6">
                   <FontAwesomeIcon icon={faSeedling} className="text-emerald-600 text-xl" />
                   <h3 className="text-2xl font-bold text-gray-900">Producători Alimentari</h3>
-                  <span className="ml-2 text-xs text-gray-400 italic">(animate-ui FlipCard)</span>
                 </div>
                 <B2CProviderCarousel providers={b2cProviders} onNavigate={onNavigate} />
               </div>

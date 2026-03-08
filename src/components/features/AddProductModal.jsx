@@ -98,6 +98,14 @@ const UNITS_B2B = [
 
 const B2B_IDS = CATEGORY_GROUPS.find(g => g.type === 'b2b').categories.map(c => c.id);
 
+const TODAY = new Date().toISOString().split('T')[0];
+
+const calcExpiresAt = (days) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+};
+
 // ── Helpers ────────────────────────────────────────────────────
 function Alert({ variant = 'default', title, children, className = '' }) {
   const styles = {
@@ -143,12 +151,13 @@ function FormInput({ label, required, error, helper, children, ...props }) {
 }
 
 // ── Main Component ─────────────────────────────────────────────
-export default function AddProductModal({ isOpen, onClose, session, onSuccess }) {
+export default function AddProductModal({ isOpen, onClose, session, onSuccess, product }) {
   const [loading, setLoading] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(true);
   const [galleryImages, setGalleryImages] = useState([]);
   const [detectingLocation, setDetectingLocation] = useState(false);
   const [activeGroup, setActiveGroup] = useState('b2c'); // 'b2c' | 'b2b'
+  const [expiresAt, setExpiresAt] = useState(product?.expires_at || '');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -292,13 +301,14 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
         is_negotiable: formData.is_negotiable,
         image_url: imageUrls[0] || null,
         gallery_images: imageUrls.slice(1).length > 0 ? imageUrls.slice(1) : null,
-        status: 'active'
+        status: 'pending',
+        expires_at: expiresAt || null
       }).select().single();
       if (error) throw error;
 
       toast.success('Produs adăugat cu succes!', { duration: 4000 });
       setFormData({ name: '', description: '', price: '', unit: 'kg', quantity: '', category: 'Legume', subcategory: '', location: '', is_negotiable: false });
-      setGalleryImages([]); setErrors({}); setActiveGroup('b2c');
+      setGalleryImages([]); setErrors({}); setActiveGroup('b2c'); setExpiresAt('');
       onClose(); if (onSuccess) onSuccess();
     } catch (err) {
       toast.error('Eroare: ' + err.message);
@@ -545,6 +555,67 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess })
                   </button>
                   <p className="text-gray-500 text-xs">Locația ajută cumpărătorii să găsească produse din zona lor.</p>
                 </div>
+              </div>
+
+              {/* ── Perioadă de valabilitate ── */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                  Perioadă de valabilitate
+                </h3>
+
+                {/* Quick-pick chips */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {[{ label: '7 zile', days: 7 }, { label: '14 zile', days: 14 }, { label: '30 zile', days: 30 }, { label: '60 zile', days: 60 }].map(opt => {
+                    const chipDate = calcExpiresAt(opt.days);
+                    const isActive = expiresAt === chipDate;
+                    return (
+                      <button
+                        key={opt.days}
+                        type="button"
+                        onClick={() => setExpiresAt(isActive ? '' : chipDate)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition border ${
+                          isActive
+                            ? activeGroup === 'b2b' ? 'bg-blue-600 text-white border-blue-600' : 'bg-emerald-600 text-white border-emerald-600'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                  {expiresAt && !([7, 14, 30, 60].map(d => calcExpiresAt(d)).includes(expiresAt)) && (
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${activeGroup === 'b2b' ? 'bg-blue-600 text-white border-blue-600' : 'bg-emerald-600 text-white border-emerald-600'}`}>
+                      {expiresAt.split('-').reverse().join('.')}
+                    </span>
+                  )}
+                  {expiresAt && (
+                    <button
+                      type="button"
+                      onClick={() => setExpiresAt('')}
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold text-gray-400 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition flex items-center gap-1"
+                    >
+                      <FontAwesomeIcon icon={faTimes} className="text-[10px]" />
+                      Fără limită
+                    </button>
+                  )}
+                </div>
+
+                {/* Calendar input */}
+                <input
+                  type="date"
+                  value={expiresAt}
+                  min={TODAY}
+                  onChange={e => setExpiresAt(e.target.value)}
+                  className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 transition-all cursor-pointer
+                    ${activeGroup === 'b2b' ? 'border-blue-200 focus:ring-blue-400' : 'border-gray-200 focus:ring-emerald-400'}`}
+                />
+
+                <p className={`text-xs mt-2 ${expiresAt ? 'text-gray-500' : 'text-gray-400'}`}>
+                  {expiresAt
+                    ? <>Anunțul va fi activ până pe: <span className="font-semibold text-gray-700">{expiresAt.split('-').reverse().join('.')}</span></>
+                    : 'Anunțul rămâne activ fără limită de timp.'
+                  }
+                </p>
               </div>
 
             </div>{/* end inner padding */}

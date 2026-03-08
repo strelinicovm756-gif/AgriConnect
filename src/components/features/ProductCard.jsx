@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { getColorForName } from '../../lib/utils';
+import { supabase } from '../../services/supabaseClient';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,10 +16,31 @@ import {
   faLocationDot,
   faCalendarDays,
   faImages,
-  faLock
+  faLock,
+  faFlag
 } from '@fortawesome/free-solid-svg-icons';
 
 export function ProductCard({ product, session, onViewDetails, onContactClick }) {
+  const [isReported, setIsReported] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+
+  const handleQuickReport = async (e) => {
+    e.stopPropagation();
+    if (!session || isReported || isReporting) return;
+    setIsReporting(true);
+    try {
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: session.user.id, product_id: product.id, reason: 'Spam sau duplicat'
+      });
+      if (error) throw error;
+      setIsReported(true);
+    } catch {
+      // Dacă există deja o raportare, marcăm oricum ca raportat
+      setIsReported(true);
+    } finally {
+      setIsReporting(false);
+    }
+  };
   const formatPrice = (price) => {
     return new Intl.NumberFormat('ro-RO', {
       minimumFractionDigits: 0,
@@ -85,6 +108,20 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
             {product.category}
           </span>
         </div>
+
+        {/* Buton raportare — vizibil la hover */}
+        {session && session.user?.id !== product.user_id && (
+          <button
+            onClick={handleQuickReport}
+            disabled={isReported || isReporting}
+            title={isReported ? 'Ai raportat deja' : 'Raportează anunțul'}
+            className={`absolute bottom-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow transition-all duration-200 opacity-0 group-hover:opacity-100 ${
+              isReported ? 'bg-red-500 text-white cursor-default' : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-red-50'
+            }`}
+          >
+            <FontAwesomeIcon icon={faFlag} className="text-[9px]" />
+          </button>
+        )}
       </div>
 
       {/* Content - spacing optimizat */}

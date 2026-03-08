@@ -7,6 +7,7 @@ import DetailsPage from "./pages/DetailsPage";
 import ProfilePage from "./pages/ProfilePage";
 import AllProductsPage from "./pages/AllProductsPage";
 import ProducerPublicProfile from './pages/ProducerPublicProfile';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import { Navbar } from "./components/layout/Navbar";
 import { Toaster } from "react-hot-toast";
 
@@ -36,6 +37,9 @@ export default function App() {
       case 'profil':
         navigate('/profil');
         break;
+      case 'admin':
+        navigate('/admin');
+        break;
       case 'producator':
         navigate(`/producator/${param}`);
         break;
@@ -48,6 +52,7 @@ export default function App() {
         if (options.search) params.set('cautare', options.search);
         if (options.sortBy && options.sortBy !== 'newest') params.set('sortare', options.sortBy);
         if (options.type) params.set('tip', options.type);
+        if (options.verified) params.set('verificat', 'true');
         navigate(`/produse${params.toString() ? '?' + params.toString() : ''}`);
         break;
       }
@@ -69,7 +74,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Toaster position="top-center" />
+      <Toaster position="bottom-right" reverseOrder={true} />
 
       {!isLoginPage && (
         <Navbar
@@ -139,6 +144,11 @@ export default function App() {
             }
           />
 
+          <Route
+            path="/admin"
+            element={<AdminDashboard session={session} onNavigate={navigateTo} />}
+          />
+
           {/* Orice altă rută → acasă */}
           <Route path="*" element={<HomePage session={session} onNavigate={navigateTo} searchQuery={searchQuery} searchLocation={searchLocation} />} />
         </Routes>
@@ -160,6 +170,7 @@ function AllProductsPageWrapper({ session, onNavigate }) {
       initialSearch={params.get('cautare') || null}
       initialSortBy={params.get('sortare') || 'newest'}
       initialType={params.get('tip') || null}
+      initialVerified={params.get('verificat') === 'true'}
     />
   );
 }

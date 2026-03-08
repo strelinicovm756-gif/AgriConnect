@@ -378,7 +378,7 @@ function FilterSidebar({
 // ── Main Page ─────────────────────────────────────────────────
 export default function AllProductsPage({
   session, onNavigate,
-  initialCategory = null, initialSearch = null, initialSortBy = 'newest', initialType = null
+  initialCategory = null, initialSearch = null, initialSortBy = 'newest', initialType = null, initialVerified = false
 }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -393,6 +393,7 @@ export default function AllProductsPage({
     maxPrice: '',
     location: '',
     negotiable: false,
+    verified: initialVerified,
     sortBy: initialSortBy || 'newest',
     type: initialType || null
   });

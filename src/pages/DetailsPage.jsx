@@ -15,7 +15,7 @@ import {
   faHandshake, faLeaf, faMessage,
   faStar, faExclamationTriangle,
   faChevronLeft, faChevronRight,
-  faComments, faPaperPlane, faTrash, faPen
+  faComments, faPaperPlane, faTrash, faPen, faFlag
 } from '@fortawesome/free-solid-svg-icons';
 
 function StarRating({ value = 0, onChange = null, size = 'text-xl' }) {
@@ -275,6 +275,12 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   // ── RATING FURNIZOR — calculat din toate produsele lui, inclusiv arhivate ──
   const [sellerRating, setSellerRating] = useState(0);
+  // ── RAPORTARE ──
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDesc, setReportDesc] = useState('');
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [alreadyReported, setAlreadyReported] = useState(false);
 
   useEffect(() => {
     if (!session) { onNavigate('login'); return; }
@@ -288,6 +294,14 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
         .from('products_with_user').select('*').eq('id', productId).single();
       if (error) throw error;
       setProduct(data);
+
+      // Check raportare anterioară
+      if (session?.user?.id && data?.user_id !== session.user.id) {
+        const { data: existingReport } = await supabase
+          .from('reports').select('id')
+          .eq('reporter_id', session.user.id).eq('product_id', productId).maybeSingle();
+        setAlreadyReported(!!existingReport);
+      }
 
       // Rating furnizor — toate produsele lui, inclusiv arhivate/șterse
       if (data?.user_id) {
@@ -338,6 +352,23 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
         (error) => console.log('Could not get user location:', error)
       );
     }
+  };
+
+  const handleReport = async () => {
+    if (!reportReason) return toast.error('Selectează un motiv');
+    setReportSubmitting(true);
+    try {
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: session.user.id, product_id: product.id,
+        reason: reportReason, description: reportDesc.trim() || null
+      });
+      if (error) throw error;
+      toast.success('Raportare trimisă. Mulțumim!');
+      setShowReportModal(false);
+      setAlreadyReported(true);
+      setReportReason(''); setReportDesc('');
+    } catch { toast.error('Eroare la trimiterea raportării'); }
+    finally { setReportSubmitting(false); }
   };
 
   const formatPrice = (price) =>
@@ -426,6 +457,20 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                         <div className="bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
                           <span className="text-white font-semibold text-xs">NEGOCIABIL</span>
                         </div>
+                      )}
+                      {session && session.user.id !== product.user_id && (
+                        <button
+                          onClick={() => { if (!alreadyReported) setShowReportModal(true); }}
+                          disabled={alreadyReported}
+                          title={alreadyReported ? 'Ai raportat deja acest anunț' : 'Raportează anunțul'}
+                          className={`self-end w-8 h-8 rounded-full backdrop-blur-sm shadow-md flex items-center justify-center transition ${
+                            alreadyReported
+                              ? 'bg-red-500/95 cursor-not-allowed'
+                              : 'bg-white/80 hover:bg-red-100 text-gray-400 hover:text-red-500'
+                          }`}
+                        >
+                          <FontAwesomeIcon icon={faFlag} className={`text-xs ${alreadyReported ? 'text-white' : ''}`} />
+                        </button>
                       )}
                     </div>
                     {allImages.length > 1 && (
@@ -613,6 +658,59 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
 
         <ReviewsSection productId={productId} session={session} productOwnerId={product.user_id} />
       </main>
+
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
+              <FontAwesomeIcon icon={faFlag} className="text-red-500" />
+              Raportează anunț
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">Selectează motivul raportării:</p>
+            <div className="space-y-2 mb-5">
+              {['Spam sau duplicat', 'Preț fals / înșelător', 'Categorie greșită', 'Fraudă sau escrocherie'].map(r => (
+                <button
+                  key={r}
+                  onClick={() => setReportReason(r)}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition border ${
+                    reportReason === r
+                      ? 'bg-red-50 text-red-700 font-semibold border-red-300'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-transparent'
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Detalii suplimentare (opțional)</label>
+              <textarea
+                value={reportDesc}
+                onChange={e => setReportDesc(e.target.value)}
+                placeholder="Descrie problema mai detaliat..."
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setShowReportModal(false); setReportReason(''); setReportDesc(''); }}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
+              >
+                Anulează
+              </button>
+              <button
+                onClick={handleReport}
+                disabled={!reportReason || reportSubmitting}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-60 flex items-center gap-2"
+              >
+                {reportSubmitting && <FontAwesomeIcon icon={faFlag} className="animate-pulse" />}
+                Trimite raportarea
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ProductMapModal isOpen={showMapModal} onClose={() => setShowMapModal(false)} product={product} userLocation={userCurrentLocation} />
     </div>

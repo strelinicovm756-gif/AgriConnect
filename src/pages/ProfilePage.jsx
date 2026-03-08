@@ -13,7 +13,7 @@ import {
     faChevronDown, faChevronUp, faBoxesStacked, faTriangleExclamation,
     faCircleCheck, faHourglassHalf, faXmark, faUser, faPhone,
     faLocationDot, faIdCard, faPenToSquare, faFloppyDisk, faBan,
-    faEye, faRightFromBracket, faImages, faStar, faTrash, faPen
+    faEye, faRightFromBracket, faImages, faStar, faTrash, faPen, faRotateRight
 } from '@fortawesome/free-solid-svg-icons';
 import {
     Star, MessageSquare, Package, ChevronDown, ChevronUp,
@@ -298,6 +298,8 @@ export default function ProfilePage({ session, onNavigate }) {
     const [myProducts, setMyProducts] = useState([]);
     const [loadingProducts, setLoadingProducts] = useState(false);
     const [editingProductId, setEditingProductId] = useState(null);
+    const [dismissedBanner, setDismissedBanner] = useState(false);
+    const [dismissedExpiryBanner, setDismissedExpiryBanner] = useState(false);
 
     // ── RATING STATE ──────────────────────────────────────────
     const [avgRating, setAvgRating] = useState(0);
@@ -425,9 +427,14 @@ export default function ProfilePage({ session, onNavigate }) {
             setLoadingProducts(true);
             const { data, error } = await supabase.from('products_with_user')
                 .select('*').eq('user_id', session.user.id)
-                .in('status', ['active', 'archived']).order('created_at', { ascending: false });
+                .in('status', ['active', 'archived', 'pending', 'rejected', 'inactive']).order('created_at', { ascending: false });
             if (error) throw error;
-            setMyProducts(data || []);
+            const now = new Date();
+            const toMark = (data || []).filter(p => p.expires_at && new Date(p.expires_at) < now && p.status !== 'inactive');
+            if (toMark.length > 0) {
+                await Promise.all(toMark.map(p => supabase.from('products').update({ status: 'inactive' }).eq('id', p.id)));
+            }
+            setMyProducts((data || []).map(p => toMark.find(m => m.id === p.id) ? { ...p, status: 'inactive' } : p));
         } catch (error) {
             toast.error('Eroare la încărcarea produselor');
         } finally {
@@ -457,6 +464,17 @@ export default function ProfilePage({ session, onNavigate }) {
             else if (error.message.includes('not found')) toast.error('Produsul nu a fost găsit');
             else toast.error('Eroare: ' + error.message);
         }
+    };
+
+    const handleResubmit = async (productId) => {
+        try {
+            const { error } = await supabase.from('products')
+                .update({ status: 'pending', reject_reason: null })
+                .eq('id', productId);
+            if (error) throw error;
+            toast.success('Anunț retrimis pentru aprobare!');
+            setMyProducts(prev => prev.map(p => p.id === productId ? { ...p, status: 'pending', reject_reason: null } : p));
+        } catch { toast.error('Eroare la retrimitere'); }
     };
 
     const handleSubmit = async (e) => {
@@ -769,6 +787,31 @@ export default function ProfilePage({ session, onNavigate }) {
                     </div>
                 </div>
 
+                {/* ── BANNER ANUNȚURI RESPINSE ── */}
+                {!dismissedBanner && myProducts.some(p => p.status === 'rejected') && (
+                    <div className="mt-6 bg-amber-50 border border-amber-300 text-amber-800 rounded-xl px-5 py-4 flex items-start gap-3">
+                        <span className="text-lg flex-shrink-0">⚠️</span>
+                        <p className="flex-1 text-sm font-medium">Unul sau mai multe anunțuri au fost respinse. Verifică și corectează anunțurile tale.</p>
+                        <button onClick={() => setDismissedBanner(true)} className="text-amber-600 hover:text-amber-900 transition flex-shrink-0 mt-0.5">
+                            <FontAwesomeIcon icon={faXmark} />
+                        </button>
+                    </div>
+                )}
+
+                {/* ── BANNER ANUNȚURI EXPIRATE ── */}
+                {!dismissedExpiryBanner && myProducts.some(p => {
+                    const exp = p.expires_at ? new Date(p.expires_at) : null;
+                    return exp && (exp - new Date()) < 48 * 60 * 60 * 1000;
+                }) && (
+                    <div className="mt-4 bg-orange-50 border border-orange-300 text-orange-800 rounded-xl px-5 py-4 flex items-start gap-3">
+                        <FontAwesomeIcon icon={faTriangleExclamation} className="flex-shrink-0 mt-0.5" />
+                        <p className="flex-1 text-sm font-medium">Ai anunțuri care expiră în curând. Verifică anunțurile tale.</p>
+                        <button onClick={() => setDismissedExpiryBanner(true)} className="text-orange-600 hover:text-orange-900 transition flex-shrink-0 mt-0.5">
+                            <FontAwesomeIcon icon={faXmark} />
+                        </button>
+                    </div>
+                )}
+
                 {/* ── PRODUSE ── */}
                 {showProducts && (
                     <div className="mt-10" id="my-products">
@@ -790,30 +833,76 @@ export default function ProfilePage({ session, onNavigate }) {
                                 </div>
                             ) : myProducts.length > 0 ? (
                                 <div className="grid md:grid-cols-2 gap-6">
-                                    {myProducts.map((product) => (
-                                        <div key={product.id} className="relative rounded-2xl border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 overflow-hidden">
+                                    {myProducts.map((product) => {
+                                        const now = new Date();
+                                        const expiresDate = product.expires_at ? new Date(product.expires_at) : null;
+                                        const isExpired = expiresDate && expiresDate < now;
+                                        const isExpiringSoon = expiresDate && !isExpired && (expiresDate - now) < 48 * 60 * 60 * 1000;
+                                        return (
+                                        <div key={product.id} className={`relative rounded-2xl border bg-white hover:shadow-lg transition-all duration-300 overflow-hidden ${
+                                            product.status === 'rejected' ? 'border-red-400' :
+                                            product.status === 'inactive' || isExpired ? 'border-red-300' :
+                                            isExpiringSoon ? 'border-orange-400' :
+                                            product.status === 'pending' ? 'border-yellow-400' :
+                                            'border-gray-200'
+                                        }`}>
                                             <ProductCard product={product} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
                                             <div className="absolute top-4 right-4 flex gap-2 z-10">
-                                                <button onClick={() => setEditingProductId(product.id)}
-                                                    className="bg-blue-500 hover:bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Editează galeria foto">
-                                                    <FontAwesomeIcon icon={faImages} />
-                                                </button>
+                                                {product.status === 'rejected' ? (
+                                                    <button onClick={() => handleResubmit(product.id)}
+                                                        className="bg-orange-500 hover:bg-orange-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110"
+                                                        title="Retrimite pentru aprobare">
+                                                        <FontAwesomeIcon icon={faRotateRight} />
+                                                    </button>
+                                                ) : (
+                                                    <button onClick={() => setEditingProductId(product.id)}
+                                                        className="bg-blue-500 hover:bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Editează galeria foto">
+                                                        <FontAwesomeIcon icon={faImages} />
+                                                    </button>
+                                                )}
                                                 <button onClick={() => handleDeleteProduct(product.id)}
                                                     className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Arhivează anunțul">
                                                     <FontAwesomeIcon icon={faXmark} />
                                                 </button>
-                                                <Toaster
-                                                    position="bottom-right"
-                                                    reverseOrder={false}
-                                                />
+                                                <Toaster position="bottom-right" reverseOrder={false} />
                                             </div>
                                             {product.status === 'archived' && (
                                                 <div className="absolute top-16 right-4 z-10">
                                                     <Badge variant="default">ARHIVAT</Badge>
                                                 </div>
                                             )}
+                                            {product.status === 'rejected' && (
+                                                <div className="absolute top-16 right-4 z-10" title={product.reject_reason || 'Neconform cu regulamentul'}>
+                                                    <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full cursor-help">RESPINS</span>
+                                                </div>
+                                            )}
+                                            {product.status === 'pending' && (
+                                                <div className="absolute top-16 right-4 z-10">
+                                                    <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2.5 py-1 rounded-full">ÎN AȘTEPTARE</span>
+                                                </div>
+                                            )}
+                                            {(product.status === 'inactive' || isExpired) && (
+                                                <div className="absolute top-16 right-4 z-10">
+                                                    <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRAT</span>
+                                                </div>
+                                            )}
+                                            {isExpiringSoon && product.status !== 'inactive' && (
+                                                <div className="absolute top-16 right-4 z-10">
+                                                    <span className="bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRĂ ÎN CURÂND</span>
+                                                </div>
+                                            )}
+                                            {expiresDate && (
+                                                <div className={`absolute bottom-0 left-0 right-0 px-4 py-1.5 text-xs flex items-center gap-1.5 ${
+                                                    isExpired || product.status === 'inactive' ? 'bg-red-50 text-red-500' :
+                                                    isExpiringSoon ? 'bg-orange-50 text-orange-600' :
+                                                    'bg-gray-50 text-gray-400'
+                                                }`}>
+                                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
+                                                    Valabil până: {expiresDate.toLocaleDateString('ro-RO')}
+                                                </div>
+                                            )}
                                         </div>
-                                    ))}
+                                    ); })}
                                 </div>
                             ) : (
                                 <div className="text-center py-12">

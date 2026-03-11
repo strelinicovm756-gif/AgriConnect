@@ -159,7 +159,7 @@ export function Navbar({ session, onNavigate }) {
   const loadNotifs = async () => {
     if (!session) return;
     const [{ data }, { count }] = await Promise.all([
-      supabase.from('annonce_notifications').select('*').eq('id_profiles', session.user.id).order('created_at', { ascending: false }).limit(5),
+      supabase.from('annonce_notifications').select('*').eq('id_profiles', session.user.id).order('created_at', { ascending: false }).limit(20),
       supabase.from('annonce_notifications').select('*', { count: 'exact', head: true }).eq('id_profiles', session.user.id).eq('is_read', false),
     ]);
     setNotifs(data || []);
@@ -334,20 +334,22 @@ export function Navbar({ session, onNavigate }) {
                         </div>
                       ) : (
                         <div>
-                          {notifs.map(n => (
-                            <button
-                              key={n.id}
-                              onClick={() => markAsRead(n)}
-                              className={`w-full text-left px-5 py-3.5 flex gap-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0 ${!n.is_read ? 'bg-blue-50/40' : ''}`}
-                            >
-                              <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
-                              <div className="flex-1 min-w-0">
-                                {n.title && <p className="text-sm font-bold text-gray-900 truncate">{n.title}</p>}
-                                <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{n.content}</p>
-                                <p className="text-[10px] text-gray-400 mt-1">{relativeTime(n.created_at)} · {formatDate(n.created_at)}</p>
-                              </div>
-                            </button>
-                          ))}
+                          <div className="max-h-80 overflow-y-auto">
+                            {notifs.map(n => (
+                              <button
+                                key={n.id}
+                                onClick={() => markAsRead(n)}
+                                className={`w-full text-left px-5 py-3.5 flex gap-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0 ${!n.is_read ? 'bg-blue-50/40' : ''}`}
+                              >
+                                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
+                                <div className="flex-1 min-w-0">
+                                  {n.title && <p className="text-sm font-bold text-gray-900 truncate">{n.title}</p>}
+                                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{n.content}</p>
+                                  <p className="text-[10px] text-gray-400 mt-1">{relativeTime(n.created_at)} · {formatDate(n.created_at)}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                           {unreadCount > 0 && (
                             <div className="px-5 py-3 border-t border-gray-100">
                               <button onClick={markAllAsRead} className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition py-1">

@@ -1,32 +1,53 @@
 import { useState, useEffect, useRef } from "react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvira } from '@fortawesome/free-brands-svg-icons';
+import {
+  faLayerGroup, faCarrot, faAppleWhole, faCow, faDrumstickBite,
+  faEgg, faJar, faWheatAwn, faTractor, faSeedling, faWrench, faDroplet,
+  faCartShopping, faIndustry,
+  faChevronDown as faChevronDownSolid
+} from '@fortawesome/free-solid-svg-icons';
 import { getColorForName } from '../../lib/utils';
 import { supabase } from "../../services/supabaseClient";
 import toast from "react-hot-toast";
-import { X } from "@/components/animate-ui/icons/x";
-import { Search } from "@/components/animate-ui/icons/search";
-import { SearchAlert } from 'lucide-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import AddProductModal from "../features/AddProductModal";
+import { X as XAnimated } from "@/components/animate-ui/icons/x";
+import { Search as SearchAnimated } from "@/components/animate-ui/icons/search";
 import {
-  faPlus, faUser, faRightFromBracket, faChevronDown, faLeaf,
-  faMagnifyingGlass, faCarrot, faAppleWhole, faCow,
-  faDrumstickBite, faEgg, faJar, faWheatAwn, faTractor, faBox,
-  faArrowRight, faLocationDot, faShieldHalved, faBell, faCheckDouble
-} from '@fortawesome/free-solid-svg-icons';
-
+  SearchX, Plus, Bell, Check, ChevronDown, User, Shield,
+  LogOut, ArrowRight, MapPin, Package, Search,
+  Carrot, Apple, Milk, Beef, Egg, Flower2, Wheat, Tractor
+} from 'lucide-react';
+import AddProductModal from "../features/AddProductModal";
 
 const CATEGORY_ICONS = {
-  'Legume': faCarrot,
-  'Fructe': faAppleWhole,
-  'Lactate': faCow,
-  'Carne': faDrumstickBite,
-  'Ouă': faEgg,
-  'Miere': faJar,
-  'Cereale': faWheatAwn,
-  'Servicii': faTractor,
+  'Legume': Carrot,
+  'Fructe': Apple,
+  'Lactate': Milk,
+  'Carne': Beef,
+  'Ouă': Egg,
+  'Miere': Flower2,
+  'Cereale': Wheat,
+  'Servicii': Tractor,
 };
 
-export function Navbar({ session, onNavigate, currentPage }) {
+const B2C_MEGA = [
+  { id: 'Legume',   name: 'Legume',   icon: faCarrot,       subs: ['Rădăcinoase', 'Verzișuri', 'Roșii & Ardei', 'Dovlecei & Castraveți'] },
+  { id: 'Fructe',   name: 'Fructe',   icon: faAppleWhole,   subs: ['Mere & Pere', 'Fructe de pădure', 'Citrice', 'Struguri'] },
+  { id: 'Lactate',  name: 'Lactate',  icon: faCow,          subs: ['Lapte', 'Brânzeturi', 'Smântână & Unt', 'Iaurt'] },
+  { id: 'Carne',    name: 'Carne',    icon: faDrumstickBite,subs: ['Carne de porc', 'Carne de vită', 'Pasăre', 'Mezeluri artizanale'] },
+  { id: 'Ouă',      name: 'Ouă',      icon: faEgg,          subs: ['Ouă de găină', 'Ouă de rață', 'Ouă de prepeliță', 'Altele'] },
+  { id: 'Miere',    name: 'Miere',    icon: faJar,          subs: ['Miere de flori', 'Miere de salcâm', 'Miere de tei', 'Produse apicole'] },
+  { id: 'Cereale',  name: 'Cereale',  icon: faWheatAwn,     subs: ['Grâu', 'Porumb', 'Floarea-soarelui', 'Orz & Ovăz'] },
+];
+
+const B2B_MEGA = [
+  { id: 'Servicii Teren',      name: 'Servicii Teren',      icon: faTractor,  subs: ['Arat & Prelucrare sol', 'Semănat', 'Recoltare mecanizată', 'Transport agricol'] },
+  { id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faSeedling, subs: ['Pesticide', 'Erbicide', 'Îngrășăminte organice', 'Fungicide'] },
+  { id: 'Echipamente',         name: 'Echipamente',         icon: faWrench,   subs: ['Unelte manuale', 'Piese schimb utilaje', 'Utilaje second-hand', 'Altele'] },
+  { id: 'Sisteme de Irigare',  name: 'Sisteme de Irigare',  icon: faDroplet,  subs: ['Sisteme picurare', 'Pompe apă', 'Furtunuri & Accesorii', 'Altele'] },
+];
+
+export function Navbar({ session, onNavigate }) {
   const [profileName, setProfileName] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(!!session);
@@ -42,12 +63,14 @@ export function Navbar({ session, onNavigate, currentPage }) {
   const [notifs, setNotifs] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [showMegaMenu, setShowMegaMenu] = useState(false);
 
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
   const searchInputRef = useRef(null);
   const overlayRef = useRef(null);
-  const isAllProducts = currentPage === '/produse';
+  const megaMenuRef = useRef(null);
+  const categoriiBtnRef = useRef(null);
 
   useEffect(() => {
     if (session) loadProfileName();
@@ -59,10 +82,15 @@ export function Navbar({ session, onNavigate, currentPage }) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifDropdown(false);
       if (showOverlay && overlayRef.current && !overlayRef.current.contains(e.target)) closeOverlay();
+      if (
+        showMegaMenu &&
+        megaMenuRef.current && !megaMenuRef.current.contains(e.target) &&
+        categoriiBtnRef.current && !categoriiBtnRef.current.contains(e.target)
+      ) setShowMegaMenu(false);
     };
     document.addEventListener('mousedown', clickOut);
     return () => document.removeEventListener('mousedown', clickOut);
-  }, [showOverlay]);
+  }, [showOverlay, showMegaMenu]);
 
   useEffect(() => {
     if (!session) { setNotifs([]); setUnreadCount(0); return; }
@@ -75,7 +103,9 @@ export function Navbar({ session, onNavigate, currentPage }) {
   }, [session]);
 
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') closeOverlay(); };
+    const handleKey = (e) => {
+      if (e.key === 'Escape') { closeOverlay(); setShowMegaMenu(false); }
+    };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
   }, []);
@@ -145,6 +175,11 @@ export function Navbar({ session, onNavigate, currentPage }) {
     return `acum ${Math.floor(h / 24)}z`;
   };
 
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
   const markAsRead = async (notif) => {
     setShowNotifDropdown(false);
     if (!notif.is_read) {
@@ -197,6 +232,10 @@ export function Navbar({ session, onNavigate, currentPage }) {
     onNavigate('toate-produsele', null, { search: searchQuery });
   };
 
+  const handleMegaNav = (params) => {
+    setShowMegaMenu(false);
+    onNavigate('toate-produsele', null, params);
+  };
 
   const filteredResults = activeLocation ? searchResults.filter(p => p.location === activeLocation) : searchResults;
   const hasResults = searchQuery.trim() && (searchResults.length > 0 || isSearching);
@@ -209,30 +248,40 @@ export function Navbar({ session, onNavigate, currentPage }) {
 
           {/* Logo */}
           <div onClick={() => onNavigate('home')} className="flex items-center gap-2 cursor-pointer group flex-shrink-0">
-            <div className="text-emerald-600 text-2xl"><FontAwesomeIcon icon={faLeaf} /></div>
+            <FontAwesomeIcon icon={faEnvira} rotation={90} style={{ color: "#059669", fontSize: "24px", position: "relative", top: "2px" }} />
             <h1 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition hidden sm:block">AgriConnect</h1>
           </div>
 
-          {/* Search trigger - ocupă spațiul din mijloc */}
-          {!isAllProducts ? (
-            <>
-              <button
-                onClick={() => setShowOverlay(true)}
-                className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-300 hover:bg-white transition-all group shadow-sm"
-              >
-                <Search animateOnHover color="#c2c2c2" strokeWidth={2} size={20} />
-                <span className="flex-1">Caută produse, localitate, categorii...</span>
-              </button>
-              <button
-                onClick={() => setShowOverlay(true)}
-                className="md:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition"
-              >
-                <FontAwesomeIcon icon={faMagnifyingGlass} />
-              </button>
-            </>
-          ) : (
-            <div className="flex-1" />
-          )}
+          {/* Buton Categorii */}
+          <button
+            ref={categoriiBtnRef}
+            onClick={() => setShowMegaMenu(p => !p)}
+            className="hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
+          >
+            <FontAwesomeIcon icon={faLayerGroup} />
+            <span>Categorii</span>
+            <FontAwesomeIcon
+              icon={faChevronDownSolid}
+              className={`transition-transform duration-200 text-xs ${showMegaMenu ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {/* Search trigger */}
+          <>
+            <button
+              onClick={() => setShowOverlay(true)}
+              className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-300 hover:bg-white transition-all group shadow-sm"
+            >
+              <SearchAnimated animateOnHover color="#c2c2c2" strokeWidth={2} size={20} />
+              <span className="flex-1">Caută produse, localitate, categorii...</span>
+            </button>
+            <button
+              onClick={() => setShowOverlay(true)}
+              className="md:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition"
+            >
+              <Search size={18} />
+            </button>
+          </>
 
           {/* Dreapta: buton + avatar */}
           <div className="flex items-center gap-3 flex-shrink-0">
@@ -241,9 +290,9 @@ export function Navbar({ session, onNavigate, currentPage }) {
                 {/* Buton Adaugă anunț */}
                 <button
                   onClick={() => setShowAddProductModal(true)}
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-full text-sm hover:bg-emerald-700 hover:scale-105 transition shadow-md"
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-full text-sm hover:bg-emerald-700 shadow-md"
                 >
-                  <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                  <Plus size={14} />
                   <span>Adaugă anunț</span>
                 </button>
 
@@ -252,7 +301,7 @@ export function Navbar({ session, onNavigate, currentPage }) {
                   onClick={() => setShowAddProductModal(true)}
                   className="sm:hidden w-9 h-9 flex items-center justify-center bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition shadow-md"
                 >
-                  <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                  <Plus size={14} />
                 </button>
 
                 {/* Clopot notificări */}
@@ -261,7 +310,7 @@ export function Navbar({ session, onNavigate, currentPage }) {
                     onClick={() => setShowNotifDropdown(!showNotifDropdown)}
                     className="relative w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-xl transition"
                   >
-                    <FontAwesomeIcon icon={faBell} />
+                    <Bell size={18} />
                     {unreadCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -280,7 +329,7 @@ export function Navbar({ session, onNavigate, currentPage }) {
 
                       {notifs.length === 0 ? (
                         <div className="px-5 py-8 text-center text-gray-400">
-                          <FontAwesomeIcon icon={faBell} className="text-2xl mb-2 opacity-30" />
+                          <Bell size={28} className="mx-auto mb-2 opacity-30" />
                           <p className="text-sm">Nicio notificare</p>
                         </div>
                       ) : (
@@ -295,14 +344,14 @@ export function Navbar({ session, onNavigate, currentPage }) {
                               <div className="flex-1 min-w-0">
                                 {n.title && <p className="text-sm font-bold text-gray-900 truncate">{n.title}</p>}
                                 <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{n.content}</p>
-                                <p className="text-[10px] text-gray-400 mt-1">{relativeTime(n.created_at)}</p>
+                                <p className="text-[10px] text-gray-400 mt-1">{relativeTime(n.created_at)} · {formatDate(n.created_at)}</p>
                               </div>
                             </button>
                           ))}
                           {unreadCount > 0 && (
                             <div className="px-5 py-3 border-t border-gray-100">
                               <button onClick={markAllAsRead} className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition py-1">
-                                <FontAwesomeIcon icon={faCheckDouble} />
+                                <Check size={14} />
                                 Marchează toate ca citite
                               </button>
                             </div>
@@ -322,7 +371,7 @@ export function Navbar({ session, onNavigate, currentPage }) {
                     >
                       {!isLoadingProfile && (profileName ? profileName[0] : session.user.email[0]).toUpperCase()}
                     </div>
-                    <FontAwesomeIcon icon={faChevronDown} className={`text-gray-400 text-[10px] transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={12} className={`text-gray-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
                   {showDropdown && (
@@ -334,14 +383,14 @@ export function Navbar({ session, onNavigate, currentPage }) {
                       <div className="p-2">
                         <button onClick={() => { onNavigate('profil'); setShowDropdown(false); }} className="w-full p-2.5 text-left hover:bg-emerald-50 rounded-xl flex items-center gap-3 group">
                           <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                            <FontAwesomeIcon icon={faUser} />
+                            <User size={16} />
                           </div>
                           <span className="text-sm font-medium">Profilul meu</span>
                         </button>
                         {(userRole === 'admin' || userRole === 'super_admin') && (
                           <button onClick={() => { onNavigate('admin'); setShowDropdown(false); }} className="w-full p-2.5 text-left hover:bg-purple-50 rounded-xl flex items-center gap-3 group mt-1">
                             <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all">
-                              <FontAwesomeIcon icon={faShieldHalved} />
+                              <Shield size={16} />
                             </div>
                             <div>
                               <span className="text-sm font-medium">Administrare</span>
@@ -351,7 +400,7 @@ export function Navbar({ session, onNavigate, currentPage }) {
                         )}
                         <button onClick={handleLogout} className="w-full p-2.5 text-left hover:bg-red-50 rounded-xl flex items-center gap-3 group mt-1">
                           <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all">
-                            <FontAwesomeIcon icon={faRightFromBracket} />
+                            <LogOut size={16} />
                           </div>
                           <span className="text-sm font-medium text-red-600">Deconectare</span>
                         </button>
@@ -370,6 +419,110 @@ export function Navbar({ session, onNavigate, currentPage }) {
         </div>
       </nav>
 
+      {/* MEGA MENU */}
+      {showMegaMenu && (
+        <div
+          ref={megaMenuRef}
+          className="fixed top-16 left-0 right-0 z-40 bg-white shadow-2xl border-t border-gray-100 overflow-y-auto animate-megamenu mega-scroll"
+          style={{ maxHeight: '70vh' }}
+        >
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+              {/* B2C */}
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={faCartShopping} />
+                  Produse Alimentare
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-6">
+                  {B2C_MEGA.map(cat => (
+                    <div key={cat.id}>
+                      <button
+                        onClick={() => handleMegaNav({ category: cat.id })}
+                        className="flex items-center gap-1.5 font-bold text-gray-900 hover:text-emerald-600 transition-colors mb-2 w-full text-left"
+                      >
+                        <FontAwesomeIcon icon={cat.icon} className="text-emerald-500 text-sm flex-shrink-0" />
+                        <span className="text-sm">{cat.name}</span>
+                      </button>
+                      <ul className="space-y-1.5">
+                        {cat.subs.map(sub => (
+                          <li key={sub}>
+                            <button
+                              onClick={() => handleMegaNav({ category: cat.id, subcategory: sub })}
+                              className="text-xs text-gray-500 hover:text-emerald-600 transition-colors text-left w-full"
+                            >
+                              {sub}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        onClick={() => handleMegaNav({ category: cat.id })}
+                        className="text-xs text-emerald-600 font-semibold mt-2 hover:underline block"
+                      >
+                        Vezi toate →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* B2B */}
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={faIndustry} />
+                  Servicii &amp; Utilități 
+                </p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                  {B2B_MEGA.map(cat => (
+                    <div key={cat.id}>
+                      <button
+                        onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
+                        className="flex items-center gap-1.5 font-bold text-gray-900 hover:text-emerald-600 transition-colors mb-2 w-full text-left"
+                      >
+                        <FontAwesomeIcon icon={cat.icon} className="text-emerald-500 text-sm flex-shrink-0" />
+                        <span className="text-sm">{cat.name}</span>
+                      </button>
+                      <ul className="space-y-1.5">
+                        {cat.subs.map(sub => (
+                          <li key={sub}>
+                            <button
+                              onClick={() => handleMegaNav({ category: cat.id, subcategory: sub, type: 'b2b' })}
+                              className="text-xs text-gray-500 hover:text-emerald-600 transition-colors text-left w-full"
+                            >
+                              {sub}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
+                        className="text-xs text-emerald-600 font-semibold mt-2 hover:underline block"
+                      >
+                        Vezi toate →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer mega menu */}
+            <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+              <button
+                onClick={() => { setShowMegaMenu(false); onNavigate('toate-produsele'); }}
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-emerald-600 hover:text-white text-gray-700 rounded-xl font-semibold text-sm transition-colors"
+              >
+                Caută în toate categoriile
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* BACKDROP */}
       {showOverlay && <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[99] animate-fadeIn" />}
 
@@ -377,7 +530,7 @@ export function Navbar({ session, onNavigate, currentPage }) {
       {showOverlay && (
         <div ref={overlayRef} className="fixed top-10 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-white rounded-[20px] shadow-2xl z-[100] overflow-hidden animate-fadeIn flex flex-col">
           <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 flex-shrink-0">
-            <Search color="#c2c2c2" strokeWidth={2} size={20} />
+            <SearchAnimated color="#c2c2c2" strokeWidth={2} size={20} />
             <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(); }} className="flex-1">
               <input
                 ref={searchInputRef}
@@ -390,13 +543,13 @@ export function Navbar({ session, onNavigate, currentPage }) {
             </form>
             <div className="w-px h-5 bg-gray-200 mx-1 flex-shrink-0" />
             <button onClick={closeOverlay} className="flex-shrink-0 text-gray-500 hover:text-gray-800 transition w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full">
-              <X animateOnHover color="#c2c2c2" strokeWidth={2} size={24} />
+              <XAnimated animateOnHover color="#c2c2c2" strokeWidth={2} size={24} />
             </button>
           </div>
 
           {!searchQuery.trim() && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-gray-400">
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl mb-3 opacity-30" />
+              <Search size={36} className="mb-3 opacity-30" />
               <p className="text-sm">Începe să scrii pentru a căuta produse</p>
             </div>
           )}
@@ -418,15 +571,18 @@ export function Navbar({ session, onNavigate, currentPage }) {
                 <div className="p-5">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Categorii ({matchedCategories.length})</p>
                   <div className="space-y-1">
-                    {matchedCategories.map(catId => (
-                      <button key={catId} onClick={() => handleSelectCategory(catId)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-all group">
-                        <div className="w-7 h-7 rounded-lg bg-emerald-50 group-hover:bg-emerald-100 flex items-center justify-center flex-shrink-0 transition-colors">
-                          <FontAwesomeIcon icon={CATEGORY_ICONS[catId] || faBox} className="text-emerald-600 text-xs" />
-                        </div>
-                        <span className="font-medium truncate">{catId}</span>
-                        <span className="ml-auto text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 flex-shrink-0">{searchResults.filter(p => p.category === catId).length}</span>
-                      </button>
-                    ))}
+                    {matchedCategories.map(catId => {
+                      const CatIcon = CATEGORY_ICONS[catId] || Package;
+                      return (
+                        <button key={catId} onClick={() => handleSelectCategory(catId)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-all group">
+                          <div className="w-7 h-7 rounded-lg bg-emerald-50 group-hover:bg-emerald-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                            <CatIcon size={12} className="text-emerald-600" />
+                          </div>
+                          <span className="font-medium truncate">{catId}</span>
+                          <span className="ml-auto text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 flex-shrink-0">{searchResults.filter(p => p.category === catId).length}</span>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {matchedLocations.length > 0 && (
@@ -437,7 +593,7 @@ export function Navbar({ session, onNavigate, currentPage }) {
                           <button key={loc} onClick={() => setActiveLocation(activeLocation === loc ? null : loc)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group ${activeLocation === loc ? 'bg-emerald-50 text-emerald-700' : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-700'}`}>
                             <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${activeLocation === loc ? 'bg-emerald-100' : 'bg-gray-50 group-hover:bg-emerald-100'}`}>
-                              <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600 text-xs" />
+                              <MapPin size={12} className="text-emerald-600" />
                             </div>
                             <span className="font-medium truncate">{loc}</span>
                             <span className="ml-auto text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 flex-shrink-0">{searchResults.filter(p => p.location === loc).length}</span>
@@ -449,47 +605,50 @@ export function Navbar({ session, onNavigate, currentPage }) {
 
                   <button onClick={handleSearchSubmit} className="mt-6 w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition">
                     <span>Vezi toate ({searchResults.length})</span>
-                    <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+                    <ArrowRight size={14} />
                   </button>
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto">
                 <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {filteredResults.map(product => (
-                    <button key={product.id} onClick={() => handleSelectProduct(product.id)} className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-200 text-left group">
-                      <div className="h-28 bg-gray-50 overflow-hidden relative">
-                        {product.image_url ? (
-                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <FontAwesomeIcon icon={CATEGORY_ICONS[product.category] || faBox} className="text-3xl text-gray-200" />
-                          </div>
-                        )}
-                        <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <FontAwesomeIcon icon={CATEGORY_ICONS[product.category] || faBox} className="text-emerald-600 text-[9px]" />
-                          {product.category}
-                        </span>
-                      </div>
-                      <div className="p-2.5">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
-                        <p className="text-xs text-gray-400 truncate mt-0.5 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faLocationDot} className="text-emerald-500 text-[9px]" />
-                          {product.location}
-                        </p>
-                        <p className="text-sm font-bold text-emerald-600 mt-1.5">
-                          {product.price} <span className="text-xs font-normal text-gray-400">lei/{product.unit}</span>
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                  {filteredResults.map(product => {
+                    const ProdIcon = CATEGORY_ICONS[product.category] || Package;
+                    return (
+                      <button key={product.id} onClick={() => handleSelectProduct(product.id)} className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-200 text-left group">
+                        <div className="h-28 bg-gray-50 overflow-hidden relative">
+                          {product.image_url ? (
+                            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ProdIcon size={36} className="text-gray-200" />
+                            </div>
+                          )}
+                          <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <ProdIcon size={10} className="text-emerald-600" />
+                            {product.category}
+                          </span>
+                        </div>
+                        <div className="p-2.5">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{product.name}</p>
+                          <p className="text-xs text-gray-400 truncate mt-0.5 flex items-center gap-1">
+                            <MapPin size={10} className="text-emerald-500" />
+                            {product.location}
+                          </p>
+                          <p className="text-sm font-bold text-emerald-600 mt-1.5">
+                            {product.price} <span className="text-xs font-normal text-gray-400">lei/{product.unit}</span>
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           )}
           {noResults && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-center">
-              <SearchAlert color="#c2c2c2" strokeWidth={2} size={48} />
+              <SearchX size={48} className="text-gray-300 mb-4" />
               <p className="text-gray-600 font-medium mt-4">Niciun produs găsit pentru „{searchQuery}"</p>
               <p className="text-gray-400 text-sm mt-1">Încearcă un alt termen de căutare</p>
             </div>
@@ -510,6 +669,14 @@ export function Navbar({ session, onNavigate, currentPage }) {
         .animate-dropdown { animation: dropdown 0.18s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-fadeIn { animation: fadeIn 0.15s ease-out; }
+        @keyframes megamenu { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-megamenu { animation: megamenu 0.2s ease-out; }
+        .mega-scroll::-webkit-scrollbar { width: 4px; }
+        .mega-scroll::-webkit-scrollbar-track { background: transparent; }
+        .mega-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 99px; }
+        .mega-scroll:hover::-webkit-scrollbar-thumb { background: #d1fae5; }
+        .mega-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+        .mega-scroll:hover { scrollbar-color: #d1fae5 transparent; }
       `}</style>
     </>
   );

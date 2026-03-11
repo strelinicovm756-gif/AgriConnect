@@ -49,7 +49,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
   };
 
   const categoryConfig = {
-    'Legume': { icon: faCarrot, bgColor: 'bg-green-50', iconColor: 'text-green-600' },
+    'Legume': { icon: faCarrot, bgColor: 'bg-gray-100', iconColor: 'text-emerald-600' },
     'Fructe': { icon: faAppleWhole, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
     'Lactate': { icon: faCow, bgColor: 'bg-blue-50', iconColor: 'text-blue-600' },
     'Carne': { icon: faDrumstickBite, bgColor: 'bg-orange-50', iconColor: 'text-orange-600' },

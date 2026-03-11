@@ -74,7 +74,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Toaster position="bottom-right" reverseOrder={true} />
+      <Toaster position="top-center" />
 
       {!isLoginPage && (
         <Navbar

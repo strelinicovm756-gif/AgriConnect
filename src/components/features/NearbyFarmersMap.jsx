@@ -242,7 +242,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
     return (
         <section className="mb-12">
 
-            <div className="px-4 sm:px-6 lg:px-8 mb-4">
+            <div className="px-6 sm:px-8 lg:px-12 mb-4">
                 <button
                     onClick={() => setIsExpanded(prev => !prev)}
                     className="w-full flex items-center justify-between group text-left"
@@ -251,7 +251,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                         <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                             <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600" />
                             Furnizori langa tine
-                            <span className={`ml-5 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-0' : 'rotate-180'}`}>
+                            <span className={`ml-5 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                                 <FontAwesomeIcon icon={faChevronDown} />
                             </span>
                         </h3>
@@ -266,7 +266,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
 
 
             {/* Card cu animatie expand/collapse */}
-            <div className="px-4 sm:px-6 lg:px-8">
+            <div className="px-6 sm:px-8 lg:px-12">
                 <div
                     className="relative bg-white rounded-[32px] border border-gray-200 shadow-sm overflow-hidden transition-all duration-500 ease-in-out"
                     style={{

@@ -8,7 +8,8 @@ import {
   faUserShield, faUser, faBan, faUnlock, faArrowRight, faArrowLeft,
   faPlus, faTrash, faPen, faFloppyDisk, faRotateLeft, faStar,
   faCircleCheck, faTriangleExclamation, faBoxOpen, faFileImage,
-  faLocationDot, faTag, faCalendar, faCrown, faUserTie
+  faLocationDot, faTag, faCalendar, faCrown, faUserTie,
+  faCartShopping, faIndustry
 } from '@fortawesome/free-solid-svg-icons';
 
 // ── Structura categorii implicită ──────────────────────────────
@@ -747,8 +748,8 @@ function CategoryManagement() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {renderGroup('b2c', '🛒 B2C — Produse Alimentare', 'border-emerald-200 bg-emerald-50/30')}
-        {renderGroup('b2b', '🏭 B2B — Servicii & Utilități', 'border-blue-200 bg-blue-50/30')}
+        {renderGroup('b2c', <span className="flex items-center gap-2"><FontAwesomeIcon icon={faCartShopping} className="text-emerald-600" /> B2C — Produse Alimentare</span>, 'border-emerald-200 bg-emerald-50/30')}
+        {renderGroup('b2b', <span className="flex items-center gap-2"><FontAwesomeIcon icon={faIndustry} className="text-blue-600" /> B2B — Servicii &amp; Utilități</span>, 'border-blue-200 bg-blue-50/30')}
       </div>
     </div>
   );

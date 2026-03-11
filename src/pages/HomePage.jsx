@@ -20,30 +20,40 @@ import {
 
 // ── Categorii B2B ──────────────────────────────────────────────
 const B2B_CATEGORIES = [
-  { id: 'Servicii Teren',      name: 'Servicii Teren',      icon: faTractor },
-  { id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faFlask   },
-  { id: 'Echipamente',         name: 'Echipamente',         icon: faWrench  },
-  { id: 'Sisteme de Irigare',  name: 'Sisteme de Irigare',  icon: faDroplet },
+  {
+    id: 'Servicii Teren', name: 'Servicii Teren', icon: faTractor,
+    subs: ['Arat & Prelucrare sol', 'Semănat', 'Recoltare mecanizată', 'Transport agricol']
+  },
+  {
+    id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faFlask,
+    subs: ['Pesticide', 'Erbicide', 'Îngrășăminte organice', 'Fungicide']
+  },
+  {
+    id: 'Echipamente', name: 'Echipamente', icon: faWrench,
+    subs: ['Unelte manuale', 'Piese schimb utilaje', 'Utilaje second-hand', 'Altele']
+  },
+  {
+    id: 'Sisteme de Irigare', name: 'Sisteme de Irigare', icon: faDroplet,
+    subs: ['Sisteme picurare', 'Pompe apă', 'Furtunuri & Accesorii', 'Altele']
+  },
 ];
 const B2B_IDS = B2B_CATEGORIES.map(c => c.id);
 
-// Pill Nav Button
+// Pill Nav Button — acum fără `absolute`, poziționat de wrapper-ul părintе
 function PillNavButton({ direction, onClick, ariaLabel }) {
   return (
-    <button 
-      onClick={onClick} 
+    <button
+      onClick={onClick}
       aria-label={ariaLabel}
-      className={`absolute top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-9 h-24 backdrop-blur-sm border shadow-md transition-all duration-200 active:scale-95 hover:shadow-lg hover:w-11
+      className={`absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-9 h-24 backdrop-blur-sm transition-all duration-200 active:scale-95 hover:w-11
         ${direction === 'left' ? 'left-0' : 'right-0'}
-        /* Fundal și Text în tema Emerald */
-        bg-white/80 border-emerald-100 text-emerald-600 
-        hover:bg-emerald-600 hover:text-white hover:border-emerald-600`}
-      style={{ 
-        borderRadius: direction === 'left' ? '0 9999px 9999px 0' : '9999px 0 0 9999px' 
+        bg-white border-gray-600 text-emerald-600 hover:bg-gray-50 rounded-full shadow-md`}
+      style={{
+        borderRadius: direction === 'left' ? '0 9999px 9999px 0' : '9999px 0 0 9999px'
       }}>
-      <FontAwesomeIcon 
-        icon={direction === 'left' ? faChevronLeft : faChevronRight} 
-        className="text-xs" 
+      <FontAwesomeIcon
+        icon={direction === 'left' ? faChevronLeft : faChevronRight}
+        className="text-sm"
       />
     </button>
   );
@@ -82,13 +92,13 @@ function FarmerCard({ farmer, onNavigate }) {
   );
 }
 
-const CARD_B2C = "min-w-[320px] w-[320px] snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex-shrink-0";
-const CARD_B2B = "min-w-[320px] w-[320px] snap-start bg-white rounded-2xl border border-gray-300 overflow-hidden hover:shadow-lg hover:border-gray-400 transition-all duration-300 flex-shrink-0";
+const CARD_B2C = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-300";
+const CARD_B2B = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-300";
 
 const heroImages = [
-  { url: 'src/assets/Rosii.jpg',      alt: 'Roșii proaspete' },
+  { url: 'src/assets/Rosii.jpg', alt: 'Roșii proaspete' },
   { url: 'src/assets/castravete.jpg', alt: 'Castraveți proaspeți' },
-  { url: 'src/assets/Miere.jpeg',     alt: 'Miere naturală' },
+  { url: 'src/assets/Miere.jpeg', alt: 'Miere naturală' },
 ];
 
 // ── B2C Collapsible Block ──────────────────────────────────────
@@ -108,14 +118,14 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
   return (
     <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-[0_-15px_30px_-5px_rgba(0,0,0,0.1),0_-8px_10px_-6px_rgba(0,0,0,0.1)]">
 
-      {/* Header — identic cu harta */}
-      <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+      {/* Header */}
+      <div className="px-6 sm:px-8 lg:px-12 pt-8 pb-12">
         <button onClick={toggle} className="w-full flex items-center justify-between group text-left">
           <div className="text-left">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FontAwesomeIcon icon={faSeedling} className="text-emerald-600" />
               Produse Alimentare
-              <span className={`ml-4 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-0' : 'rotate-180'}`}>
+              <span className={`ml-4 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                 <FontAwesomeIcon icon={faChevronDown} />
               </span>
             </h3>
@@ -128,42 +138,48 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
         className="overflow-hidden"
         style={{
           transition: 'height 0.5s ease-in-out, opacity 0.5s ease-in-out',
-          height: isExpanded ? '680px' : '35px',
+          height: isExpanded ? '730px' : '35px',
           opacity: isExpanded ? 1 : 0,
         }}
       >
-        <div className="px-4 sm:px-6 lg:px-8 pt-2 pb-12">
+        <div className="px-6 sm:px-8 lg:px-12 pt-2 pb-12">
           {/* Vezi tot */}
           <div className="flex justify-end mb-5">
             <button onClick={viewAll}
-              className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all hover:scale-105 active:scale-95">
+              className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
               <span>Vezi tot</span>
               <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
             </button>
           </div>
 
-          {/* Carusel */}
+          {/* Wrapper relativ pentru butoane + carusel */}
           <div className="relative">
-            <PillNavButton direction="left" onClick={() => scroll('left', carouselRef)} ariaLabel="Stânga" />
-            <div ref={carouselRef}
-              className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory px-10"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {activeProducts.length > 0 ? activeProducts.map(p => (
-                <div key={p.id} className={CARD_B2C}>
-                  <ProductCard product={p} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
-                </div>
-              )) : (
-                <div className="flex-1 py-14 flex items-center justify-center text-gray-400 min-w-[200px]">
-                  <p className="text-sm">Niciun produs momentan.</p>
-                </div>
-              )}
+            {/* Containerul caruselului */}
+            <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
+              <PillNavButton direction="left" onClick={() => scroll('left', carouselRef)} ariaLabel="Stânga" />
+              <PillNavButton direction="right" onClick={() => scroll('right', carouselRef)} ariaLabel="Dreapta" />
+
+              <div
+                ref={carouselRef}
+                className="flex overflow-x-auto gap-4 py-2 snap-x snap-mandatory"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {activeProducts.length > 0 ? activeProducts.map(p => (
+                  <div key={p.id} className={CARD_B2C}>
+                    <ProductCard product={p} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
+                  </div>
+                )) : (
+                  <div className="flex-1 py-14 flex items-center justify-center text-gray-400 min-w-[200px]">
+                    <p className="text-sm">Niciun produs momentan.</p>
+                  </div>
+                )}
+              </div>
             </div>
-            <PillNavButton direction="right" onClick={() => scroll('right', carouselRef)} ariaLabel="Dreapta" />
           </div>
+
         </div>
       </div>
     </div>
-    
   );
 }
 
@@ -179,14 +195,14 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
       style={{ marginTop: b2cExpanded ? '-25px' : '-25px', transition: 'margin-top 0.5s ease-in-out' }}
     >
 
-      {/* Header — identic cu harta */}
-      <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+      {/* Header */}
+      <div className="px-6 sm:px-8 lg:px-12 pt-8 pb-12">
         <button onClick={() => setIsExpanded(p => !p)} className="w-full flex items-center justify-between group text-left">
           <div className="text-left">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FontAwesomeIcon icon={faTractor} className="text-emerald-600" />
               Servicii & Utilități
-              <span className={`ml-[38px] text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-0' : 'rotate-180'}`}>
+              <span className={`ml-[38px] text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                 <FontAwesomeIcon icon={faChevronDown} />
               </span>
             </h3>
@@ -199,34 +215,41 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
         className="overflow-hidden"
         style={{
           transition: 'height 0.5s ease-in-out, opacity 0.5s ease-in-out',
-          height: isExpanded ? '680px' : '0px',
+          height: isExpanded ? '720px' : '0px',
           opacity: isExpanded ? 1 : 0,
         }}
       >
-        <div className="px-4 sm:px-6 lg:px-8 pt-2 pb-6">
+        <div className="px-6 sm:px-8 lg:px-12 pt-2 pb-6">
           {/* Vezi tot */}
           <div className="flex justify-end mb-5">
             <button onClick={() => onNavigate('toate-produsele', null, { type: 'b2b' })}
-              className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-gray-700 hover:bg-gray-800 text-white shadow-sm transition-all hover:scale-105 active:scale-95">
+              className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
               <span>Vezi tot</span>
               <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
             </button>
           </div>
 
-          {/* Carusel */}
+          {/* Wrapper relativ pentru butoane + carusel */}
           <div className="relative">
-            <PillNavButton direction="left" onClick={() => scroll('left', b2bRef)} ariaLabel="Stânga" />
-            <div ref={b2bRef}
-              className="flex overflow-x-auto gap-5 pb-4 snap-x snap-mandatory px-10"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {b2bProducts.slice(0, 8).map(p => (
-                <div key={p.id} className={CARD_B2B}>
-                  <ProductCard product={p} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
-                </div>
-              ))}
+            {/* Containerul caruselului */}
+            <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6 ">
+              <PillNavButton direction="left" onClick={() => scroll('left', b2bRef)} ariaLabel="Stânga" />
+              <PillNavButton direction="right" onClick={() => scroll('right', b2bRef)} ariaLabel="Dreapta" />
+
+              <div
+                ref={b2bRef}
+                className="flex overflow-x-auto gap-4 px-2 py-2 snap-x snap-mandatory"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {b2bProducts.slice(0, 8).map(p => (
+                  <div key={p.id} className={CARD_B2B}>
+                    <ProductCard product={p} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
+                  </div>
+                ))}
+              </div>
             </div>
-            <PillNavButton direction="right" onClick={() => scroll('right', b2bRef)} ariaLabel="Dreapta" />
           </div>
+
         </div>
       </div>
 
@@ -277,12 +300,17 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   const scroll = (direction, ref) => {
     if (!ref?.current) return;
     const c = ref.current;
+    const card = c.querySelector(':first-child');
+    const cardWidth = card ? card.offsetWidth + 16 : 0; 
     const max = c.scrollWidth - c.clientWidth;
-    const amt = c.clientWidth * 0.8;
     if (direction === 'right') {
-      c.scrollLeft >= max - 10 ? c.scrollTo({ left: 0, behavior: 'smooth' }) : c.scrollBy({ left: amt, behavior: 'smooth' });
+      c.scrollLeft >= max - 10
+        ? c.scrollTo({ left: 0, behavior: 'smooth' })
+        : c.scrollBy({ left: cardWidth, behavior: 'smooth' });
     } else {
-      c.scrollLeft <= 10 ? c.scrollTo({ left: max, behavior: 'smooth' }) : c.scrollBy({ left: -amt, behavior: 'smooth' });
+      c.scrollLeft <= 10
+        ? c.scrollTo({ left: max, behavior: 'smooth' })
+        : c.scrollBy({ left: -cardWidth, behavior: 'smooth' });
     }
   };
 
@@ -423,7 +451,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
       {!loading && (
         <>
-          {/* ── FERMIERI VERIFICAȚI — în main alb ─────────────── */}
+          {/* ── FERMIERI VERIFICAȚI ─────────────────────────── */}
           {verifiedFarmers.length > 0 && (
             <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl px-4 sm:px-6 lg:px-8 pt-10 pb-8">
               <div className="flex items-center justify-between mb-5">
@@ -439,22 +467,25 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                   <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
                 </button>
               </div>
+              {/* Wrapper relativ pentru fermieri */}
               <div className="relative">
-                <PillNavButton direction="left" onClick={() => scroll('left', farmersRef)} ariaLabel="Stânga" />
-                <div ref={farmersRef} className="flex overflow-x-auto gap-4 pb-3 snap-x snap-mandatory px-10"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  {verifiedFarmers.map(f => <FarmerCard key={f.id} farmer={f} onNavigate={onNavigate} />)}
+                <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-4">
+                  <PillNavButton direction="left" onClick={() => scroll('left', farmersRef)} ariaLabel="Stânga" />
+                  <PillNavButton direction="right" onClick={() => scroll('right', farmersRef)} ariaLabel="Dreapta" />
+                  <div ref={farmersRef}
+                    className="flex overflow-x-auto gap-4 py-2 snap-x snap-mandatory"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    {verifiedFarmers.map(f => <FarmerCard key={f.id} farmer={f} onNavigate={onNavigate} />)}
+                  </div>
                 </div>
-                <PillNavButton direction="right" onClick={() => scroll('right', farmersRef)} ariaLabel="Dreapta" />
               </div>
             </div>
           )}
 
-          {/* ── B2C — Produse Alimentare (collapsible) ─────────── */}
+          {/* ── B2C ─────────────────────────────────────────── */}
           <B2CBlock
             b2cProducts={b2cProducts}
             getNewProducts={getNewProducts}
-
             session={session}
             onNavigate={onNavigate}
             handleViewDetails={handleViewDetails}
@@ -463,7 +494,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             onExpandChange={setB2cExpanded}
           />
 
-          {/* ── B2B — Servicii & Utilități (collapsible) ─── */}
+          {/* ── B2B ─────────────────────────────────────────── */}
           <B2BBlock
             b2bProducts={b2bProducts}
             session={session}
@@ -474,6 +505,50 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             b2bRef={b2bRef}
             b2cExpanded={b2cExpanded}
           />
+
+          {/* ── CATEGORII B2B GRID ────────────────────────────── */}
+          <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
+            <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
+              <h3 className="text-lg font-bold text-gray-500 uppercase tracking-wider mb-6 border-b border-gray-100 pb-3">
+                Categorii Servicii & Utilități
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
+                {B2B_CATEGORIES.map(cat => (
+                  <div key={cat.id} className="relative p-6 bg-white hover:bg-gray-50 transition-colors group overflow-hidden">
+                    <FontAwesomeIcon
+                      icon={cat.icon}
+                      className="absolute right-4 bottom-4 text-gray-100 group-hover:text-emerald-600 transition-colors"
+                      style={{ fontSize: '72px' }}
+                    />
+                    <button
+                      onClick={() => onNavigate('toate-produsele', null, { category: cat.id, type: 'b2b' })}
+                      className="font-bold text-gray-900 hover:text-emerald-700 transition-colors text-left mb-3 block text-base"
+                    >
+                      {cat.name}
+                    </button>
+                    <ul className="space-y-1.5 mb-3">
+                      {cat.subs.map(sub => (
+                        <li key={sub}>
+                          <button
+                            onClick={() => onNavigate('toate-produsele', null, { category: cat.id, subcategory: sub, type: 'b2b' })}
+                            className="text-sm text-gray-500 hover:text-emerald-600 transition-colors text-left"
+                          >
+                            {sub}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => onNavigate('toate-produsele', null, { category: cat.id, type: 'b2b' })}
+                      className="text-sm text-emerald-600 font-semibold hover:underline"
+                    >
+                      Vezi toate →
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* ── PRESTATORI B2B ────────────────────────────────── */}
           {b2bProviders.length > 0 && (
@@ -490,7 +565,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             </div>
           )}
 
-          {/* ── PRESTATORI B2C (animate-ui FlipCard) ─────────── */}
+          {/* ── PRESTATORI B2C ────────────────────────────────── */}
           {b2cProviders.length > 0 && (
             <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
               <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
@@ -509,9 +584,9 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl p-8 md:p-12 shadow-xl">
                 <div className="grid md:grid-cols-3 gap-8 text-white">
                   {[
-                    { icon: faTruck,       title: 'Direct de la Sursă',     desc: 'Fără intermediari, produse proaspete direct de la producător' },
+                    { icon: faTruck, title: 'Direct de la Sursă', desc: 'Fără intermediari, produse proaspete direct de la producător' },
                     { icon: faCircleCheck, title: 'Producători Verificați', desc: 'Toți vânzătorii sunt verificați pentru calitate și autenticitate' },
-                    { icon: faHandshake,   title: 'Fără Comisioane',        desc: 'Platformă gratuită pentru toți producătorii locali' },
+                    { icon: faHandshake, title: 'Fără Comisioane', desc: 'Platformă gratuită pentru toți producătorii locali' },
                   ].map(({ icon, title, desc }) => (
                     <div key={title} className="text-center">
                       <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -525,7 +600,6 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               </div>
             </section>
 
-            {/* ── CTA ─────────────────────────────────────────── */}
             {session && (
               <section className="mb-12">
                 <div className="bg-white rounded-3xl p-8 md:p-12 text-center border border-gray-200 shadow-sm">

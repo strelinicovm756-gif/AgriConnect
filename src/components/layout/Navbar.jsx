@@ -15,9 +15,11 @@ import { Search as SearchAnimated } from "@/components/animate-ui/icons/search";
 import {
   SearchX, Plus, Bell, Check, ChevronDown, User, Shield,
   LogOut, ArrowRight, MapPin, Package, Search,
-  Carrot, Apple, Milk, Beef, Egg, Flower2, Wheat, Tractor
+  Carrot, Apple, Milk, Beef, Egg, Flower2, Wheat, Tractor,
+  MessageSquare
 } from 'lucide-react';
 import AddProductModal from "../features/AddProductModal";
+import { useChat } from "../../hooks/useChat";
 
 const CATEGORY_ICONS = {
   'Legume': Carrot,
@@ -64,6 +66,8 @@ export function Navbar({ session, onNavigate }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
+  const { getUnreadCount } = useChat();
 
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
@@ -100,6 +104,17 @@ export function Navbar({ session, onNavigate }) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'annonce_notifications', filter: `id_profiles=eq.${session.user.id}` }, () => loadNotifs())
       .subscribe();
     return () => supabase.removeChannel(channel);
+  }, [session]);
+
+  useEffect(() => {
+    if (!session) { setChatUnreadCount(0); return; }
+    const loadChatUnread = async () => {
+      const count = await getUnreadCount(session.user.id);
+      setChatUnreadCount(count);
+    };
+    loadChatUnread();
+    const interval = setInterval(loadChatUnread, 30000);
+    return () => clearInterval(interval);
   }, [session]);
 
   useEffect(() => {
@@ -303,6 +318,22 @@ export function Navbar({ session, onNavigate }) {
                 >
                   <Plus size={14} />
                 </button>
+
+                {/* Chat */}
+                <div className="relative">
+                  <button
+                    onClick={() => onNavigate('chat')}
+                    className="relative w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-xl transition"
+                    title="Mesaje"
+                  >
+                    <MessageSquare size={18} />
+                    {chatUnreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                        {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
 
                 {/* Clopot notificări */}
                 <div className="relative" ref={notifRef}>

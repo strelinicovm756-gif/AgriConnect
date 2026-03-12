@@ -3,6 +3,7 @@ import { getColorForName } from '../lib/utils';
 import { useParams } from 'react-router-dom';
 import { supabase } from "../services/supabaseClient";
 import ProductMapModal from "../components/features/ProductMapModal";
+import ChatModal from "../components/features/ChatModal";
 import toast from 'react-hot-toast';
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
@@ -87,7 +88,14 @@ function ReviewsSection({ productId, session, productOwnerId }) {
     setSubmitting(true);
     try {
       const { error } = await supabase.from('comments').insert({ id_profiles: session.user.id, id_produit: productId, content: newContent.trim(), rating: newRating });
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Ai lăsat deja o recenzie pentru acest produs');
+        } else {
+          throw error;
+        }
+        return;
+      }
       toast.success('Recenzie adăugată!');
       setNewContent(''); setNewRating(0); fetchComments();
     } catch (err) { toast.error('Eroare la trimitere'); console.error(err); }
@@ -269,6 +277,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const [userCurrentLocation, setUserCurrentLocation] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isHoveringGallery, setIsHoveringGallery] = useState(false);
@@ -604,7 +613,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                         className="bg-white text-emerald-600 hover:bg-emerald-50 font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-md">
                         <FontAwesomeIcon icon={faPhone} /> Sună Acum
                       </button>
-                      <button onClick={() => toast('Funcționalitate în dezvoltare', { icon: '💬' })}
+                      <button onClick={() => { if (!session) { onNavigate('login'); return; } setShowChatModal(true); }}
                         className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2">
                         <FontAwesomeIcon icon={faMessage} /> Mesaj
                       </button>
@@ -687,6 +696,19 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
       )}
 
       <ProductMapModal isOpen={showMapModal} onClose={() => setShowMapModal(false)} product={product} userLocation={userCurrentLocation} />
+
+      <ChatModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        session={session}
+        product={{
+          id: product.id,
+          name: product.name,
+          user_id: product.user_id,
+          seller_name: product.seller_name,
+          seller_phone: product.seller_phone,
+        }}
+      />
     </div>
   );
 }

@@ -93,7 +93,7 @@ function FarmerCard({ farmer, onNavigate }) {
 }
 
 const CARD_B2C = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-300";
-const CARD_B2B = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-300";
+const CARD_B2B = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-00 transition-all duration-300";
 
 const heroImages = [
   { url: 'src/assets/Rosii.jpg', alt: 'Roșii proaspete' },

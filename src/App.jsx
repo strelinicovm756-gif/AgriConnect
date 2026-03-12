@@ -8,6 +8,7 @@ import ProfilePage from "./pages/ProfilePage";
 import AllProductsPage from "./pages/AllProductsPage";
 import ProducerPublicProfile from './pages/ProducerPublicProfile';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import ChatPage from './pages/ChatPage';
 import { Navbar } from "./components/layout/Navbar";
 import { Toaster } from "react-hot-toast";
 
@@ -39,6 +40,9 @@ export default function App() {
         break;
       case 'admin':
         navigate('/admin');
+        break;
+      case 'chat':
+        navigate('/chat');
         break;
       case 'producator':
         navigate(`/producator/${param}`);
@@ -147,6 +151,11 @@ export default function App() {
           <Route
             path="/admin"
             element={<AdminDashboard session={session} onNavigate={navigateTo} />}
+          />
+
+          <Route
+            path="/chat"
+            element={<ChatPage session={session} onNavigate={navigateTo} />}
           />
 
           {/* Orice altă rută → acasă */}

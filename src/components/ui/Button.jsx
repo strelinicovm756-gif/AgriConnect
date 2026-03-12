@@ -32,7 +32,7 @@ export function Button({
         ${variants[variant]} 
         ${sizes[size]} 
         ${className}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98]'}
+        ${disabled && 'opacity-50 cursor-not-allowed'}
       `}
     >
       {children}

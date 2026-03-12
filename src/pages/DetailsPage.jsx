@@ -10,10 +10,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot, faAppleWhole, faCow, faDrumstickBite,
   faEgg, faJar, faWheatAwn, faBox,
-  faLocationDot, faCalendarDays, faPhone, faEye,
-  faCircleCheck, faMapMarkedAlt, faTag,
+  faLocationDot, faCalendarDays, faPhone, faAddressCard,
+  faCircleCheck, faMapMarkedAlt,
   faHandshake, faLeaf, faMessage,
-  faStar, faExclamationTriangle,
+  faStar,
   faChevronLeft, faChevronRight,
   faComments, faPaperPlane, faTrash, faPen, faFlag
 } from '@fortawesome/free-solid-svg-icons';
@@ -156,18 +156,18 @@ function ReviewsSection({ productId, session, productOwnerId }) {
       )}
 
       {session && !myComment && !isProductOwner && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 mb-8">
+        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8">
           <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faPen} className="text-emerald-600" />
             Lasă o recenzie
           </h3>
           <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2 font-medium">Rating *</p>
+            <p className="text-sm text-gray-600 mb-2 font-medium">Rating</p>
             <StarRating value={newRating} onChange={setNewRating} size="text-3xl" />
             {newRating > 0 && <p className="text-xs text-emerald-600 mt-1 font-medium">{['', 'Slab', 'Acceptabil', 'Bun', 'Foarte bun', 'Excelent'][newRating]}</p>}
           </div>
           <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2 font-medium">Recenzie *</p>
+            <p className="text-sm text-gray-600 mb-2 font-medium">Recenzie</p>
             <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)}
               placeholder="Spune-ne experiența ta cu acest produs..." rows={4} maxLength={1000}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white" />
@@ -412,7 +412,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-white flex items-center justify-center">
         <div className="text-center">
           <Metronome size="40" speed="1.6" color="#059669" />
           <p className="text-gray-600">Se încarcă...</p>
@@ -429,7 +429,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-8">
           <div className="grid lg:grid-cols-2 gap-0">
             {/* Left - GALERIE */}
-            <div className="p-8 bg-gray-50">
+            <div className="p-8 bg-white">
               <div className="relative aspect-square bg-white rounded-3xl overflow-hidden shadow-lg mb-4"
                 onMouseEnter={() => setIsHoveringGallery(true)}
                 onMouseLeave={() => setIsHoveringGallery(false)}>
@@ -446,13 +446,6 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                       </div>
                     </div>
                     <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
-                      {product.seller_verified && (
-                        <div className="bg-emerald-500/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
-                          <span className="text-white font-semibold text-xs flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faCircleCheck} /> VERIFICAT
-                          </span>
-                        </div>
-                      )}
                       {product.is_negotiable && (
                         <div className="bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
                           <span className="text-white font-semibold text-xs">NEGOCIABIL</span>
@@ -463,11 +456,10 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                           onClick={() => { if (!alreadyReported) setShowReportModal(true); }}
                           disabled={alreadyReported}
                           title={alreadyReported ? 'Ai raportat deja acest anunț' : 'Raportează anunțul'}
-                          className={`self-end w-8 h-8 rounded-full backdrop-blur-sm shadow-md flex items-center justify-center transition ${
-                            alreadyReported
-                              ? 'bg-red-500/95 cursor-not-allowed'
-                              : 'bg-white/80 hover:bg-red-100 text-gray-400 hover:text-red-500'
-                          }`}
+                          className={`self-end w-8 h-8 rounded-full backdrop-blur-sm shadow-md flex items-center justify-center transition ${alreadyReported
+                            ? 'bg-red-500/95 cursor-not-allowed'
+                            : 'bg-white/80 hover:bg-red-100 text-gray-400 hover:text-red-500'
+                            }`}
                         >
                           <FontAwesomeIcon icon={faFlag} className={`text-xs ${alreadyReported ? 'text-white' : ''}`} />
                         </button>
@@ -496,8 +488,8 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     )}
                   </>
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-emerald-50">
-                    <FontAwesomeIcon icon={categoryIcons[product.category] || faBox} className="text-9xl text-emerald-200" />
+                  <div className="flex items-center justify-center h-full bg-gray-50">
+                    <FontAwesomeIcon icon={categoryIcons[product.category] || faBox} className="text-9xl text-emerald-600" />
                   </div>
                 )}
               </div>
@@ -519,23 +511,6 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                   </div>
                 </div>
               )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-xl p-4 text-center border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <FontAwesomeIcon icon={faEye} className="text-gray-400" />
-                    <p className="text-2xl font-bold text-gray-900">{product.views_count || 0}</p>
-                  </div>
-                  <p className="text-gray-500 text-xs">Vizualizări</p>
-                </div>
-                <div className="bg-white rounded-xl p-4 text-center border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <FontAwesomeIcon icon={faPhone} className="text-gray-400" />
-                    <p className="text-2xl font-bold text-gray-900">{product.contact_count || 0}</p>
-                  </div>
-                  <p className="text-gray-500 text-xs">Contactări</p>
-                </div>
-              </div>
             </div>
 
             {/* Right - Info */}
@@ -554,53 +529,54 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                 </div>
               </div>
 
-              <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-6 mb-6">
-                <div className="flex items-baseline gap-3 mb-2">
-                  <p className="text-5xl font-bold text-emerald-600">{formatPrice(product.price)}</p>
-                  <span className="text-2xl font-semibold text-gray-900">lei</span>
-                </div>
-                <p className="text-gray-600 text-lg">per <span className="font-semibold text-gray-900">{product.unit}</span></p>
-              </div>
-
-              {product.quantity && (
-                <div className="mb-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700">Disponibilitate</span>
-                    <span className={`text-sm font-bold ${stockPercentage < 10 ? 'text-red-600' : stockPercentage < 30 ? 'text-orange-600' : 'text-emerald-600'}`}>
-                      {formatPrice(product.quantity)} {product.unit} rămase
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                    <div className={`h-2.5 rounded-full transition-all ${stockPercentage < 10 ? 'bg-red-600' : stockPercentage < 30 ? 'bg-orange-500' : 'bg-emerald-600'}`}
-                      style={{ width: `${Math.max(stockPercentage, 5)}%` }} />
-                  </div>
-                  {stockPercentage < 30 && (
-                    <p className="text-xs text-orange-600 mt-1 font-medium flex items-center gap-1">
-                      <FontAwesomeIcon icon={faExclamationTriangle} /> Stoc limitat! Comandă repede.
-                    </p>
-                  )}
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-3 mb-6">
-                <button onClick={() => onNavigate('producator', product.user_id)}
-                  className="text-emerald-100 text-xs underline hover:text-white">
-                  Vezi profilul complet →
-                </button>
-                <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
-                  <FontAwesomeIcon icon={faTag} className="text-emerald-600 mt-1" />
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Categorie</p>
-                    <p className="text-gray-900 font-semibold">{product.category}</p>
+
+                {/* Preț — ocupă toată lățimea */}
+                <div className="col-span-2 bg-gray-50 rounded-2xl px-5 py-4 flex items-center justify-between">
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-5xl font-bold text-emerald-600">{formatPrice(product.price)}</p>
+                    <span className="text-xl font-semibold text-gray-700">lei</span>
+                    <span className="text-gray-400 text-sm">/ {product.unit}</span>
                   </div>
                 </div>
-                {product.is_negotiable && (
-                  <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
-                    <FontAwesomeIcon icon={faHandshake} className="text-emerald-600 mt-1" />
-                    <div><p className="text-xs text-gray-500 mb-1">Preț Negociabil</p></div>
+
+                {/* Negociabil */}
+                {product.is_negotiable ? (
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2.5">
+                    <FontAwesomeIcon icon={faHandshake} className="text-blue-500 text-lg shrink-0" />
+                    <div>
+                      <p className="text-xs text-blue-400 font-medium leading-none mb-0.5">Preț</p>
+                      <p className="text-sm font-bold text-blue-700">Negociabil</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-2.5">
+                    <FontAwesomeIcon icon={faHandshake} className="text-gray-300 text-lg shrink-0" />
+                    <div>
+                      <p className="text-xs text-gray-400 font-medium leading-none mb-0.5">Preț</p>
+                      <p className="text-sm font-bold text-gray-400">Fix</p>
+                    </div>
                   </div>
                 )}
+
+                {/* Profil complet */}
+                <button
+                  onClick={() => onNavigate('producator', product.user_id)}
+                  className="bg-gray-50 border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 rounded-xl px-4 py-3 flex items-center gap-2.5 transition-all group"
+                >
+                  <FontAwesomeIcon icon={faAddressCard} className="text-emerald-500 text-lg shrink-0" />
+                  <div className="text-left">
+                    <p className="text-xs text-gray-400 font-medium leading-none mb-0.5">Vânzător</p>
+                    <p className="text-sm font-bold text-gray-700 group-hover:text-emerald-600 transition-colors">
+                      Vezi profil
+                    </p>
+                  </div>
+                </button>
+
               </div>
+
+
+
 
               <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-6 mb-4 shadow-lg">
                 <div className="flex items-center gap-4 mb-4">
@@ -638,10 +614,9 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
               </div>
 
               <button onClick={handleViewOnMap}
-                className="w-full bg-white border-2 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 font-medium py-3 rounded-xl transition flex items-center justify-center gap-2">
+                className="w-full bg-emerald-700 border-2 border-gray-200 hover:bg-emerald-800 text-white hover:text-white font-medium py-3 rounded-xl transition flex items-center justify-center gap-2">
                 <FontAwesomeIcon icon={faMapMarkedAlt} /> Vezi locația pe hartă
               </button>
-              <p className="text-gray-500 text-xs text-center mt-2">Locație aproximativă pentru confidențialitate</p>
             </div>
           </div>
         </div>
@@ -672,11 +647,10 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                 <button
                   key={r}
                   onClick={() => setReportReason(r)}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition border ${
-                    reportReason === r
-                      ? 'bg-red-50 text-red-700 font-semibold border-red-300'
-                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-transparent'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition border ${reportReason === r
+                    ? 'bg-red-50 text-red-700 font-semibold border-red-300'
+                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-transparent'
+                    }`}
                 >
                   {r}
                 </button>

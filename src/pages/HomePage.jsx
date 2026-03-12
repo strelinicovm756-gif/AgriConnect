@@ -15,7 +15,7 @@ import {
   faPlus, faLeaf, faCircleCheck, faHandshake,
   faArrowRight, faTruck, faSeedling, faChevronLeft, faChevronRight,
   faTractor, faFlask, faStar, faMapMarkerAlt, faShieldHalved,
-  faWrench, faDroplet, faChevronDown
+  faWrench, faDroplet, faChevronDown, faCalendarDays, faLocationDot
 } from '@fortawesome/free-solid-svg-icons';
 
 // ── Categorii B2B ──────────────────────────────────────────────
@@ -95,11 +95,6 @@ function FarmerCard({ farmer, onNavigate }) {
 const CARD_B2C = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-300";
 const CARD_B2B = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-00 transition-all duration-300";
 
-const heroImages = [
-  { url: 'src/assets/Rosii.jpg', alt: 'Roșii proaspete' },
-  { url: 'src/assets/castravete.jpg', alt: 'Castraveți proaspeți' },
-  { url: 'src/assets/Miere.jpeg', alt: 'Miere naturală' },
-];
 
 // ── B2C Collapsible Block ──────────────────────────────────────
 function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleViewDetails, handleContactClick, scroll, onExpandChange }) {
@@ -265,6 +260,8 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   const [loading, setLoading] = useState(true);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [heroEvents, setHeroEvents] = useState([]);
+  const [heroLoading, setHeroLoading] = useState(true);
 
   const farmersRef = useRef(null);
   const b2bRef = useRef(null);
@@ -272,9 +269,28 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
   useEffect(() => { fetchProducts(); fetchVerifiedFarmers(); }, []);
   useEffect(() => {
-    const t = setInterval(() => setCurrentSlide(p => (p + 1) % heroImages.length), 5000);
-    return () => clearInterval(t);
+    const fetchHeroEvents = async () => {
+      try {
+        const { data } = await supabase
+          .from('events')
+          .select('id, title, description, image_url, event_date, end_date, location_text, type')
+          .eq('is_published', true)
+          .order('event_date', { ascending: true })
+          .limit(6);
+        setHeroEvents(data || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setHeroLoading(false);
+      }
+    };
+    fetchHeroEvents();
   }, []);
+  useEffect(() => {
+    if (heroEvents.length === 0) return;
+    const t = setInterval(() => setCurrentSlide(p => (p + 1) % heroEvents.length), 5500);
+    return () => clearInterval(t);
+  }, [heroEvents.length]);
 
   const fetchProducts = async () => {
     try {
@@ -398,42 +414,147 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50/50 via-white to-gray-50">
 
-      {/* ── HERO ─────────────────────────────────────────────── */}
+      {/* ── HERO — Dynamic Events Slider ─────────────────────── */}
       <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
-        {heroImages.map((img, i) => (
-          <div key={i} className={`absolute inset-0 transition-opacity duration-1000 ${i === currentSlide ? 'opacity-100' : 'opacity-0'}`}>
-            <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-black/30 to-transparent" />
+
+        {/* Loading state */}
+        {heroLoading && (
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 to-emerald-700 flex items-center justify-center">
+            <div className="text-white text-center">
+              <FontAwesomeIcon icon={faCalendarDays} className="text-5xl opacity-40 mb-3" />
+              <p className="text-emerald-200 text-sm">Se încarcă...</p>
+            </div>
+          </div>
+        )}
+
+        {/* No events fallback */}
+        {!heroLoading && heroEvents.length === 0 && (
+          <div className="absolute inset-0 bg-gradient-to-tr from-emerald-900 via-emerald-700 to-emerald-500">
+            <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-black/20 to-transparent" />
             <div className="absolute inset-0 flex items-center">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                 <div className="max-w-2xl text-white">
+                  <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-white/30">
+                    <FontAwesomeIcon icon={faCalendarDays} />
+                    AgriConnect Moldova
+                  </span>
                   <h2 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
-                    {i === 0 ? 'Produse proaspete direct de la producător' : img.alt}
+                    Produse proaspete direct de la producător
                   </h2>
-                  <p className="text-lg md:text-xl text-gray-200 mb-6 font-light">
+                  <p className="text-lg md:text-xl text-gray-200 mb-8 font-light">
                     Susținem micii antreprenori locali. Calitate garantată fără intermediari.
                   </p>
+                  <button
+                    onClick={() => onNavigate('toate-produsele')}
+                    className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-4 rounded-2xl hover:bg-emerald-50 transition-all shadow-xl hover:scale-105 active:scale-95"
+                  >
+                    Explorează produsele
+                    <FontAwesomeIcon icon={faArrowRight} />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        ))}
-        <button onClick={() => setCurrentSlide(p => (p - 1 + heroImages.length) % heroImages.length)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-28 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-all active:scale-95"
-          style={{ borderRadius: '0 9999px 9999px 0' }}>
-          <FontAwesomeIcon icon={faChevronLeft} className="text-sm" />
-        </button>
-        <button onClick={() => setCurrentSlide(p => (p + 1) % heroImages.length)}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-28 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-all active:scale-95"
-          style={{ borderRadius: '9999px 0 0 9999px' }}>
-          <FontAwesomeIcon icon={faChevronRight} className="text-sm" />
-        </button>
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-          {heroImages.map((_, i) => (
-            <button key={i} onClick={() => setCurrentSlide(i)}
-              className={`transition-all duration-300 rounded-full ${i === currentSlide ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50'}`} />
-          ))}
-        </div>
+        )}
+
+        {/* Dynamic slides from events */}
+        {!heroLoading && heroEvents.length > 0 && (
+          <>
+            {heroEvents.map((ev, i) => {
+              const TYPE_CONFIG = {
+                iarmaroc:     { label: 'Iarmaroc',     color: 'bg-emerald-500/90' },
+                curs_agricol: { label: 'Curs Agricol', color: 'bg-blue-500/90' },
+                piata_locala: { label: 'Piață Locală', color: 'bg-amber-500/90' },
+              };
+              const typeInfo = TYPE_CONFIG[ev.type] || TYPE_CONFIG.iarmaroc;
+              const isActive = i === currentSlide;
+
+              return (
+                <div
+                  key={ev.id}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                >
+                  {ev.image_url ? (
+                    <img src={ev.image_url} alt={ev.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-emerald-900 via-emerald-700 to-emerald-500" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-black/80 via-black/40 to-transparent" />
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                      <div className="max-w-2xl text-white">
+                        <span className={`inline-flex items-center gap-2 ${typeInfo.color} backdrop-blur-sm text-white text-xs font-bold px-4 py-2 rounded-full mb-5 shadow-lg`}>
+                          <FontAwesomeIcon icon={faCalendarDays} />
+                          {typeInfo.label}
+                        </span>
+                        <h2 className="text-3xl md:text-5xl font-bold mb-4 leading-tight drop-shadow-lg">
+                          {ev.title}
+                        </h2>
+                        <div className="flex flex-wrap items-center gap-4 mb-7 text-sm text-gray-200">
+                          {ev.location_text && (
+                            <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                              <FontAwesomeIcon icon={faLocationDot} className="text-emerald-400" />
+                              {ev.location_text}
+                            </span>
+                          )}
+                          {ev.event_date && (
+                            <span className="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                              <FontAwesomeIcon icon={faCalendarDays} className="text-emerald-400" />
+                              {new Date(ev.event_date).toLocaleDateString('ro-RO', {
+                                day: 'numeric', month: 'long', year: 'numeric'
+                              })}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => onNavigate('eveniment', ev.id)}
+                          className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-4 rounded-2xl hover:bg-emerald-50 transition-all shadow-xl hover:scale-105 active:scale-95"
+                        >
+                          Află mai mult
+                          <FontAwesomeIcon icon={faArrowRight} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            <button
+              onClick={() => setCurrentSlide(p => (p - 1 + heroEvents.length) % heroEvents.length)}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-28 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-all active:scale-95"
+              style={{ borderRadius: '0 9999px 9999px 0' }}
+              aria-label="Slide anterior"
+            >
+              <FontAwesomeIcon icon={faChevronLeft} className="text-sm" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide(p => (p + 1) % heroEvents.length)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-28 bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-all active:scale-95"
+              style={{ borderRadius: '9999px 0 0 9999px' }}
+              aria-label="Slide următor"
+            >
+              <FontAwesomeIcon icon={faChevronRight} className="text-sm" />
+            </button>
+
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {heroEvents.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`transition-all duration-300 rounded-full ${
+                    i === currentSlide ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
+                  }`}
+                  aria-label={`Slide ${i + 1}`}
+                />
+              ))}
+            </div>
+
+            <div className="absolute top-5 right-5 z-10 bg-black/30 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+              {currentSlide + 1} / {heroEvents.length}
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── HARTA ─────────────────────────────────────────────── */}

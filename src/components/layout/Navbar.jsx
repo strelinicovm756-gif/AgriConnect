@@ -5,7 +5,7 @@ import {
   faLayerGroup, faCarrot, faAppleWhole, faCow, faDrumstickBite,
   faEgg, faJar, faWheatAwn, faTractor, faSeedling, faWrench, faDroplet,
   faCartShopping, faIndustry,
-  faChevronDown as faChevronDownSolid
+  faChevronDown as faChevronDownSolid, faCalendarDays
 } from '@fortawesome/free-solid-svg-icons';
 import { getColorForName } from '../../lib/utils';
 import { supabase } from "../../services/supabaseClient";
@@ -266,6 +266,15 @@ export function Navbar({ session, onNavigate }) {
             <FontAwesomeIcon icon={faEnvira} rotation={90} style={{ color: "#059669", fontSize: "24px", position: "relative", top: "2px" }} />
             <h1 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition hidden sm:block">AgriConnect</h1>
           </div>
+
+          {/* Link Evenimente */}
+          <button
+            onClick={() => onNavigate('evenimente')}
+            className="hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
+          >
+            <FontAwesomeIcon icon={faCalendarDays} className="text-white" />
+            <span>Evenimente</span>
+          </button>
 
           {/* Buton Categorii */}
           <button

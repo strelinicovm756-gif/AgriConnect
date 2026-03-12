@@ -9,6 +9,8 @@ import AllProductsPage from "./pages/AllProductsPage";
 import ProducerPublicProfile from './pages/ProducerPublicProfile';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ChatPage from './pages/ChatPage';
+import EventDetailsPage from './pages/EventDetailsPage';
+import EventsPage from './pages/EventsPage';
 import { Navbar } from "./components/layout/Navbar";
 import { Toaster } from "react-hot-toast";
 
@@ -49,6 +51,12 @@ export default function App() {
         break;
       case 'detalii':
         navigate(`/produs/${param}`);
+        break;
+      case 'eveniment':
+        navigate(`/eveniment/${param}`);
+        break;
+      case 'evenimente':
+        navigate('/evenimente');
         break;
       case 'toate-produsele': {
         const params = new URLSearchParams();
@@ -156,6 +164,16 @@ export default function App() {
           <Route
             path="/chat"
             element={<ChatPage session={session} onNavigate={navigateTo} />}
+          />
+
+          <Route
+            path="/evenimente"
+            element={<EventsPage session={session} onNavigate={navigateTo} />}
+          />
+
+          <Route
+            path="/eveniment/:id"
+            element={<EventDetailsPage session={session} onNavigate={navigateTo} />}
           />
 
           {/* Orice altă rută → acasă */}

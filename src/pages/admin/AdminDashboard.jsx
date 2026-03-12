@@ -9,7 +9,7 @@ import {
   faPlus, faTrash, faPen, faFloppyDisk, faRotateLeft, faStar,
   faCircleCheck, faTriangleExclamation, faBoxOpen, faFileImage,
   faLocationDot, faTag, faCalendar, faCrown, faUserTie,
-  faCartShopping, faIndustry
+  faCartShopping, faIndustry, faCalendarDays
 } from '@fortawesome/free-solid-svg-icons';
 
 // ── Structura categorii implicită ──────────────────────────────
@@ -920,6 +920,448 @@ function UserManagement({ userRole }) {
   );
 }
 
+// ── Management Evenimente ──────────────────────────────────────
+function EventManagement() {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const emptyForm = {
+    title: '',
+    description: '',
+    type: 'iarmaroc',
+    event_date: '',
+    end_date: '',
+    location_text: '',
+    latitude: '',
+    longitude: '',
+    schedule: '',
+    image_url: '',
+    is_published: false,
+  };
+  const [form, setForm] = useState(emptyForm);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('event_date', { ascending: false });
+      if (error) throw error;
+      setEvents(data || []);
+    } catch {
+      toast.error('Eroare la încărcarea evenimentelor');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openCreate = () => {
+    setEditingEvent(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (ev) => {
+    setEditingEvent(ev);
+    setForm({
+      title: ev.title || '',
+      description: ev.description || '',
+      type: ev.type || 'iarmaroc',
+      event_date: ev.event_date ? ev.event_date.slice(0, 16) : '',
+      end_date: ev.end_date ? ev.end_date.slice(0, 16) : '',
+      location_text: ev.location_text || '',
+      latitude: ev.latitude || '',
+      longitude: ev.longitude || '',
+      schedule: ev.schedule || '',
+      image_url: ev.image_url || '',
+      is_published: ev.is_published || false,
+    });
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.title.trim()) return toast.error('Titlul este obligatoriu');
+    if (!form.event_date) return toast.error('Data evenimentului este obligatorie');
+    setActionLoading('save');
+    try {
+      const payload = {
+        title: form.title.trim(),
+        description: form.description.trim() || null,
+        type: form.type,
+        event_date: form.event_date || null,
+        end_date: form.end_date || null,
+        location_text: form.location_text.trim() || null,
+        latitude: form.latitude ? parseFloat(form.latitude) : null,
+        longitude: form.longitude ? parseFloat(form.longitude) : null,
+        schedule: form.schedule.trim() || null,
+        image_url: form.image_url.trim() || null,
+        is_published: form.is_published,
+      };
+      if (editingEvent) {
+        const { error } = await supabase.from('events').update(payload).eq('id', editingEvent.id);
+        if (error) throw error;
+        toast.success('Eveniment actualizat!');
+      } else {
+        const { error } = await supabase.from('events').insert(payload);
+        if (error) throw error;
+        toast.success('Eveniment creat!');
+      }
+      setShowForm(false);
+      setEditingEvent(null);
+      setForm(emptyForm);
+      load();
+    } catch {
+      toast.error('Eroare la salvare');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleTogglePublish = async (ev) => {
+    setActionLoading(ev.id + '_publish');
+    try {
+      const { error } = await supabase.from('events').update({ is_published: !ev.is_published }).eq('id', ev.id);
+      if (error) throw error;
+      toast.success(ev.is_published ? 'Eveniment ascuns!' : 'Eveniment publicat!');
+      load();
+    } catch {
+      toast.error('Eroare');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Ștergi definitiv acest eveniment?')) return;
+    setActionLoading(id + '_delete');
+    try {
+      const { error } = await supabase.from('events').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Eveniment șters!');
+      load();
+    } catch {
+      toast.error('Eroare la ștergere');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const TYPE_CONFIG = {
+    iarmaroc:     { label: 'Iarmaroc',     color: 'bg-emerald-100 text-emerald-700' },
+    curs_agricol: { label: 'Curs Agricol', color: 'bg-blue-100 text-blue-700' },
+    piata_locala: { label: 'Piață Locală', color: 'bg-amber-100 text-amber-800' },
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <p className="text-sm text-gray-500">
+          Evenimentele publicate apar în slider-ul de pe pagina principală.
+        </p>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-md"
+        >
+          <FontAwesomeIcon icon={faPlus} />
+          Eveniment nou
+        </button>
+      </div>
+
+      {/* Form modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-4">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                <FontAwesomeIcon icon={faCalendarDays} className="text-emerald-600" />
+                {editingEvent ? 'Editează eveniment' : 'Eveniment nou'}
+              </h3>
+              <button
+                onClick={() => { setShowForm(false); setEditingEvent(null); }}
+                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition"
+              >
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              {/* Titlu */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Titlu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  value={form.title}
+                  onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder="ex: Iarmaroc de Toamnă Pirita 2026"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+              </div>
+
+              {/* Tip + Publicat */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tip eveniment</label>
+                  <select
+                    value={form.type}
+                    onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                  >
+                    <option value="iarmaroc">Iarmaroc</option>
+                    <option value="curs_agricol">Curs Agricol</option>
+                    <option value="piata_locala">Piață Locală</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-3 cursor-pointer w-full px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                    <div
+                      onClick={() => setForm(p => ({ ...p, is_published: !p.is_published }))}
+                      className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${form.is_published ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.is_published ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {form.is_published ? 'Publicat' : 'Ascuns'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Date */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Data start <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={form.event_date}
+                    onChange={e => setForm(p => ({ ...p, event_date: e.target.value }))}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Data sfârșit</label>
+                  <input
+                    type="datetime-local"
+                    value={form.end_date}
+                    onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+              </div>
+
+              {/* Locație */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  <FontAwesomeIcon icon={faLocationDot} className="text-emerald-500 mr-1" />
+                  Locație (text)
+                </label>
+                <input
+                  value={form.location_text}
+                  onChange={e => setForm(p => ({ ...p, location_text: e.target.value }))}
+                  placeholder="ex: s. Pîrița, Școala Gimnazială"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+              </div>
+
+              {/* Coordonate GPS */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Latitudine GPS</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={form.latitude}
+                    onChange={e => setForm(p => ({ ...p, latitude: e.target.value }))}
+                    placeholder="ex: 47.0284"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Longitudine GPS</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={form.longitude}
+                    onChange={e => setForm(p => ({ ...p, longitude: e.target.value }))}
+                    placeholder="ex: 28.8575"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 -mt-2">
+                Coordonatele GPS sunt opționale — folosite pentru harta din pagina evenimentului.
+                Găsește-le pe <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="text-emerald-600 underline">Google Maps</a> → click dreapta pe locație.
+              </p>
+
+              {/* URL Imagine */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  URL Imagine (opțional)
+                </label>
+                <input
+                  value={form.image_url}
+                  onChange={e => setForm(p => ({ ...p, image_url: e.target.value }))}
+                  placeholder="https://..."
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+                {form.image_url && (
+                  <img
+                    src={form.image_url}
+                    alt="preview"
+                    className="mt-2 w-full h-32 object-cover rounded-xl border border-gray-200"
+                    onError={e => { e.target.style.display = 'none'; }}
+                  />
+                )}
+              </div>
+
+              {/* Descriere */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Descriere</label>
+                <textarea
+                  value={form.description}
+                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                  placeholder="Descrie evenimentul..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+              </div>
+
+              {/* Program */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Program (opțional)</label>
+                <textarea
+                  value={form.schedule}
+                  onChange={e => setForm(p => ({ ...p, schedule: e.target.value }))}
+                  placeholder={'ex: 09:00 — Deschidere\n10:00 — Concurs produse locale\n14:00 — Premierea câștigătorilor'}
+                  rows={4}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+              <button
+                onClick={() => { setShowForm(false); setEditingEvent(null); }}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
+              >
+                Anulează
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={actionLoading === 'save'}
+                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
+              >
+                {actionLoading === 'save'
+                  ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                  : <FontAwesomeIcon icon={faFloppyDisk} />
+                }
+                {editingEvent ? 'Salvează modificările' : 'Creează evenimentul'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Events list */}
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" />
+        </div>
+      ) : events.length === 0 ? (
+        <EmptyState icon={faCalendarDays} message="Niciun eveniment creat încă" />
+      ) : (
+        <div className="space-y-3">
+          {events.map(ev => {
+            const typeInfo = TYPE_CONFIG[ev.type] || TYPE_CONFIG.iarmaroc;
+            return (
+              <div key={ev.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex gap-4 hover:border-emerald-200 transition">
+                <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
+                  {ev.image_url ? (
+                    <img src={ev.image_url} alt={ev.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                      <FontAwesomeIcon icon={faCalendarDays} className="text-white text-2xl opacity-60" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${typeInfo.color}`}>
+                        {typeInfo.label}
+                      </span>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        ev.is_published ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {ev.is_published ? '● Publicat' : '○ Ascuns'}
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5 flex-shrink-0">
+                      <button
+                        onClick={() => handleTogglePublish(ev)}
+                        disabled={!!actionLoading}
+                        title={ev.is_published ? 'Ascunde' : 'Publică'}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50 ${
+                          ev.is_published
+                            ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                        }`}
+                      >
+                        {ev.is_published ? 'Ascunde' : 'Publică'}
+                      </button>
+                      <button
+                        onClick={() => openEdit(ev)}
+                        className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition"
+                      >
+                        <FontAwesomeIcon icon={faPen} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(ev.id)}
+                        disabled={actionLoading === ev.id + '_delete'}
+                        className="px-3 py-1.5 bg-red-50 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-100 transition disabled:opacity-50"
+                      >
+                        {actionLoading === ev.id + '_delete'
+                          ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                          : <FontAwesomeIcon icon={faTrash} />
+                        }
+                      </button>
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-gray-900 mt-1.5 truncate">{ev.title}</h3>
+                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
+                    {ev.event_date && (
+                      <span className="flex items-center gap-1">
+                        <FontAwesomeIcon icon={faCalendarDays} className="text-emerald-500" />
+                        {new Date(ev.event_date).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {ev.end_date && ` — ${new Date(ev.end_date).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}`}
+                      </span>
+                    )}
+                    {ev.location_text && (
+                      <span className="flex items-center gap-1">
+                        <FontAwesomeIcon icon={faLocationDot} className="text-emerald-500" />
+                        {ev.location_text}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main AdminDashboard ────────────────────────────────────────
 export default function AdminDashboard({ session, onNavigate }) {
   const [userRole, setUserRole] = useState(null);
@@ -975,6 +1417,7 @@ export default function AdminDashboard({ session, onNavigate }) {
     { key: 'approvals', label: 'Queue Aprobare', icon: faClockRotateLeft, badge: stats.pending },
     { key: 'flags', label: 'Raportări', icon: faFlag, badge: stats.reports },
     { key: 'categories', label: 'Categorii', icon: faLayerGroup, badge: 0 },
+    { key: 'events', label: 'Evenimente', icon: faCalendarDays, badge: 0 },
     { key: 'users', label: 'Utilizatori', icon: faUsers, badge: 0 },
   ];
 
@@ -1000,6 +1443,7 @@ export default function AdminDashboard({ session, onNavigate }) {
           {activeTab === 'approvals' && <ApprovalQueue userRole={userRole} />}
           {activeTab === 'flags' && <FlagSystem />}
           {activeTab === 'categories' && <CategoryManagement />}
+          {activeTab === 'events' && <EventManagement />}
           {activeTab === 'users' && <UserManagement userRole={userRole} />}
         </div>
       </div>

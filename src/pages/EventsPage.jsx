@@ -49,7 +49,8 @@ export default function EventsPage({ session, onNavigate }) {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-10">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">📅 Evenimente & Piețe Locale</h1>
+          <FontAwesomeIcon icon={faCalendarDays} className="text-5xl mb-3 text-emerald-600" />
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Evenimente & Piețe Locale</h1>
           <p className="text-gray-500">Iarmaroace, cursuri agricole și piețe locale din comunitate.</p>
         </div>
       </div>

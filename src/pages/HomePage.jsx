@@ -265,6 +265,8 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
   const farmersRef = useRef(null);
   const b2bRef = useRef(null);
+  const b2bProvidersRef = useRef(null);
+  const b2cProvidersRef = useRef(null);
   const [b2cExpanded, setB2cExpanded] = useState(true);
 
   useEffect(() => { fetchProducts(); fetchVerifiedFarmers(); }, []);
@@ -681,7 +683,13 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                     Prestatori de Servicii
                   </h3>
                 </div>
-                <B2BProviderCarousel providers={b2bProviders} onNavigate={onNavigate} />
+                <div className="relative">
+                  <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
+                    <PillNavButton direction="left" onClick={() => scroll('left', b2bProvidersRef)} ariaLabel="Stânga" />
+                    <PillNavButton direction="right" onClick={() => scroll('right', b2bProvidersRef)} ariaLabel="Dreapta" />
+                    <B2BProviderCarousel providers={b2bProviders} onNavigate={onNavigate} scrollRef={b2bProvidersRef} />
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -694,7 +702,13 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                   <FontAwesomeIcon icon={faSeedling} className="text-emerald-600 text-xl" />
                   <h3 className="text-2xl font-bold text-gray-900">Producători Alimentari</h3>
                 </div>
-                <B2CProviderCarousel providers={b2cProviders} onNavigate={onNavigate} />
+                <div className="relative">
+                  <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
+                    <PillNavButton direction="left" onClick={() => scroll('left', b2cProvidersRef)} ariaLabel="Stânga" />
+                    <PillNavButton direction="right" onClick={() => scroll('right', b2cProvidersRef)} ariaLabel="Dreapta" />
+                    <B2CProviderCarousel providers={b2cProviders} onNavigate={onNavigate} scrollRef={b2cProvidersRef} />
+                  </div>
+                </div>
               </div>
             </div>
           )}

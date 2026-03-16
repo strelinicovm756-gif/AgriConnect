@@ -13,7 +13,7 @@ import {
     faChevronDown, faChevronUp, faBoxesStacked, faTriangleExclamation,
     faCircleCheck, faHourglassHalf, faXmark, faUser, faPhone,
     faLocationDot, faIdCard, faPenToSquare, faFloppyDisk, faBan,
-    faEye, faRightFromBracket, faImages, faStar, faTrash, faPen, faRotateRight
+     faRightFromBracket, faImages, faScroll, faRotateRight
 } from '@fortawesome/free-solid-svg-icons';
 import {
     Star, MessageSquare, Package, ChevronDown, ChevronUp,
@@ -136,8 +136,8 @@ function MyReviewsSection({ session, onNavigate }) {
             <button onClick={() => setOpen(!open)}
                 className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-center">
-                        <MessageSquare size={18} className="text-yellow-500" />
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center">
+                        <MessageSquare size={18} className="text-emerald-600" />
                     </div>
                     <div className="text-left">
                         <p className="font-bold text-gray-900">Recenziile mele</p>
@@ -553,31 +553,30 @@ export default function ProfilePage({ session, onNavigate }) {
                                     <FontAwesomeIcon icon={faUser} className="mr-2 text-gray-500" />
                                     Vânzător
                                 </span>
-                                {profile?.is_verified ? (
-                                    <Badge variant="success">
-                                        <span className="inline-flex items-center gap-2"><FontAwesomeIcon icon={faCircleCheck} />VERIFICAT</span>
-                                    </Badge>
-                                ) : (
-                                    <Badge variant="default">NEVERIFICAT</Badge>
-                                )}
                             </div>
 
-                            {/* ── STATS cu rating real ── */}
-                            <div className="pt-6 border-t border-gray-200 mb-6">
-                                <div className="grid grid-cols-2 gap-4 text-center">
-                                    <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
-                                        <p className="text-3xl font-bold text-emerald-600">{productsCount}</p>
-                                        <p className="text-gray-600 text-xs font-medium mt-1">Anunțuri Active</p>
-                                    </div>
-                                    <div className="rounded-xl bg-yellow-50 border border-yellow-200 p-4">
-                                        <div className="flex items-center justify-center gap-1 mb-1">
-                                            <Star size={16} className="text-yellow-500 fill-yellow-400" />
-                                            <p className="text-3xl font-bold text-yellow-600">
-                                                {avgRating > 0 ? avgRating.toFixed(1) : '—'}
-                                            </p>
+                            {/* STATS cu rating real  */}
+                            <div className="pt-6 border-t border-gray-100 mb-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    {/* Card Anunțuri */}
+                                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2">
+                                           <FontAwesomeIcon icon={faScroll} className="text-emerald-600" />
                                         </div>
-                                        <p className="text-gray-600 text-xs font-medium">
-                                            Rating{reviewCount > 0 ? ` (${reviewCount})` : ''}
+                                        <p className="text-2xl font-bold text-gray-900 leading-none">{productsCount}</p>
+                                        <p className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold mt-2">Anunțuri</p>
+                                    </div>
+
+                                    {/* Card Rating */}
+                                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2">
+                                            <Star size={20} className="text-yellow-300 fill-yellow-400" />
+                                        </div>
+                                        <p className="text-2xl font-bold text-gray-900 leading-none">
+                                            {avgRating > 0 ? avgRating.toFixed(1) : "N/A"}
+                                        </p>
+                                        <p className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold mt-2">
+                                            Rating {reviewCount > 0 ? `(${reviewCount})` : ''}
                                         </p>
                                     </div>
                                 </div>
@@ -601,7 +600,7 @@ export default function ProfilePage({ session, onNavigate }) {
 
                             <button
                                 onClick={handleLogout}
-                                className="w-full bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95"
+                                className="w-full bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
                             >
                                 <span>Deconectare</span>
                                 <div className="bg-white/20 w-5 h-5 rounded-full flex items-center justify-center">
@@ -803,14 +802,14 @@ export default function ProfilePage({ session, onNavigate }) {
                     const exp = p.expires_at ? new Date(p.expires_at) : null;
                     return exp && (exp - new Date()) < 48 * 60 * 60 * 1000;
                 }) && (
-                    <div className="mt-4 bg-orange-50 border border-orange-300 text-orange-800 rounded-xl px-5 py-4 flex items-start gap-3">
-                        <FontAwesomeIcon icon={faTriangleExclamation} className="flex-shrink-0 mt-0.5" />
-                        <p className="flex-1 text-sm font-medium">Ai anunțuri care expiră în curând. Verifică anunțurile tale.</p>
-                        <button onClick={() => setDismissedExpiryBanner(true)} className="text-orange-600 hover:text-orange-900 transition flex-shrink-0 mt-0.5">
-                            <FontAwesomeIcon icon={faXmark} />
-                        </button>
-                    </div>
-                )}
+                        <div className="mt-4 bg-orange-50 border border-orange-300 text-orange-800 rounded-xl px-5 py-4 flex items-start gap-3">
+                            <FontAwesomeIcon icon={faTriangleExclamation} className="flex-shrink-0 mt-0.5" />
+                            <p className="flex-1 text-sm font-medium">Ai anunțuri care expiră în curând. Verifică anunțurile tale.</p>
+                            <button onClick={() => setDismissedExpiryBanner(true)} className="text-orange-600 hover:text-orange-900 transition flex-shrink-0 mt-0.5">
+                                <FontAwesomeIcon icon={faXmark} />
+                            </button>
+                        </div>
+                    )}
 
                 {/* ── PRODUSE ── */}
                 {showProducts && (
@@ -839,70 +838,69 @@ export default function ProfilePage({ session, onNavigate }) {
                                         const isExpired = expiresDate && expiresDate < now;
                                         const isExpiringSoon = expiresDate && !isExpired && (expiresDate - now) < 48 * 60 * 60 * 1000;
                                         return (
-                                        <div key={product.id} className={`relative rounded-2xl border bg-white hover:shadow-lg transition-all duration-300 overflow-hidden ${
-                                            product.status === 'rejected' ? 'border-red-400' :
-                                            product.status === 'inactive' || isExpired ? 'border-red-300' :
-                                            isExpiringSoon ? 'border-orange-400' :
-                                            product.status === 'pending' ? 'border-yellow-400' :
-                                            'border-gray-200'
-                                        }`}>
-                                            <ProductCard product={product} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
-                                            <div className="absolute top-4 right-4 flex gap-2 z-10">
-                                                {product.status === 'rejected' ? (
-                                                    <button onClick={() => handleResubmit(product.id)}
-                                                        className="bg-orange-500 hover:bg-orange-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110"
-                                                        title="Retrimite pentru aprobare">
-                                                        <FontAwesomeIcon icon={faRotateRight} />
-                                                    </button>
-                                                ) : (
-                                                    <button onClick={() => setEditingProductId(product.id)}
-                                                        className="bg-blue-500 hover:bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Editează galeria foto">
-                                                        <FontAwesomeIcon icon={faImages} />
-                                                    </button>
-                                                )}
-                                                <button onClick={() => handleDeleteProduct(product.id)}
-                                                    className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Arhivează anunțul">
-                                                    <FontAwesomeIcon icon={faXmark} />
-                                                </button>
-                                                <Toaster position="bottom-right" reverseOrder={false} />
-                                            </div>
-                                            {product.status === 'archived' && (
-                                                <div className="absolute top-16 right-4 z-10">
-                                                    <Badge variant="default">ARHIVAT</Badge>
-                                                </div>
-                                            )}
-                                            {product.status === 'rejected' && (
-                                                <div className="absolute top-16 right-4 z-10" title={product.reject_reason || 'Neconform cu regulamentul'}>
-                                                    <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full cursor-help">RESPINS</span>
-                                                </div>
-                                            )}
-                                            {product.status === 'pending' && (
-                                                <div className="absolute top-16 right-4 z-10">
-                                                    <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2.5 py-1 rounded-full">ÎN AȘTEPTARE</span>
-                                                </div>
-                                            )}
-                                            {(product.status === 'inactive' || isExpired) && (
-                                                <div className="absolute top-16 right-4 z-10">
-                                                    <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRAT</span>
-                                                </div>
-                                            )}
-                                            {isExpiringSoon && product.status !== 'inactive' && (
-                                                <div className="absolute top-16 right-4 z-10">
-                                                    <span className="bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRĂ ÎN CURÂND</span>
-                                                </div>
-                                            )}
-                                            {expiresDate && (
-                                                <div className={`absolute bottom-0 left-0 right-0 px-4 py-1.5 text-xs flex items-center gap-1.5 ${
-                                                    isExpired || product.status === 'inactive' ? 'bg-red-50 text-red-500' :
-                                                    isExpiringSoon ? 'bg-orange-50 text-orange-600' :
-                                                    'bg-gray-50 text-gray-400'
+                                            <div key={product.id} className={`relative rounded-2xl border bg-white hover:shadow-lg transition-all duration-300 overflow-hidden ${product.status === 'rejected' ? 'border-red-400' :
+                                                    product.status === 'inactive' || isExpired ? 'border-red-300' :
+                                                        isExpiringSoon ? 'border-orange-400' :
+                                                            product.status === 'pending' ? 'border-yellow-400' :
+                                                                'border-gray-200'
                                                 }`}>
-                                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
-                                                    Valabil până: {expiresDate.toLocaleDateString('ro-RO')}
+                                                <ProductCard product={product} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
+                                                <div className="absolute top-4 right-4 flex gap-2 z-10">
+                                                    {product.status === 'rejected' ? (
+                                                        <button onClick={() => handleResubmit(product.id)}
+                                                            className="bg-orange-500 hover:bg-orange-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110"
+                                                            title="Retrimite pentru aprobare">
+                                                            <FontAwesomeIcon icon={faRotateRight} />
+                                                        </button>
+                                                    ) : (
+                                                        <button onClick={() => setEditingProductId(product.id)}
+                                                            className="bg-blue-500 hover:bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Editează galeria foto">
+                                                            <FontAwesomeIcon icon={faImages} />
+                                                        </button>
+                                                    )}
+                                                    <button onClick={() => handleDeleteProduct(product.id)}
+                                                        className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Arhivează anunțul">
+                                                        <FontAwesomeIcon icon={faXmark} />
+                                                    </button>
+                                                    <Toaster position="bottom-right" reverseOrder={false} />
                                                 </div>
-                                            )}
-                                        </div>
-                                    ); })}
+                                                {product.status === 'archived' && (
+                                                    <div className="absolute top-16 right-4 z-10">
+                                                        <Badge variant="default">ARHIVAT</Badge>
+                                                    </div>
+                                                )}
+                                                {product.status === 'rejected' && (
+                                                    <div className="absolute top-16 right-4 z-10" title={product.reject_reason || 'Neconform cu regulamentul'}>
+                                                        <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full cursor-help">RESPINS</span>
+                                                    </div>
+                                                )}
+                                                {product.status === 'pending' && (
+                                                    <div className="absolute top-16 right-4 z-10">
+                                                        <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2.5 py-1 rounded-full">ÎN AȘTEPTARE</span>
+                                                    </div>
+                                                )}
+                                                {(product.status === 'inactive' || isExpired) && (
+                                                    <div className="absolute top-16 right-4 z-10">
+                                                        <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRAT</span>
+                                                    </div>
+                                                )}
+                                                {isExpiringSoon && product.status !== 'inactive' && (
+                                                    <div className="absolute top-16 right-4 z-10">
+                                                        <span className="bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRĂ ÎN CURÂND</span>
+                                                    </div>
+                                                )}
+                                                {expiresDate && (
+                                                    <div className={`absolute bottom-0 left-0 right-0 px-4 py-1.5 text-xs flex items-center gap-1.5 ${isExpired || product.status === 'inactive' ? 'bg-red-50 text-red-500' :
+                                                            isExpiringSoon ? 'bg-orange-50 text-orange-600' :
+                                                                'bg-gray-50 text-gray-400'
+                                                        }`}>
+                                                        <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
+                                                        Valabil până: {expiresDate.toLocaleDateString('ro-RO')}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <div className="text-center py-12">

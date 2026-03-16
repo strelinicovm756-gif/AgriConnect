@@ -283,9 +283,21 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   const validateForm = () => {
     const e = {};
-    if (!formData.name.trim()) e.name = 'Numele este obligatoriu';
+    if (!formData.name.trim()) {
+      e.name = 'Numele este obligatoriu';
+    } else if (formData.name.trim().length < 3) {
+      e.name = 'Numele trebuie să aibă minim 3 caractere';
+    } else if (/^[\s\-']+$/.test(formData.name.trim())) {
+      e.name = 'Numele trebuie să conțină litere';
+    }
     if (!formData.description.trim() || formData.description.length < 20) e.description = 'Descrierea trebuie să aibă minim 20 caractere';
-    if (!formData.price || parseFloat(formData.price) <= 0) e.price = 'Prețul trebuie să fie mai mare ca 0';
+    if (!formData.price || formData.price === '') {
+      e.price = 'Prețul este obligatoriu';
+    } else if (parseFloat(formData.price) <= 0) {
+      e.price = 'Prețul trebuie să fie mai mare ca 0';
+    } else if (parseFloat(formData.price) > 999999) {
+      e.price = 'Prețul nu poate depăși 999,999 lei';
+    }
     if (!formData.quantity || parseFloat(formData.quantity) <= 0) e.quantity = 'Cantitatea trebuie să fie mai mare ca 0';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -464,7 +476,12 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
                   {/* Nume */}
                   <FormInput label="Nume Produs" required error={errors.name}
-                    value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    helper="Doar litere și spații (fără cifre sau simboluri)"
+                    value={formData.name} onChange={e => {
+                      const value = e.target.value;
+                      const filtered = value.replace(/[^a-zA-ZăâîșțĂÂÎȘȚ\s\-']/g, '');
+                      setFormData(prev => ({ ...prev, name: filtered }));
+                    }}
                     placeholder={isB2B ? 'ex: Servicii arat, Fertilizant organic' : 'ex: Roșii bio de țară, Brânză de oaie'} />
 
                   {/* Descriere */}
@@ -508,8 +525,18 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                         Preț <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
-                        <input type="number" step="0.01" min="0" value={formData.price}
-                          onChange={e => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          pattern="\d{1,6}(\.\d{0,2})?"
+                          maxLength={9}
+                          value={formData.price}
+                          onChange={e => {
+                            const value = e.target.value;
+                            if (value === '' || /^\d{1,6}(\.\d{0,2})?$/.test(value)) {
+                              setFormData(prev => ({ ...prev, price: value }));
+                            }
+                          }}
                           placeholder="0.00"
                           className={`w-full px-4 py-3 pr-12 bg-white border border-l-[3px] rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none transition-all
                             ${errors.price
@@ -519,6 +546,11 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">lei</span>
                       </div>
                       {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
+                      {!errors.price && (
+                        <p className="text-[11px] text-gray-600 mt-1 px-1">
+                          Ex: 25, 12.50...
+                        </p>
+                      )}
                     </div>
                   </div>
 

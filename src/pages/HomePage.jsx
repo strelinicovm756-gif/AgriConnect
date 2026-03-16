@@ -224,6 +224,11 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
             </button>
           </div>
 
+          <Button>
+
+            
+          </Button>
+
           {/* Wrapper relativ pentru butoane + carusel */}
           <div className="relative">
             {/* Containerul caruselului */}

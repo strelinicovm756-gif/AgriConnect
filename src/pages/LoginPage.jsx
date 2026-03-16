@@ -252,7 +252,7 @@ export default function LoginPage({ onNavigate }) {
                 <div className="flex justify-center mb-6">
                   {!logoError ? (
                     <img
-                      src="src/assets/IconApp.svg"
+                      src="src/assets/IconApp_em_600.svg"
                       alt="Logo"
                       className="h-16 w-auto object-contain"
                       // Dacă imaginea nu se încarcă, setăm logoError pe true
@@ -400,7 +400,7 @@ export default function LoginPage({ onNavigate }) {
               <div>
                 <div className="flex justify-center mb-6">
                   <img
-                    src="/src/assets/IconApp.svg"
+                    src="/src/assets/IconApp_em_600.svg"
                     alt="Logo"
                     className="h-16 w-auto object-contain"
                     onError={(e) => {

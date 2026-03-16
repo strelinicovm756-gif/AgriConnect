@@ -33,20 +33,20 @@ const CATEGORY_ICONS = {
 };
 
 const B2C_MEGA = [
-  { id: 'Legume',   name: 'Legume',   icon: faCarrot,       subs: ['Rădăcinoase', 'Verzișuri', 'Roșii & Ardei', 'Dovlecei & Castraveți'] },
-  { id: 'Fructe',   name: 'Fructe',   icon: faAppleWhole,   subs: ['Mere & Pere', 'Fructe de pădure', 'Citrice', 'Struguri'] },
-  { id: 'Lactate',  name: 'Lactate',  icon: faCow,          subs: ['Lapte', 'Brânzeturi', 'Smântână & Unt', 'Iaurt'] },
-  { id: 'Carne',    name: 'Carne',    icon: faDrumstickBite,subs: ['Carne de porc', 'Carne de vită', 'Pasăre', 'Mezeluri artizanale'] },
-  { id: 'Ouă',      name: 'Ouă',      icon: faEgg,          subs: ['Ouă de găină', 'Ouă de rață', 'Ouă de prepeliță', 'Altele'] },
-  { id: 'Miere',    name: 'Miere',    icon: faJar,          subs: ['Miere de flori', 'Miere de salcâm', 'Miere de tei', 'Produse apicole'] },
-  { id: 'Cereale',  name: 'Cereale',  icon: faWheatAwn,     subs: ['Grâu', 'Porumb', 'Floarea-soarelui', 'Orz & Ovăz'] },
+  { id: 'Legume', name: 'Legume', icon: faCarrot, subs: ['Rădăcinoase', 'Verzișuri', 'Roșii & Ardei', 'Dovlecei & Castraveți'] },
+  { id: 'Fructe', name: 'Fructe', icon: faAppleWhole, subs: ['Mere & Pere', 'Fructe de pădure', 'Citrice', 'Struguri'] },
+  { id: 'Lactate', name: 'Lactate', icon: faCow, subs: ['Lapte', 'Brânzeturi', 'Smântână & Unt', 'Iaurt'] },
+  { id: 'Carne', name: 'Carne', icon: faDrumstickBite, subs: ['Carne de porc', 'Carne de vită', 'Pasăre', 'Mezeluri artizanale'] },
+  { id: 'Ouă', name: 'Ouă', icon: faEgg, subs: ['Ouă de găină', 'Ouă de rață', 'Ouă de prepeliță', 'Altele'] },
+  { id: 'Miere', name: 'Miere', icon: faJar, subs: ['Miere de flori', 'Miere de salcâm', 'Miere de tei', 'Produse apicole'] },
+  { id: 'Cereale', name: 'Cereale', icon: faWheatAwn, subs: ['Grâu', 'Porumb', 'Floarea-soarelui', 'Orz & Ovăz'] },
 ];
 
 const B2B_MEGA = [
-  { id: 'Servicii Teren',      name: 'Servicii Teren',      icon: faTractor,  subs: ['Arat & Prelucrare sol', 'Semănat', 'Recoltare mecanizată', 'Transport agricol'] },
+  { id: 'Servicii Teren', name: 'Servicii Teren', icon: faTractor, subs: ['Arat & Prelucrare sol', 'Semănat', 'Recoltare mecanizată', 'Transport agricol'] },
   { id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faSeedling, subs: ['Pesticide', 'Erbicide', 'Îngrășăminte organice', 'Fungicide'] },
-  { id: 'Echipamente',         name: 'Echipamente',         icon: faWrench,   subs: ['Unelte manuale', 'Piese schimb utilaje', 'Utilaje second-hand', 'Altele'] },
-  { id: 'Sisteme de Irigare',  name: 'Sisteme de Irigare',  icon: faDroplet,  subs: ['Sisteme picurare', 'Pompe apă', 'Furtunuri & Accesorii', 'Altele'] },
+  { id: 'Echipamente', name: 'Echipamente', icon: faWrench, subs: ['Unelte manuale', 'Piese schimb utilaje', 'Utilaje second-hand', 'Altele'] },
+  { id: 'Sisteme de Irigare', name: 'Sisteme de Irigare', icon: faDroplet, subs: ['Sisteme picurare', 'Pompe apă', 'Furtunuri & Accesorii', 'Altele'] },
 ];
 
 export function Navbar({ session, onNavigate }) {
@@ -263,7 +263,8 @@ export function Navbar({ session, onNavigate }) {
 
           {/* Logo */}
           <div onClick={() => onNavigate('home')} className="flex items-center gap-2 cursor-pointer group flex-shrink-0">
-            <FontAwesomeIcon icon={faEnvira} rotation={90} style={{ color: "#059669", fontSize: "24px", position: "relative", top: "2px" }} />
+            <img src="/src/assets/IconApp_em_600.svg" alt="Logo" className="h-7 w-7" />
+
             <h1 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition hidden sm:block">AgriConnect</h1>
           </div>
 
@@ -514,7 +515,7 @@ export function Navbar({ session, onNavigate }) {
               <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
                   <FontAwesomeIcon icon={faIndustry} />
-                  Servicii &amp; Utilități 
+                  Servicii &amp; Utilități
                 </p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-6">
                   {B2B_MEGA.map(cat => (
@@ -703,7 +704,7 @@ export function Navbar({ session, onNavigate }) {
         isOpen={showAddProductModal}
         onClose={() => setShowAddProductModal(false)}
         session={session}
-        onSuccess={() => {}}
+        onSuccess={() => { }}
       />
 
       <style>{`

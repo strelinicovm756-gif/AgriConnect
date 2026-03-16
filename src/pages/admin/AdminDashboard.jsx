@@ -3,33 +3,15 @@ import { supabase } from '../../services/supabaseClient';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faShieldHalved, faClockRotateLeft, faFlag, faLayerGroup, faUsers,
-  faCheck, faXmark, faEye, faChevronRight, faSpinner, faSearch,
+  faClockRotateLeft, faFlag, faLayerGroup, faUsers,
+  faCheck, faXmark, faChevronRight, faSpinner, faSearch,
   faUserShield, faUser, faBan, faUnlock, faArrowRight, faArrowLeft,
-  faPlus, faTrash, faPen, faFloppyDisk, faRotateLeft, faStar,
+  faPlus, faTrash, faPen, faFloppyDisk,
   faCircleCheck, faTriangleExclamation, faBoxOpen, faFileImage,
-  faLocationDot, faTag, faCalendar, faCrown, faUserTie,
+  faLocationDot, faCrown,
   faCartShopping, faIndustry, faCalendarDays
 } from '@fortawesome/free-solid-svg-icons';
 
-// ── Structura categorii implicită ──────────────────────────────
-const DEFAULT_CATEGORIES = {
-  b2c: [
-    { id: 'Legume', name: 'Legume', subs: ['Rădăcinoase', 'Verzișuri', 'Roșii & Ardei', 'Dovlecei & Castraveți', 'Altele'] },
-    { id: 'Fructe', name: 'Fructe', subs: ['Mere & Pere', 'Fructe de pădure', 'Citrice', 'Struguri', 'Altele'] },
-    { id: 'Lactate', name: 'Lactate', subs: ['Lapte', 'Brânzeturi', 'Smântână & Unt', 'Iaurt', 'Altele'] },
-    { id: 'Carne', name: 'Carne', subs: ['Carne de porc', 'Carne de vită', 'Pasăre', 'Mezeluri artizanale', 'Altele'] },
-    { id: 'Ouă', name: 'Ouă', subs: ['Ouă de găină', 'Ouă de rață', 'Ouă de prepeliță', 'Altele'] },
-    { id: 'Miere', name: 'Miere', subs: ['Miere de flori', 'Miere de salcâm', 'Miere de tei', 'Produse apicole', 'Altele'] },
-    { id: 'Cereale', name: 'Cereale', subs: ['Grâu', 'Porumb', 'Floarea-soarelui', 'Orz & Ovăz', 'Altele'] },
-  ],
-  b2b: [
-    { id: 'Servicii Teren', name: 'Servicii Teren', subs: ['Arat & Prelucrare sol', 'Semănat', 'Recoltare mecanizată', 'Transport agricol', 'Altele'] },
-    { id: 'Protecția Plantelor', name: 'Protecția Plantelor', subs: ['Pesticide', 'Erbicide', 'Îngrășăminte organice', 'Fungicide', 'Altele'] },
-    { id: 'Echipamente', name: 'Echipamente', subs: ['Unelte manuale', 'Piese schimb utilaje', 'Utilaje second-hand', 'Altele'] },
-    { id: 'Sisteme de Irigare', name: 'Sisteme de Irigare', subs: ['Sisteme picurare', 'Pompe apă', 'Furtunuri & Accesorii', 'Altele'] },
-  ]
-};
 
 const ROLE_LABELS = {
   user: { label: 'Utilizator', color: 'bg-gray-100 text-gray-700', icon: faUser },
@@ -46,7 +28,7 @@ const REPORT_REASONS = [
   'Altele',
 ];
 
-// ── Sub-componente helpers ─────────────────────────────────────
+// Sub-componente helpers
 function StatBadge({ icon, value, label, color = 'emerald' }) {
   const colors = {
     emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -91,12 +73,12 @@ function EmptyState({ icon, message }) {
   );
 }
 
-// ── Queue de Aprobare ──────────────────────────────────────────
+// Queue de Aprobare
 function ApprovalQueue({ userRole }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
-  const [rejectModal, setRejectModal] = useState(null); // product id
+  const [rejectModal, setRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -335,7 +317,7 @@ function ApprovalQueue({ userRole }) {
   );
 }
 
-// ── Sistem de Flag-uri ─────────────────────────────────────────
+// Sistem de Flag-uri 
 function FlagSystem() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -497,12 +479,11 @@ function FlagSystem() {
   );
 }
 
-// ── Management Categorii ───────────────────────────────────────
+// Management Categorii 
 function CategoryManagement() {
-  const [categories, setCategories] = useState({ b2c: [], b2b: [] });
+  const [b2cCategories, setB2cCategories] = useState([]);
+  const [b2bCategories, setB2bCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
   const [expandedCat, setExpandedCat] = useState(null);
   const [newSubInput, setNewSubInput] = useState({ catId: null, group: null, value: '' });
   const [newCatInput, setNewCatInput] = useState({ group: null, value: '' });
@@ -510,18 +491,16 @@ function CategoryManagement() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from('platform_config')
-        .select('value')
-        .eq('key', 'categories')
-        .maybeSingle();
-      if (data?.value) {
-        setCategories(data.value);
-      } else {
-        setCategories(DEFAULT_CATEGORIES);
-      }
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*, subcategories(id, name, slug, sort_order, is_active)')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      setB2cCategories(data.filter(c => c.market_type !== 'b2b'));
+      setB2bCategories(data.filter(c => c.market_type !== 'b2c'));
     } catch {
-      setCategories(DEFAULT_CATEGORIES);
+      toast.error('Eroare la încărcarea categoriilor');
     } finally {
       setLoading(false);
     }
@@ -529,86 +508,92 @@ function CategoryManagement() {
 
   useEffect(() => { load(); }, [load]);
 
-  const markDirty = (updated) => {
-    setCategories(updated);
-    setDirty(true);
-  };
-
-  const save = async () => {
-    setSaving(true);
+  const handleAddCategory = async (group, name) => {
+    if (!name.trim()) return;
+    const slug = name.trim().toLowerCase()
+      .replace(/ă/g, 'a').replace(/â/g, 'a').replace(/î/g, 'i')
+      .replace(/ș/g, 's').replace(/ț/g, 't')
+      .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const market_type = group === 'b2c' ? 'b2c' : 'b2b';
+    const maxOrder = b2cCategories.length + b2bCategories.length + 1;
     try {
-      const { error } = await supabase
-        .from('platform_config')
-        .upsert({ key: 'categories', value: categories, updated_at: new Date().toISOString() });
+      const { error } = await supabase.from('categories').insert({
+        name: name.trim(), slug, market_type, sort_order: maxOrder, is_active: true,
+      });
       if (error) throw error;
-      toast.success('Categorii salvate!');
-      setDirty(false);
-    } catch {
-      toast.error('Eroare la salvare');
-    } finally {
-      setSaving(false);
+      toast.success('Categorie adăugată!');
+      setNewCatInput({ group: null, value: '' });
+      load();
+    } catch (e) {
+      toast.error(e.message.includes('unique') ? 'Această categorie există deja' : 'Eroare la adăugare');
     }
   };
 
-  const reset = () => {
-    setCategories(DEFAULT_CATEGORIES);
-    setDirty(true);
+  const handleDeleteCategory = async (catId) => {
+    if (!window.confirm('Ștergi această categorie? Produsele asociate nu vor fi afectate.')) return;
+    try {
+      const { error } = await supabase.from('categories').update({ is_active: false }).eq('id', catId);
+      if (error) throw error;
+      toast.success('Categorie dezactivată!');
+      load();
+    } catch {
+      toast.error('Eroare la ștergere');
+    }
   };
 
-  const moveCategory = (catId, fromGroup, toGroup) => {
-    const cat = categories[fromGroup].find(c => c.id === catId);
-    if (!cat) return;
-    markDirty({
-      ...categories,
-      [fromGroup]: categories[fromGroup].filter(c => c.id !== catId),
-      [toGroup]: [...categories[toGroup], cat],
-    });
+  const handleMoveCategory = async (catId, toGroup) => {
+    try {
+      const { error } = await supabase.from('categories').update({ market_type: toGroup }).eq('id', catId);
+      if (error) throw error;
+      toast.success('Categorie mutată!');
+      load();
+    } catch {
+      toast.error('Eroare la mutare');
+    }
   };
 
-  const deleteCategory = (catId, group) => {
-    markDirty({ ...categories, [group]: categories[group].filter(c => c.id !== catId) });
+  const handleAddSubcategory = async (catId, name) => {
+    if (!name.trim()) return;
+    const slug = name.trim().toLowerCase()
+      .replace(/ă/g, 'a').replace(/â/g, 'a').replace(/î/g, 'i')
+      .replace(/ș/g, 's').replace(/ț/g, 't')
+      .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    try {
+      const { error } = await supabase.from('subcategories').insert({
+        category_id: catId, name: name.trim(), slug, sort_order: 0, is_active: true,
+      });
+      if (error) throw error;
+      toast.success('Subcategorie adăugată!');
+      setNewSubInput({ catId: null, group: null, value: '' });
+      load();
+    } catch (e) {
+      toast.error(e.message.includes('unique') ? 'Subcategoria există deja' : 'Eroare la adăugare');
+    }
   };
 
-  const addSubcategory = (catId, group) => {
-    const val = newSubInput.value.trim();
-    if (!val) return;
-    markDirty({
-      ...categories,
-      [group]: categories[group].map(c =>
-        c.id === catId ? { ...c, subs: [...(c.subs || []), val] } : c
-      ),
-    });
-    setNewSubInput({ catId: null, group: null, value: '' });
+  const handleDeleteSubcategory = async (subId) => {
+    try {
+      const { error } = await supabase.from('subcategories').update({ is_active: false }).eq('id', subId);
+      if (error) throw error;
+      toast.success('Subcategorie eliminată!');
+      load();
+    } catch {
+      toast.error('Eroare la ștergere');
+    }
   };
 
-  const deleteSubcategory = (catId, group, sub) => {
-    markDirty({
-      ...categories,
-      [group]: categories[group].map(c =>
-        c.id === catId ? { ...c, subs: c.subs.filter(s => s !== sub) } : c
-      ),
-    });
-  };
-
-  const addCategory = (group) => {
-    const val = newCatInput.value.trim();
-    if (!val) return;
-    const newCat = { id: val, name: val, subs: ['Altele'] };
-    markDirty({ ...categories, [group]: [...categories[group], newCat] });
-    setNewCatInput({ group: null, value: '' });
-  };
-
-  const renderGroup = (group, title, color) => (
+  const renderGroup = (group, categoriesArray, title, color) => (
     <div className={`border-2 rounded-2xl p-5 ${color}`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-gray-900 text-lg">{title}</h3>
-        <span className="text-xs bg-white px-2 py-1 rounded-full font-semibold text-gray-600">{categories[group]?.length || 0} categorii</span>
+        <span className="text-xs bg-white px-2 py-1 rounded-full font-semibold text-gray-600">{categoriesArray.length} categorii</span>
       </div>
 
       <div className="space-y-3">
-        {(categories[group] || []).map(cat => {
+        {categoriesArray.map(cat => {
           const isExpanded = expandedCat === cat.id + '_' + group;
           const otherGroup = group === 'b2c' ? 'b2b' : 'b2c';
+          const subs = (cat.subcategories || []).filter(s => s.is_active);
           return (
             <div key={cat.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="flex items-center gap-3 px-4 py-3">
@@ -618,11 +603,11 @@ function CategoryManagement() {
                 >
                   <FontAwesomeIcon icon={faChevronRight} className={`text-gray-400 text-xs transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                   <span className="font-semibold text-gray-800">{cat.name}</span>
-                  <span className="text-xs text-gray-400">({cat.subs?.length || 0} sub.)</span>
+                  <span className="text-xs text-gray-400">({subs.length} sub.)</span>
                 </button>
                 <div className="flex gap-1">
                   <button
-                    onClick={() => moveCategory(cat.id, group, otherGroup)}
+                    onClick={() => handleMoveCategory(cat.id, otherGroup)}
                     className={`px-2 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
                       group === 'b2c' ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                     }`}
@@ -632,7 +617,7 @@ function CategoryManagement() {
                     <span className="hidden sm:inline">{group === 'b2c' ? 'B2B' : 'B2C'}</span>
                   </button>
                   <button
-                    onClick={() => deleteCategory(cat.id, group)}
+                    onClick={() => handleDeleteCategory(cat.id)}
                     className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition text-xs"
                   >
                     <FontAwesomeIcon icon={faTrash} />
@@ -643,10 +628,10 @@ function CategoryManagement() {
               {isExpanded && (
                 <div className="px-4 pb-3 border-t border-gray-100">
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {cat.subs?.map(sub => (
-                      <span key={sub} className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
-                        {sub}
-                        <button onClick={() => deleteSubcategory(cat.id, group, sub)} className="text-gray-400 hover:text-red-500 transition ml-1">
+                    {subs.map(sub => (
+                      <span key={sub.id} className="flex items-center gap-1 bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
+                        {sub.name}
+                        <button onClick={() => handleDeleteSubcategory(sub.id)} className="text-gray-400 hover:text-red-500 transition ml-1">
                           <FontAwesomeIcon icon={faXmark} />
                         </button>
                       </span>
@@ -658,11 +643,11 @@ function CategoryManagement() {
                         autoFocus
                         value={newSubInput.value}
                         onChange={e => setNewSubInput(prev => ({ ...prev, value: e.target.value }))}
-                        onKeyDown={e => e.key === 'Enter' && addSubcategory(cat.id, group)}
+                        onKeyDown={e => e.key === 'Enter' && handleAddSubcategory(cat.id, newSubInput.value)}
                         placeholder="Nume subcategorie..."
                         className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400"
                       />
-                      <button onClick={() => addSubcategory(cat.id, group)} className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition">
+                      <button onClick={() => handleAddSubcategory(cat.id, newSubInput.value)} className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition">
                         <FontAwesomeIcon icon={faCheck} />
                       </button>
                       <button onClick={() => setNewSubInput({ catId: null, group: null, value: '' })} className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs hover:bg-gray-200 transition">
@@ -691,11 +676,11 @@ function CategoryManagement() {
               autoFocus
               value={newCatInput.value}
               onChange={e => setNewCatInput(prev => ({ ...prev, value: e.target.value }))}
-              onKeyDown={e => e.key === 'Enter' && addCategory(group)}
+              onKeyDown={e => e.key === 'Enter' && handleAddCategory(group, newCatInput.value)}
               placeholder="Nume categorie nouă..."
               className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
             />
-            <button onClick={() => addCategory(group)} className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">
+            <button onClick={() => handleAddCategory(group, newCatInput.value)} className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">
               <FontAwesomeIcon icon={faCheck} />
             </button>
             <button onClick={() => setNewCatInput({ group: null, value: '' })} className="px-4 py-2.5 bg-white text-gray-600 rounded-xl text-sm hover:bg-gray-100 transition">
@@ -720,36 +705,12 @@ function CategoryManagement() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <p className="text-sm text-gray-500">Modificările se salvează în baza de date și afectează formularul de adăugare produse.</p>
-        <div className="flex gap-2">
-          <button
-            onClick={reset}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-200 transition"
-          >
-            <FontAwesomeIcon icon={faRotateLeft} />
-            Reset implicit
-          </button>
-          <button
-            onClick={save}
-            disabled={!dirty || saving}
-            className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
-          >
-            {saving ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faFloppyDisk} />}
-            Salvează
-          </button>
-        </div>
+        <p className="text-sm text-gray-500">Modificările se salvează direct în baza de date și afectează formularul de adăugare produse.</p>
       </div>
 
-      {dirty && (
-        <div className="mb-4 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800 flex items-center gap-2">
-          <FontAwesomeIcon icon={faTriangleExclamation} />
-          Ai modificări nesalvate. Apasă "Salvează" pentru a le aplica.
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {renderGroup('b2c', <span className="flex items-center gap-2"><FontAwesomeIcon icon={faCartShopping} className="text-emerald-600" /> B2C — Produse Alimentare</span>, 'border-emerald-200 bg-emerald-50/30')}
-        {renderGroup('b2b', <span className="flex items-center gap-2"><FontAwesomeIcon icon={faIndustry} className="text-blue-600" /> B2B — Servicii &amp; Utilități</span>, 'border-blue-200 bg-blue-50/30')}
+        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2"><FontAwesomeIcon icon={faCartShopping} className="text-emerald-600" /> B2C — Produse Alimentare</span>, 'border-emerald-200 bg-emerald-50/30')}
+        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2"><FontAwesomeIcon icon={faIndustry} className="text-blue-600" /> B2B — Servicii &amp; Utilități</span>, 'border-blue-200 bg-blue-50/30')}
       </div>
     </div>
   );
@@ -1347,7 +1308,7 @@ function EventManagement() {
                     )}
                     {ev.location_text && (
                       <span className="flex items-center gap-1">
-                        <FontAwesomeIcon icon={faLocationDot} className="text-emerald-500" />
+                        <FontAwesomeIcon icon={faLocationDot} className="text-emerald-700" />
                         {ev.location_text}
                       </span>
                     )}

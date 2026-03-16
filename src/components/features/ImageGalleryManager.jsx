@@ -8,7 +8,6 @@ import {
   faStar,
   faPlus,
   faPen,
-  faCloudArrowUp,
   faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -208,7 +207,7 @@ export default function ImageGalleryManager({
               className={`
                 relative aspect-square rounded-xl overflow-hidden group
                 ${slotIndex === 0 
-                  ? 'border-2 border-emerald-500 shadow-lg ring-2 ring-emerald-200' 
+                  ? 'ring-2 ring-gray-400' 
                   : 'border-2 border-slate-200'
                 }
                 ${isEmpty ? 'bg-slate-50' : ''}

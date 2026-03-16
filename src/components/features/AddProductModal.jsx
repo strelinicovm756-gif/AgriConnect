@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import ImageGalleryManager from './ImageGalleryManager';
 import toast from 'react-hot-toast';
@@ -20,26 +20,41 @@ const iconMap = {
   faTractor, faFlask, faWrench, faDroplet, faLeaf
 };
 
-// ── Unități per tip ────────────────────────────────────────────
-const UNITS_B2C = [
-  { value: 'kg',     label: 'Kilogram (kg)' },
-  { value: 'bucată', label: 'Bucată' },
-  { value: 'litru',  label: 'Litru (L)' },
-  { value: 'borcan', label: 'Borcan' },
-  { value: 'cutie',  label: 'Cutie' },
-  { value: 'legătură', label: 'Legătură' },
-];
-
-const UNITS_B2B = [
-  { value: 'oră',   label: 'Oră' },
-  { value: 'zi',    label: 'Zi' },
-  { value: 'ha',    label: 'Hectar (ha)' },
-  { value: 'ar',    label: 'Ar' },
-  { value: 'bucată', label: 'Bucată' },
-  { value: 'litru', label: 'Litru (L)' },
-  { value: 'kg',    label: 'Kilogram (kg)' },
-  { value: 'set',   label: 'Set' },
-];
+// ── Unități per categorie (cheie = slug din DB)
+const CATEGORY_UNITS = {
+  'legume': [
+    { value: 'kg', label: 'Kilogram (kg)' },
+  ],
+  'fructe': [
+    { value: 'kg', label: 'Kilogram (kg)' },
+  ],
+  'lactate': [
+    { value: 'litru', label: 'Litru (L)' },
+    { value: 'kg', label: 'Kilogram (kg)' },
+  ],
+  'carne': [
+    { value: 'kg', label: 'Kilogram (kg)' },
+  ],
+  'oua': [
+    { value: 'bucată', label: '10 Bucăți' },
+  ],
+  'cereale': [
+    { value: 'kg', label: 'Kilogram (kg)' },
+  ],
+  'servicii-teren': [
+    { value: 'hectar', label: 'Hectar (ha)' },
+    { value: 'oră', label: 'Oră' },
+    { value: 'zi', label: 'Zi de lucru' },
+  ],
+  'default': [
+    { value: 'kg', label: 'Kilogram (kg)' },
+    { value: 'bucată', label: 'Bucată' },
+    { value: 'litru', label: 'Litru (L)' },
+    { value: 'borcan', label: 'Borcan' },
+    { value: 'cutie', label: 'Cutie' },
+    { value: 'pachet', label: 'Pachet' },
+  ],
+};
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -74,21 +89,40 @@ function Alert({ variant = 'default', title, children, className = '' }) {
 
 function FormInput({ label, required, error, helper, children, ...props }) {
   return (
-    <div>
+    <div className="space-y-1.5"> {/* Spatiere constantă între elemente */}
       {label && (
-        <label className="block text-gray-700 text-sm font-medium mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label className="block text-gray-600 text-[13px] font-semibold ml-1">
+          {label} {required && <span className="text-red-400">*</span>}
         </label>
       )}
+
       {children || (
         <input
-          className={`w-full px-4 py-3 bg-gray-50 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
-            ${error ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-transparent'}`}
+          className={`
+            w-full px-4 py-2.5 bg-white border border-l-[3px] rounded-xl text-gray-800 text-sm
+            placeholder:text-gray-400 transition-all duration-200
+            focus:outline-none
+            ${error
+              ? 'border-red-200 border-l-red-400 bg-red-50/30'
+              : 'border-gray-200 border-l-gray-300 hover:border-l-emerald-400 focus:border-l-emerald-500 focus:bg-emerald-50/20 focus:border-gray-200'
+            }
+          `}
           {...props}
         />
       )}
-      {error && <p className="mt-1 text-sm text-red-600 flex items-center gap-1"><FontAwesomeIcon icon={faTriangleExclamation} className="text-xs" />{error}</p>}
-      {helper && !error && <p className="text-gray-500 text-xs mt-1">{helper}</p>}
+
+      {error && (
+        <p className="flex items-center gap-1.5 px-1 text-xs font-medium text-red-500">
+          <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
+          {error}
+        </p>
+      )}
+
+      {helper && !error && (
+        <p className="px-1 text-[11px] text-gray-400 leading-relaxed italic">
+          {helper}
+        </p>
+      )}
     </div>
   );
 }
@@ -111,7 +145,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
     name: '',
     description: '',
     price: '',
-    unit: 'kg',
+    unit: '',
     quantity: '',
     category: '',       // backward compat: category name string
     category_id: null,  // new FK
@@ -125,7 +159,12 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   // ── Derived values ──────────────────────────────────────────
   const isB2B = activeGroup === 'b2b';
-  const units = isB2B ? UNITS_B2B : UNITS_B2C;
+  const availableUnits = useMemo(() => {
+    const selectedCat = categories.find(c => c.id === formData.category_id);
+    if (!selectedCat?.slug) return CATEGORY_UNITS['default'];
+    return CATEGORY_UNITS[selectedCat.slug] ?? CATEGORY_UNITS['default'];
+  }, [formData.category_id, categories]);
+
   const currentGroupCategories = categories.filter(c =>
     c.market_type === activeGroup || c.market_type === 'both'
   );
@@ -154,7 +193,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
           category_id: firstB2C.id,
           subcategory: '',
           subcategory_id: null,
-          unit: 'kg'
+          unit: (CATEGORY_UNITS[firstB2C.slug] ?? CATEGORY_UNITS['default'])[0].value
         }));
         fetchSubcategories(firstB2C.id);
       }
@@ -164,15 +203,14 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   // ── Când schimbi categoria, resetează subcategoria și unitatea
   const handleCategoryChange = (cat) => {
-    const newIsB2B = cat.market_type === 'b2b';
-    const defaultUnit = newIsB2B ? 'oră' : 'kg';
+    const newUnits = CATEGORY_UNITS[cat.slug] ?? CATEGORY_UNITS['default'];
     setFormData(prev => ({
       ...prev,
       category: cat.name,
       category_id: cat.id,
       subcategory: '',
       subcategory_id: null,
-      unit: defaultUnit
+      unit: newUnits[0].value
     }));
     fetchSubcategories(cat.id);
   };
@@ -288,7 +326,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
       if (error) throw error;
 
       toast.success('Produs adăugat cu succes!', { duration: 4000 });
-      setFormData({ name: '', description: '', price: '', unit: 'kg', quantity: '', category: '', category_id: null, subcategory: '', subcategory_id: null, location: '', is_negotiable: false });
+      setFormData({ name: '', description: '', price: '', unit: '', quantity: '', category: '', category_id: null, subcategory: '', subcategory_id: null, location: '', is_negotiable: false });
       setGalleryImages([]); setErrors({}); setActiveGroup('b2c'); setExpiresAt('');
       setSubcategories([]);
       onClose(); if (onSuccess) onSuccess();
@@ -304,15 +342,12 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl max-w-3xl w-full my-8 shadow-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white overflow-hidden rounded-b-3xl rounded-3xl max-w-3xl w-full my-8 shadow-2xl max-h-[90vh] flex flex-col">
 
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5 flex justify-between items-center rounded-t-3xl flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Adaugă Produs Nou</h2>
-            <p className="text-gray-500 text-sm mt-0.5">
-              {isB2B ? 'Serviciu sau utilitate agricolă' : 'Produs alimentar sau agricol'}
-            </p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
             <FontAwesomeIcon icon={faTimes} size="lg" />
@@ -328,7 +363,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
           <form onSubmit={handleSubmit} className="overflow-y-auto flex-grow">
             <div className="p-6 space-y-8">
 
-              {/* ── SECȚIUNEA 1: Tip produs ───────────────────── */}
+              {/* SECȚIUNEA 1: Tip produs */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
                   Tipul produsului
@@ -344,8 +379,8 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                       className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-semibold text-sm transition-all
                         ${activeGroup === group.type
                           ? group.type === 'b2b'
-                            ? 'bg-blue-50 border-blue-500 text-blue-700'
-                            : 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                            : 'bg-emerald-600 border-emerald-600 text-white'
                           : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'}`}>
                       <FontAwesomeIcon icon={group.type === 'b2b' ? faTractor : faLeaf} />
                       {group.label}
@@ -365,17 +400,17 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                         className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-center gap-1.5
                           ${formData.category_id === cat.id
                             ? activeGroup === 'b2b'
-                              ? 'bg-blue-50 border-blue-500 shadow-sm'
-                              : 'bg-emerald-50 border-emerald-500 shadow-sm'
+                              ? 'bg-emerald-600 border-emerald-600 shadow-sm'
+                              : 'bg-emerald-600 border-emerald-600 shadow-sm'
                             : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}>
                         {iconMap[cat.icon] && (
                           <FontAwesomeIcon icon={iconMap[cat.icon]}
                             className={`text-xl ${formData.category_id === cat.id
-                              ? activeGroup === 'b2b' ? 'text-blue-600' : 'text-emerald-600'
+                              ? activeGroup === 'b2b' ? 'text-white' : 'text-white'
                               : 'text-gray-400'}`} />
                         )}
                         <span className={`text-xs font-medium text-center leading-tight ${formData.category_id === cat.id
-                          ? activeGroup === 'b2b' ? 'text-blue-700' : 'text-emerald-700'
+                          ? activeGroup === 'b2b' ? 'text-white' : 'text-white'
                           : 'text-gray-700'}`}>
                           {cat.name}
                         </span>
@@ -388,7 +423,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                 {subcategories.length > 0 && (
                   <div className="mt-4">
                     <label className="block text-gray-700 text-sm font-medium mb-2">
-                      Subcategorie <span className="text-gray-400 font-normal">(opțional)</span>
+                      Subcategorie
                     </label>
                     <div className="relative">
                       <select
@@ -402,24 +437,13 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                           }));
                         }}
                         className={`w-full px-4 py-3 pr-10 bg-gray-50 border rounded-xl text-gray-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 transition-all
-                          ${activeGroup === 'b2b' ? 'border-blue-200 focus:ring-blue-400' : 'border-gray-200 focus:ring-emerald-400'}`}>
-                        <option value="">— Selectează subcategorie —</option>
+                          ${activeGroup === 'b2b' ? ' focus:ring-gray-100' : 'focus:ring-gray-300'}`}>
+                        <option value="">Selectează subcategorie</option>
                         {subcategories.map(sub => (
                           <option key={sub.id} value={sub.id}>{sub.name}</option>
                         ))}
                       </select>
                       <FontAwesomeIcon icon={faChevronDown} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Info banner B2B */}
-                {isB2B && (
-                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
-                    <FontAwesomeIcon icon={faTractor} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-700">
-                      <p className="font-semibold mb-0.5">Produs / Serviciu B2B</p>
-                      <p className="text-blue-600 text-xs">Acesta va apărea în secțiunea „Servicii & Utilități" pentru fermieri și producători agricoli.</p>
                     </div>
                   </div>
                 )}
@@ -454,8 +478,11 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                         ? 'Descrie serviciul: ce include, disponibilitate, zonă de acoperire...'
                         : 'Descrie produsul: cum a fost cultivat, proprietăți, condiții de livrare...'}
                       rows={4}
-                      className={`w-full px-4 py-3 bg-gray-50 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all resize-none
-                        ${errors.description ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-transparent'}`} />
+                      className={`w-full px-4 py-3 bg-white border border-l-[3px] rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none transition-all resize-none
+                        ${errors.description
+                          ? 'border-red-200 border-l-red-400 bg-red-50/30'
+                          : 'border-gray-200 border-l-gray-300 hover:border-l-emerald-400 focus:border-l-emerald-500 focus:bg-emerald-50/20 focus:border-gray-200'
+                        }`} />
                     <div className="flex justify-between mt-1">
                       <p className={`text-xs ${errors.description ? 'text-red-600' : 'text-gray-500'}`}>
                         {errors.description || 'Minim 20 de caractere'}
@@ -468,10 +495,10 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                 </div>
               </div>
 
-              {/* ── SECȚIUNEA 3: Preț și Cantitate ───────────── */}
+              {/*SECȚIUNEA 3: Preț */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-                  Preț și cantitate
+                  Preț
                 </h3>
                 <div className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
@@ -484,18 +511,15 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                         <input type="number" step="0.01" min="0" value={formData.price}
                           onChange={e => setFormData(prev => ({ ...prev, price: e.target.value }))}
                           placeholder="0.00"
-                          className={`w-full px-4 py-3 pr-12 bg-gray-50 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
-                            ${errors.price ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-transparent'}`} />
+                          className={`w-full px-4 py-3 pr-12 bg-white border border-l-[3px] rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none transition-all
+                            ${errors.price
+                              ? 'border-red-200 border-l-red-400 bg-red-50/30'
+                              : 'border-gray-200 border-l-gray-300 hover:border-l-emerald-400 focus:border-l-emerald-500 focus:bg-emerald-50/20 focus:border-gray-200'
+                            }`} />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">lei</span>
                       </div>
                       {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
                     </div>
-
-                    {/* Cantitate */}
-                    <FormInput label="Cantitate disponibilă" type="number" step="0.01" min="0" required
-                      error={errors.quantity} value={formData.quantity}
-                      onChange={e => setFormData(prev => ({ ...prev, quantity: e.target.value }))}
-                      placeholder={isB2B ? 'ex: 10' : 'ex: 50'} />
                   </div>
 
                   {/* Unitate de măsură — dinamic */}
@@ -504,12 +528,12 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                       Unitate de măsură <span className="text-red-500">*</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {units.map(unit => (
+                      {availableUnits.map(unit => (
                         <button key={unit.value} type="button"
                           onClick={() => setFormData(prev => ({ ...prev, unit: unit.value }))}
                           className={`px-4 py-2 rounded-full font-medium transition-all text-sm
                             ${formData.unit === unit.value
-                              ? isB2B ? 'bg-blue-600 text-white shadow-md' : 'bg-emerald-600 text-white shadow-md'
+                              ? 'bg-emerald-600 text-white shadow-md'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                           {unit.label}
                         </button>
@@ -532,7 +556,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                 </div>
               </div>
 
-              {/* ── SECȚIUNEA 4: Locație ─────────────────────── */}
+              {/*Sectiunea 4: Locație  */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
                   Locație
@@ -540,19 +564,34 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                 <div className="space-y-3">
                   <div className="relative">
                     <FontAwesomeIcon icon={faLocationDot} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input type="text" value={formData.location}
+                    <input
+                      type="text"
+                      value={formData.location}
                       onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
                       placeholder="Se folosește locația din profil dacă nu completezi"
-                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all" />
+                      className="w-full pl-12 pr-4 py-3 bg-white border border-l-[3px] border-gray-200 border-l-gray-300 rounded-xl text-gray-900 placeholder-gray-400 hover:border-l-emerald-400 focus:border-l-emerald-500 focus:bg-emerald-50/20 focus:border-gray-200 focus:outline-none transition-all"
+                    />
                   </div>
-                  <button type="button" onClick={handleDetectLocation} disabled={loading || detectingLocation}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 rounded-lg font-medium transition-all disabled:opacity-50 text-sm group">
+
+                  <button
+                    type="button"
+                    onClick={handleDetectLocation}
+                    disabled={loading || detectingLocation}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 border-2 border-emerald-600 text-white rounded-xl font-semibold text-sm transition-all hover:bg-emerald-700 hover:border-emerald-700 disabled:opacity-50 group"
+                  >
                     {detectingLocation ? (
-                      <><div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-emerald-600" /><span>Detectare...</span></>
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />
+                        <span>Detectare...</span>
+                      </>
                     ) : (
-                      <><FontAwesomeIcon icon={faLocationCrosshairs} className="group-hover:scale-110 transition-transform" /><span>Folosește locația curentă</span></>
+                      <>
+                        <FontAwesomeIcon icon={faLocationCrosshairs} className="group-hover:scale-110 transition-transform" />
+                        <span>Folosește locația curentă</span>
+                      </>
                     )}
                   </button>
+
                   <p className="text-gray-500 text-xs">Locația ajută cumpărătorii să găsească produse din zona lor.</p>
                 </div>
               </div>
@@ -573,11 +612,10 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                         key={opt.days}
                         type="button"
                         onClick={() => setExpiresAt(isActive ? '' : chipDate)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition border ${
-                          isActive
-                            ? activeGroup === 'b2b' ? 'bg-blue-600 text-white border-blue-600' : 'bg-emerald-600 text-white border-emerald-600'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
-                        }`}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition border ${isActive
+                          ? activeGroup === 'b2b' ? 'bg-blue-600 text-white border-blue-600' : 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:bg-gray-50'
+                          }`}
                       >
                         {opt.label}
                       </button>
@@ -606,8 +644,15 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                   value={expiresAt}
                   min={TODAY}
                   onChange={e => setExpiresAt(e.target.value)}
-                  className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 transition-all cursor-pointer
-                    ${activeGroup === 'b2b' ? 'border-blue-200 focus:ring-blue-400' : 'border-gray-200 focus:ring-emerald-400'}`}
+                  onClick={e => {
+                    e.preventDefault();
+                    e.currentTarget.showPicker?.();
+                  }}
+                  onFocus={e => {
+                    e.preventDefault();
+                    e.currentTarget.showPicker?.();
+                  }}
+                  className="w-full px-4 py-3 bg-white border border-l-[3px] rounded-xl text-gray-900 text-sm focus:outline-none transition-all cursor-pointer border-gray-200 border-l-gray-300 hover:border-l-emerald-400 focus:border-l-emerald-500 focus:bg-emerald-50/20 focus:border-gray-200"
                 />
 
                 <p className={`text-xs mt-2 ${expiresAt ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -624,7 +669,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
             <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex gap-3 rounded-b-3xl flex-shrink-0">
               <button type="submit" disabled={loading || hasUploadingImages}
                 className={`flex-1 font-semibold py-3.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-white
-                  ${isB2B ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+                  ${isB2B ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />

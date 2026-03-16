@@ -60,7 +60,8 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
     'Altele': { icon: faBox, bgColor: 'bg-gray-50', iconColor: 'text-gray-600' }
   };
 
-  const config = categoryConfig[product.category] || categoryConfig['Altele'];
+  const categoryName = product.categories?.name ?? product.category;
+  const config = categoryConfig[categoryName] || categoryConfig['Altele'];
 
 
   return (
@@ -105,7 +106,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
         <div className="absolute top-3 left-3">
           <span className="bg-white/95 backdrop-blur-sm text-gray-900 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-md">
             <FontAwesomeIcon icon={config.icon} className={`text-xs ${config.iconColor}`} />
-            {product.category}
+            {product.categories?.name ?? product.category}
           </span>
         </div>
 

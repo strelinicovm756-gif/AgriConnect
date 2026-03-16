@@ -17,13 +17,16 @@ export function useProducts(filters = {}) {
 
       let query = supabase
         .from('products')
-        .select('*')
+        .select('*, categories(id, name, slug, icon), subcategories(id, name, slug)')
         .order('created_at', { ascending: false });
 
       if (filters.location) {
         query = query.eq('location', filters.location);
       }
-      if (filters.category) {
+      // Category filter: prefer categoryId (UUID FK), fall back to category (varchar)
+      if (filters.categoryId) {
+        query = query.eq('category_id', filters.categoryId);
+      } else if (filters.category) {
         query = query.eq('category', filters.category);
       }
       if (filters.verified) {

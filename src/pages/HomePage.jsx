@@ -15,29 +15,17 @@ import {
   faPlus, faLeaf, faCircleCheck, faHandshake,
   faArrowRight, faTruck, faSeedling, faChevronLeft, faChevronRight,
   faTractor, faFlask, faStar, faMapMarkerAlt, faShieldHalved,
-  faWrench, faDroplet, faChevronDown, faCalendarDays, faLocationDot
+  faWrench, faDroplet, faChevronDown, faCalendarDays, faLocationDot,
+  faCarrot, faAppleWhole, faCow, faDrumstickBite, faEgg, faJar, faWheatAwn
 } from '@fortawesome/free-solid-svg-icons';
 
-// ── Categorii B2B ──────────────────────────────────────────────
-const B2B_CATEGORIES = [
-  {
-    id: 'Servicii Teren', name: 'Servicii Teren', icon: faTractor,
-    subs: ['Arat & Prelucrare sol', 'Semănat', 'Recoltare mecanizată', 'Transport agricol']
-  },
-  {
-    id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faFlask,
-    subs: ['Pesticide', 'Erbicide', 'Îngrășăminte organice', 'Fungicide']
-  },
-  {
-    id: 'Echipamente', name: 'Echipamente', icon: faWrench,
-    subs: ['Unelte manuale', 'Piese schimb utilaje', 'Utilaje second-hand', 'Altele']
-  },
-  {
-    id: 'Sisteme de Irigare', name: 'Sisteme de Irigare', icon: faDroplet,
-    subs: ['Sisteme picurare', 'Pompe apă', 'Furtunuri & Accesorii', 'Altele']
-  },
-];
-const B2B_IDS = B2B_CATEGORIES.map(c => c.id);
+// ── Icon map: DB string → FontAwesome component ─────────────────
+const ICON_MAP = {
+  faCarrot, faAppleWhole, faCow, faDrumstickBite,
+  faEgg, faJar, faWheatAwn,
+  faTractor, faFlask, faWrench, faDroplet,
+  faSeedling, faLeaf
+};
 
 // Pill Nav Button — acum fără `absolute`, poziționat de wrapper-ul părintе
 function PillNavButton({ direction, onClick, ariaLabel }) {
@@ -223,12 +211,6 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
               <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
             </button>
           </div>
-
-          <Button>
-
-            
-          </Button>
-
           {/* Wrapper relativ pentru butoane + carusel */}
           <div className="relative">
             {/* Containerul caruselului */}
@@ -267,6 +249,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   const [currentSlide, setCurrentSlide] = useState(0);
   const [heroEvents, setHeroEvents] = useState([]);
   const [heroLoading, setHeroLoading] = useState(true);
+  const [dbCategories, setDbCategories] = useState([]);
 
   const farmersRef = useRef(null);
   const b2bRef = useRef(null);
@@ -274,7 +257,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   const b2cProvidersRef = useRef(null);
   const [b2cExpanded, setB2cExpanded] = useState(true);
 
-  useEffect(() => { fetchProducts(); fetchVerifiedFarmers(); }, []);
+  useEffect(() => { fetchProducts(); fetchVerifiedFarmers(); fetchDbCategories(); }, []);
   useEffect(() => {
     const fetchHeroEvents = async () => {
       try {
@@ -320,6 +303,12 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
     } catch { }
   };
 
+  const fetchDbCategories = async () => {
+    const { data } = await supabase
+      .from('categories').select('*').eq('is_active', true).order('sort_order');
+    if (data) setDbCategories(data);
+  };
+
   const scroll = (direction, ref) => {
     if (!ref?.current) return;
     const c = ref.current;
@@ -344,9 +333,17 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
     return r;
   };
 
+  // Derive b2b IDs and names for product split (handles both old and new products)
+  const b2bIds = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.id);
+  const b2bNames = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.name);
+  const isB2BProduct = (p) => {
+    if (p.category_id) return b2bIds.includes(p.category_id);
+    return b2bNames.includes(p.category); // backward compat for old products without FK
+  };
+
   const searched = applySearch(products);
-  const b2cProducts = searched.filter(p => !B2B_IDS.includes(p.category));
-  const b2bProducts = searched.filter(p => B2B_IDS.includes(p.category));
+  const b2cProducts = searched.filter(p => !isB2BProduct(p));
+  const b2bProducts = searched.filter(p => isB2BProduct(p));
 
   const getNewProducts = () => b2cProducts.slice(0, 8);
 
@@ -364,7 +361,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
           services: [],
         };
       }
-      const svc = p.subcategory || p.category;
+      const svc = p.subcategory || (p.categories?.name ?? p.category);
       if (svc && !map[p.user_id].services.includes(svc)) {
         map[p.user_id].services.push(svc);
       }
@@ -388,12 +385,18 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
         };
       }
       map[p.user_id].productsCount += 1;
-      if (p.category && !map[p.user_id].categories.includes(p.category)) {
-        map[p.user_id].categories.push(p.category);
+      const catName = p.categories?.name ?? p.category;
+      if (catName && !map[p.user_id].categories.includes(catName)) {
+        map[p.user_id].categories.push(catName);
       }
     });
     return Object.values(map);
   }, [b2cProducts]);
+
+  // B2B categories for the grid section — from DB
+  const b2bGridCategories = dbCategories
+    .filter(c => c.market_type !== 'b2c')
+    .map(c => ({ id: c.id, name: c.name, icon: ICON_MAP[c.icon] ?? faTractor, subs: [] }));
 
   const handleViewDetails = async (productId) => {
     if (session) {
@@ -635,13 +638,14 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
           />
 
           {/* ── CATEGORII B2B GRID ────────────────────────────── */}
+          {b2bGridCategories.length > 0 && (
           <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
             <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
               <h3 className="text-lg font-bold text-gray-500 uppercase tracking-wider mb-6 border-b border-gray-100 pb-3">
                 Categorii Servicii & Utilități
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
-                {B2B_CATEGORIES.map(cat => (
+                {b2bGridCategories.map(cat => (
                   <div key={cat.id} className="relative p-6 bg-white hover:bg-gray-50 transition-colors group overflow-hidden">
                     <FontAwesomeIcon
                       icon={cat.icon}
@@ -654,18 +658,20 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                     >
                       {cat.name}
                     </button>
+                    {cat.subs.length > 0 && (
                     <ul className="space-y-1.5 mb-3">
                       {cat.subs.map(sub => (
-                        <li key={sub}>
+                        <li key={sub.id}>
                           <button
-                            onClick={() => onNavigate('toate-produsele', null, { category: cat.id, subcategory: sub, type: 'b2b' })}
+                            onClick={() => onNavigate('toate-produsele', null, { category: cat.id, subcategory: sub.id, type: 'b2b' })}
                             className="text-sm text-gray-500 hover:text-emerald-600 transition-colors text-left"
                           >
-                            {sub}
+                            {sub.name}
                           </button>
                         </li>
                       ))}
                     </ul>
+                    )}
                     <button
                       onClick={() => onNavigate('toate-produsele', null, { category: cat.id, type: 'b2b' })}
                       className="text-sm text-emerald-600 font-semibold hover:underline"
@@ -677,6 +683,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               </div>
             </div>
           </div>
+          )}
 
           {/* ── PRESTATORI B2B ────────────────────────────────── */}
           {b2bProviders.length > 0 && (

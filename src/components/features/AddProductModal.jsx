@@ -13,67 +13,12 @@ import {
   faLeaf, faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
 
-// ── Structura categorii ────────────────────────────────────────
-const CATEGORY_GROUPS = [
-  {
-    type: 'b2c',
-    label: 'Produse Alimentare',
-    color: 'emerald',
-    categories: [
-      {
-        id: 'Legume', name: 'Legume', icon: faCarrot,
-        subs: ['Rădăcinoase', 'Verzișuri', 'Roșii & Ardei', 'Dovlecei & Castraveți', 'Altele']
-      },
-      {
-        id: 'Fructe', name: 'Fructe', icon: faAppleWhole,
-        subs: ['Mere & Pere', 'Fructe de pădure', 'Citrice', 'Struguri', 'Altele']
-      },
-      {
-        id: 'Lactate', name: 'Lactate', icon: faCow,
-        subs: ['Lapte', 'Brânzeturi', 'Smântână & Unt', 'Iaurt', 'Altele']
-      },
-      {
-        id: 'Carne', name: 'Carne', icon: faDrumstickBite,
-        subs: ['Carne de porc', 'Carne de vită', 'Pasăre', 'Mezeluri artizanale', 'Altele']
-      },
-      {
-        id: 'Ouă', name: 'Ouă', icon: faEgg,
-        subs: ['Ouă de găină', 'Ouă de rață', 'Ouă de prepeliță', 'Altele']
-      },
-      {
-        id: 'Miere', name: 'Miere', icon: faJar,
-        subs: ['Miere de flori', 'Miere de salcâm', 'Miere de tei', 'Produse apicole', 'Altele']
-      },
-      {
-        id: 'Cereale', name: 'Cereale', icon: faWheatAwn,
-        subs: ['Grâu', 'Porumb', 'Floarea-soarelui', 'Orz & Ovăz', 'Altele']
-      },
-    ]
-  },
-  {
-    type: 'b2b',
-    label: 'Servicii & Utilități Agricole',
-    color: 'blue',
-    categories: [
-      {
-        id: 'Servicii Teren', name: 'Servicii Teren', icon: faTractor,
-        subs: ['Arat & Prelucrare sol', 'Semănat', 'Recoltare mecanizată', 'Transport agricol', 'Altele']
-      },
-      {
-        id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faFlask,
-        subs: ['Pesticide', 'Erbicide', 'Îngrășăminte organice', 'Fungicide', 'Altele']
-      },
-      {
-        id: 'Echipamente', name: 'Echipamente', icon: faWrench,
-        subs: ['Unelte manuale', 'Piese schimb utilaje', 'Utilaje second-hand', 'Altele']
-      },
-      {
-        id: 'Sisteme de Irigare', name: 'Sisteme de Irigare', icon: faDroplet,
-        subs: ['Sisteme picurare', 'Pompe apă', 'Furtunuri & Accesorii', 'Altele']
-      },
-    ]
-  }
-];
+// ── Icon map: DB string → FontAwesome component ─────────────────
+const iconMap = {
+  faCarrot, faAppleWhole, faCow, faDrumstickBite,
+  faEgg, faJar, faWheatAwn,
+  faTractor, faFlask, faWrench, faDroplet, faLeaf
+};
 
 // ── Unități per tip ────────────────────────────────────────────
 const UNITS_B2C = [
@@ -95,8 +40,6 @@ const UNITS_B2B = [
   { value: 'kg',    label: 'Kilogram (kg)' },
   { value: 'set',   label: 'Set' },
 ];
-
-const B2B_IDS = CATEGORY_GROUPS.find(g => g.type === 'b2b').categories.map(c => c.id);
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -159,58 +102,94 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   const [activeGroup, setActiveGroup] = useState('b2c'); // 'b2c' | 'b2b'
   const [expiresAt, setExpiresAt] = useState(product?.expires_at || '');
 
+  // ── Categories from DB ─────────────────────────────────────
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     unit: 'kg',
     quantity: '',
-    category: 'Legume',
-    subcategory: '',
+    category: '',       // backward compat: category name string
+    category_id: null,  // new FK
+    subcategory: '',    // backward compat: subcategory name string
+    subcategory_id: null, // new FK
     location: '',
     is_negotiable: false
   });
 
   const [errors, setErrors] = useState({});
 
-  // ── Categoria curentă selectată ─────────────────────────────
-  const allCategories = CATEGORY_GROUPS.flatMap(g => g.categories);
-  const currentCat = allCategories.find(c => c.id === formData.category);
-  const isB2B = B2B_IDS.includes(formData.category);
+  // ── Derived values ──────────────────────────────────────────
+  const isB2B = activeGroup === 'b2b';
   const units = isB2B ? UNITS_B2B : UNITS_B2C;
+  const currentGroupCategories = categories.filter(c =>
+    c.market_type === activeGroup || c.market_type === 'both'
+  );
 
-  // Când schimbi categoria, resetează subcategoria și unitatea
-  const handleCategoryChange = (catId) => {
-    const cat = allCategories.find(c => c.id === catId);
-    const newIsB2B = B2B_IDS.includes(catId);
+  // ── Fetch categories from DB ────────────────────────────────
+  const fetchSubcategories = async (categoryId) => {
+    if (!categoryId) { setSubcategories([]); return; }
+    const { data } = await supabase
+      .from('subcategories').select('*')
+      .eq('category_id', categoryId).eq('is_active', true).order('sort_order');
+    setSubcategories(data || []);
+  };
+
+  const fetchCategories = async () => {
+    setLoadingCategories(true);
+    const { data } = await supabase
+      .from('categories').select('*').eq('is_active', true).order('sort_order');
+    if (data?.length > 0) {
+      setCategories(data);
+      // Select first b2c category by default
+      const firstB2C = data.find(c => c.market_type === 'b2c' || c.market_type === 'both');
+      if (firstB2C) {
+        setFormData(prev => ({
+          ...prev,
+          category: firstB2C.name,
+          category_id: firstB2C.id,
+          subcategory: '',
+          subcategory_id: null,
+          unit: 'kg'
+        }));
+        fetchSubcategories(firstB2C.id);
+      }
+    }
+    setLoadingCategories(false);
+  };
+
+  // ── Când schimbi categoria, resetează subcategoria și unitatea
+  const handleCategoryChange = (cat) => {
+    const newIsB2B = cat.market_type === 'b2b';
     const defaultUnit = newIsB2B ? 'oră' : 'kg';
     setFormData(prev => ({
       ...prev,
-      category: catId,
-      subcategory: cat?.subs?.[0] || '',
+      category: cat.name,
+      category_id: cat.id,
+      subcategory: '',
+      subcategory_id: null,
       unit: defaultUnit
     }));
+    fetchSubcategories(cat.id);
   };
 
   // Când schimbi grupul (B2C/B2B), selectează prima categorie din grup
   const handleGroupChange = (groupType) => {
     setActiveGroup(groupType);
-    const group = CATEGORY_GROUPS.find(g => g.type === groupType);
-    if (group?.categories?.length > 0) {
-      handleCategoryChange(group.categories[0].id);
-    }
+    const firstCat = categories.find(c => c.market_type === groupType || c.market_type === 'both');
+    if (firstCat) handleCategoryChange(firstCat);
   };
 
   useEffect(() => {
-    if (isOpen && session) checkProfile();
-  }, [isOpen, session]);
-
-  // Inițializează subcategoria la prima deschidere
-  useEffect(() => {
-    if (currentCat?.subs?.length > 0 && !formData.subcategory) {
-      setFormData(prev => ({ ...prev, subcategory: currentCat.subs[0] }));
+    if (isOpen && session) {
+      checkProfile();
+      fetchCategories();
     }
-  }, []);
+  }, [isOpen, session]);
 
   const checkProfile = async () => {
     try {
@@ -296,7 +275,9 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
         unit: formData.unit,
         quantity: parseFloat(formData.quantity),
         category: formData.category,
+        category_id: formData.category_id,
         subcategory: formData.subcategory || null,
+        subcategory_id: formData.subcategory_id || null,
         location: formData.location || profile.location,
         is_negotiable: formData.is_negotiable,
         image_url: imageUrls[0] || null,
@@ -307,8 +288,9 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
       if (error) throw error;
 
       toast.success('Produs adăugat cu succes!', { duration: 4000 });
-      setFormData({ name: '', description: '', price: '', unit: 'kg', quantity: '', category: 'Legume', subcategory: '', location: '', is_negotiable: false });
+      setFormData({ name: '', description: '', price: '', unit: 'kg', quantity: '', category: '', category_id: null, subcategory: '', subcategory_id: null, location: '', is_negotiable: false });
       setGalleryImages([]); setErrors({}); setActiveGroup('b2c'); setExpiresAt('');
+      setSubcategories([]);
       onClose(); if (onSuccess) onSuccess();
     } catch (err) {
       toast.error('Eroare: ' + err.message);
@@ -319,7 +301,6 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   if (!isOpen) return null;
   const hasUploadingImages = galleryImages.some(img => img.isUploading);
-  const currentGroup = CATEGORY_GROUPS.find(g => g.type === activeGroup);
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -355,7 +336,10 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
                 {/* Toggle B2C / B2B */}
                 <div className="flex gap-3 mb-5">
-                  {CATEGORY_GROUPS.map(group => (
+                  {[
+                    { type: 'b2c', label: 'Produse Alimentare' },
+                    { type: 'b2b', label: 'Servicii & Utilități Agricole' }
+                  ].map(group => (
                     <button key={group.type} type="button" onClick={() => handleGroupChange(group.type)}
                       className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-semibold text-sm transition-all
                         ${activeGroup === group.type
@@ -371,41 +355,57 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
                 {/* Grid categorii din grupul activ */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {currentGroup.categories.map(cat => (
-                    <button key={cat.id} type="button" onClick={() => handleCategoryChange(cat.id)}
-                      className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-center gap-1.5
-                        ${formData.category === cat.id
-                          ? activeGroup === 'b2b'
-                            ? 'bg-blue-50 border-blue-500 shadow-sm'
-                            : 'bg-emerald-50 border-emerald-500 shadow-sm'
-                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}>
-                      <FontAwesomeIcon icon={cat.icon}
-                        className={`text-xl ${formData.category === cat.id
-                          ? activeGroup === 'b2b' ? 'text-blue-600' : 'text-emerald-600'
-                          : 'text-gray-400'}`} />
-                      <span className={`text-xs font-medium text-center leading-tight ${formData.category === cat.id
-                        ? activeGroup === 'b2b' ? 'text-blue-700' : 'text-emerald-700'
-                        : 'text-gray-700'}`}>
-                        {cat.name}
-                      </span>
-                    </button>
-                  ))}
+                  {loadingCategories ? (
+                    <div className="col-span-4 flex justify-center py-6">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-600" />
+                    </div>
+                  ) : (
+                    currentGroupCategories.map(cat => (
+                      <button key={cat.id} type="button" onClick={() => handleCategoryChange(cat)}
+                        className={`p-3.5 rounded-xl border-2 transition-all flex flex-col items-center gap-1.5
+                          ${formData.category_id === cat.id
+                            ? activeGroup === 'b2b'
+                              ? 'bg-blue-50 border-blue-500 shadow-sm'
+                              : 'bg-emerald-50 border-emerald-500 shadow-sm'
+                            : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}>
+                        {iconMap[cat.icon] && (
+                          <FontAwesomeIcon icon={iconMap[cat.icon]}
+                            className={`text-xl ${formData.category_id === cat.id
+                              ? activeGroup === 'b2b' ? 'text-blue-600' : 'text-emerald-600'
+                              : 'text-gray-400'}`} />
+                        )}
+                        <span className={`text-xs font-medium text-center leading-tight ${formData.category_id === cat.id
+                          ? activeGroup === 'b2b' ? 'text-blue-700' : 'text-emerald-700'
+                          : 'text-gray-700'}`}>
+                          {cat.name}
+                        </span>
+                      </button>
+                    ))
+                  )}
                 </div>
 
                 {/* Subcategorie dropdown */}
-                {currentCat?.subs?.length > 0 && (
+                {subcategories.length > 0 && (
                   <div className="mt-4">
                     <label className="block text-gray-700 text-sm font-medium mb-2">
                       Subcategorie <span className="text-gray-400 font-normal">(opțional)</span>
                     </label>
                     <div className="relative">
                       <select
-                        value={formData.subcategory}
-                        onChange={e => setFormData(prev => ({ ...prev, subcategory: e.target.value }))}
+                        value={formData.subcategory_id || ''}
+                        onChange={e => {
+                          const sub = subcategories.find(s => s.id === e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            subcategory_id: e.target.value || null,
+                            subcategory: sub?.name || ''
+                          }));
+                        }}
                         className={`w-full px-4 py-3 pr-10 bg-gray-50 border rounded-xl text-gray-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 transition-all
                           ${activeGroup === 'b2b' ? 'border-blue-200 focus:ring-blue-400' : 'border-gray-200 focus:ring-emerald-400'}`}>
-                        {currentCat.subs.map(sub => (
-                          <option key={sub} value={sub}>{sub}</option>
+                        <option value="">— Selectează subcategorie —</option>
+                        {subcategories.map(sub => (
+                          <option key={sub.id} value={sub.id}>{sub.name}</option>
                         ))}
                       </select>
                       <FontAwesomeIcon icon={faChevronDown} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none" />

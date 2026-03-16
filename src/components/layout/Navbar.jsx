@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvira } from '@fortawesome/free-brands-svg-icons';
 import {
@@ -32,22 +33,10 @@ const CATEGORY_ICONS = {
   'Servicii': Tractor,
 };
 
-const B2C_MEGA = [
-  { id: 'Legume', name: 'Legume', icon: faCarrot, subs: ['Rădăcinoase', 'Verzișuri', 'Roșii & Ardei', 'Dovlecei & Castraveți'] },
-  { id: 'Fructe', name: 'Fructe', icon: faAppleWhole, subs: ['Mere & Pere', 'Fructe de pădure', 'Citrice', 'Struguri'] },
-  { id: 'Lactate', name: 'Lactate', icon: faCow, subs: ['Lapte', 'Brânzeturi', 'Smântână & Unt', 'Iaurt'] },
-  { id: 'Carne', name: 'Carne', icon: faDrumstickBite, subs: ['Carne de porc', 'Carne de vită', 'Pasăre', 'Mezeluri artizanale'] },
-  { id: 'Ouă', name: 'Ouă', icon: faEgg, subs: ['Ouă de găină', 'Ouă de rață', 'Ouă de prepeliță', 'Altele'] },
-  { id: 'Miere', name: 'Miere', icon: faJar, subs: ['Miere de flori', 'Miere de salcâm', 'Miere de tei', 'Produse apicole'] },
-  { id: 'Cereale', name: 'Cereale', icon: faWheatAwn, subs: ['Grâu', 'Porumb', 'Floarea-soarelui', 'Orz & Ovăz'] },
-];
-
-const B2B_MEGA = [
-  { id: 'Servicii Teren', name: 'Servicii Teren', icon: faTractor, subs: ['Arat & Prelucrare sol', 'Semănat', 'Recoltare mecanizată', 'Transport agricol'] },
-  { id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faSeedling, subs: ['Pesticide', 'Erbicide', 'Îngrășăminte organice', 'Fungicide'] },
-  { id: 'Echipamente', name: 'Echipamente', icon: faWrench, subs: ['Unelte manuale', 'Piese schimb utilaje', 'Utilaje second-hand', 'Altele'] },
-  { id: 'Sisteme de Irigare', name: 'Sisteme de Irigare', icon: faDroplet, subs: ['Sisteme picurare', 'Pompe apă', 'Furtunuri & Accesorii', 'Altele'] },
-];
+const ICON_MAP = {
+  faCarrot, faAppleWhole, faCow, faDrumstickBite, faEgg, faJar, faWheatAwn,
+  faTractor, faSeedling, faWrench, faDroplet,
+};
 
 export function Navbar({ session, onNavigate }) {
   const [profileName, setProfileName] = useState('');
@@ -68,6 +57,8 @@ export function Navbar({ session, onNavigate }) {
   const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const { getUnreadCount } = useChat();
+  const [megaCategories, setMegaCategories] = useState({ b2c: [], b2b: [] });
+  const [openCategoryId, setOpenCategoryId] = useState(null);
 
   const dropdownRef = useRef(null);
   const notifRef = useRef(null);
@@ -82,6 +73,23 @@ export function Navbar({ session, onNavigate }) {
   }, [session]);
 
   useEffect(() => {
+    const fetchMegaCategories = async () => {
+      const { data: cats } = await supabase
+        .from('categories')
+        .select('*, subcategories(id, name, slug)')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (cats) {
+        setMegaCategories({
+          b2c: cats.filter(c => c.market_type === 'b2c' || c.market_type === 'both'),
+          b2b: cats.filter(c => c.market_type === 'b2b' || c.market_type === 'both'),
+        });
+      }
+    };
+    fetchMegaCategories();
+  }, []);
+
+  useEffect(() => {
     const clickOut = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setShowDropdown(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifDropdown(false);
@@ -90,7 +98,7 @@ export function Navbar({ session, onNavigate }) {
         showMegaMenu &&
         megaMenuRef.current && !megaMenuRef.current.contains(e.target) &&
         categoriiBtnRef.current && !categoriiBtnRef.current.contains(e.target)
-      ) setShowMegaMenu(false);
+      ) { setShowMegaMenu(false); setOpenCategoryId(null); }
     };
     document.addEventListener('mousedown', clickOut);
     return () => document.removeEventListener('mousedown', clickOut);
@@ -119,7 +127,7 @@ export function Navbar({ session, onNavigate }) {
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === 'Escape') { closeOverlay(); setShowMegaMenu(false); }
+      if (e.key === 'Escape') { closeOverlay(); setShowMegaMenu(false); setOpenCategoryId(null); }
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
@@ -249,6 +257,7 @@ export function Navbar({ session, onNavigate }) {
 
   const handleMegaNav = (params) => {
     setShowMegaMenu(false);
+    setOpenCategoryId(null);
     onNavigate('toate-produsele', null, params);
   };
 
@@ -474,88 +483,160 @@ export function Navbar({ session, onNavigate }) {
 
               {/* B2C */}
               <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2 mb-4">
                   <FontAwesomeIcon icon={faCartShopping} />
                   Produse Alimentare
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-6">
-                  {B2C_MEGA.map(cat => (
-                    <div key={cat.id}>
-                      <button
-                        onClick={() => handleMegaNav({ category: cat.id })}
-                        className="flex items-center gap-1.5 font-bold text-gray-900 hover:text-emerald-600 transition-colors mb-2 w-full text-left"
-                      >
-                        <FontAwesomeIcon icon={cat.icon} className="text-emerald-500 text-sm flex-shrink-0" />
-                        <span className="text-sm">{cat.name}</span>
-                      </button>
-                      <ul className="space-y-1.5">
-                        {cat.subs.map(sub => (
-                          <li key={sub}>
-                            <button
-                              onClick={() => handleMegaNav({ category: cat.id, subcategory: sub })}
-                              className="text-xs text-gray-500 hover:text-emerald-600 transition-colors text-left w-full"
-                            >
-                              {sub}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        onClick={() => handleMegaNav({ category: cat.id })}
-                        className="text-xs text-emerald-600 font-semibold mt-2 hover:underline block"
-                      >
-                        Vezi toate →
-                      </button>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-start">
+                  {megaCategories.b2c.map(cat => {
+                    return (
+                      <div key={cat.id} className="group bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-emerald-200 transition-all duration-200 flex flex-col">
+                        <button
+                          onClick={() => handleMegaNav({ category: cat.id })}
+                          className="flex items-center gap-2.5 mb-3 w-full text-left"
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                            <FontAwesomeIcon icon={ICON_MAP[cat.icon] ?? faCarrot} className="text-emerald-600 text-sm" />
+                          </div>
+                          <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{cat.name}</span>
+                        </button>
+                        {(() => {
+                          const isOpen = openCategoryId === cat.id;
+                          const displayedSubs = isOpen ? cat.subcategories : cat.subcategories.slice(0, 3);
+                          return (
+                            <>
+                              <ul className="space-y-0.5">
+                                <AnimatePresence initial={false}>
+                                  {displayedSubs.map(sub => (
+                                    <motion.li
+                                      key={sub.id}
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                      style={{ overflow: 'hidden' }}
+                                    >
+                                      <button
+                                        onClick={() => handleMegaNav({ category: cat.id, subcategory: sub.id })}
+                                        className="text-xs font-medium text-gray-500 hover:text-emerald-600 transition-colors text-left w-full py-0.5 truncate"
+                                      >
+                                        {sub.name}
+                                      </button>
+                                    </motion.li>
+                                  ))}
+                                </AnimatePresence>
+                              </ul>
+                              {!isOpen && cat.subcategories.length > 3 && (
+                                <div className="h-4 bg-gradient-to-t from-white to-transparent -mt-4 pointer-events-none relative z-10" />
+                              )}
+                              {cat.subcategories.length > 3 && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setOpenCategoryId(isOpen ? null : cat.id); }}
+                                  className="w-full mt-2 flex justify-center items-center py-1 hover:bg-gray-50 rounded-lg transition-colors"
+                                >
+                                  <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                                    <ChevronDown className="text-emerald-400" size={16} />
+                                  </motion.div>
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
+                        <div className="border-t border-gray-100 mt-2 pt-2">
+                          <button
+                            onClick={() => handleMegaNav({ category: cat.id })}
+                            className="text-xs text-emerald-600 font-semibold hover:underline"
+                          >
+                            Vezi toate →
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* B2B */}
               <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2 mb-4">
                   <FontAwesomeIcon icon={faIndustry} />
                   Servicii &amp; Utilități
                 </p>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-                  {B2B_MEGA.map(cat => (
-                    <div key={cat.id}>
-                      <button
-                        onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
-                        className="flex items-center gap-1.5 font-bold text-gray-900 hover:text-emerald-600 transition-colors mb-2 w-full text-left"
-                      >
-                        <FontAwesomeIcon icon={cat.icon} className="text-emerald-500 text-sm flex-shrink-0" />
-                        <span className="text-sm">{cat.name}</span>
-                      </button>
-                      <ul className="space-y-1.5">
-                        {cat.subs.map(sub => (
-                          <li key={sub}>
-                            <button
-                              onClick={() => handleMegaNav({ category: cat.id, subcategory: sub, type: 'b2b' })}
-                              className="text-xs text-gray-500 hover:text-emerald-600 transition-colors text-left w-full"
-                            >
-                              {sub}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
-                        className="text-xs text-emerald-600 font-semibold mt-2 hover:underline block"
-                      >
-                        Vezi toate →
-                      </button>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 gap-3 items-start">
+                  {megaCategories.b2b.map(cat => {
+                    return (
+                      <div key={cat.id} className="group bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-emerald-200 transition-all duration-200 flex flex-col">
+                        <button
+                          onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
+                          className="flex items-center gap-2.5 mb-3 w-full text-left"
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                            <FontAwesomeIcon icon={ICON_MAP[cat.icon] ?? faTractor} className="text-emerald-600 text-sm" />
+                          </div>
+                          <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{cat.name}</span>
+                        </button>
+                        {(() => {
+                          const isOpen = openCategoryId === cat.id;
+                          const displayedSubs = isOpen ? cat.subcategories : cat.subcategories.slice(0, 3);
+                          return (
+                            <>
+                              <ul className="space-y-0.5">
+                                <AnimatePresence initial={false}>
+                                  {displayedSubs.map(sub => (
+                                    <motion.li
+                                      key={sub.id}
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                      style={{ overflow: 'hidden' }}
+                                    >
+                                      <button
+                                        onClick={() => handleMegaNav({ category: cat.id, subcategory: sub.id, type: 'b2b' })}
+                                        className="text-xs font-medium text-gray-500 hover:text-emerald-600 transition-colors text-left w-full py-0.5 truncate"
+                                      >
+                                        {sub.name}
+                                      </button>
+                                    </motion.li>
+                                  ))}
+                                </AnimatePresence>
+                              </ul>
+                              {!isOpen && cat.subcategories.length > 3 && (
+                                <div className="h-4 bg-gradient-to-t from-white to-transparent -mt-4 pointer-events-none relative z-10" />
+                              )}
+                              {cat.subcategories.length > 3 && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setOpenCategoryId(isOpen ? null : cat.id); }}
+                                  className="w-full mt-2 flex justify-center items-center py-1 hover:bg-gray-50 rounded-lg transition-colors"
+                                >
+                                  <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                                    <ChevronDown className="text-emerald-400" size={16} />
+                                  </motion.div>
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
+                        <div className="border-t border-gray-100 mt-2 pt-2">
+                          <button
+                            onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
+                            className="text-xs text-emerald-600 font-semibold hover:underline"
+                          >
+                            Vezi toate →
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
             </div>
 
             {/* Footer mega menu */}
-            <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+            <div className="rounded-lg mt-6 pt-4 border-t border-gray-100 text-center">
               <button
-                onClick={() => { setShowMegaMenu(false); onNavigate('toate-produsele'); }}
+                onClick={() => { setShowMegaMenu(false); setOpenCategoryId(null); onNavigate('toate-produsele'); }}
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-emerald-600 hover:text-white text-gray-700 rounded-xl font-semibold text-sm transition-colors"
               >
                 Caută în toate categoriile

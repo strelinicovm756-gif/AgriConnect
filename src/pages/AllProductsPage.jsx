@@ -61,60 +61,16 @@ const globalCSS = `
 
 const PRICE_MAX = 5000;
 
-const B2B_IDS = ['Servicii Teren', 'Protecția Plantelor', 'Echipamente', 'Sisteme de Irigare'];
-
-// ── Icon map ──────────────────────────────────────────────────
+// ── Icon map: DB string → FontAwesome component ───────────────
 const ICON_MAP = {
   faCarrot, faAppleWhole, faCow, faDrumstickBite,
-  faEgg, faJar, faWheatAwn, faSeedling, faLeaf
+  faEgg, faJar, faWheatAwn, faSeedling, faLeaf,
+  faTractor, faFlask, faWrench, faDroplet
 };
 
-// ── Categorii hardcodate (oglindesc ce e în Supabase) ─────────
-const PARENT_CATEGORIES = [
-  {
-    id: 'legume-fructe', name: 'Legume & Fructe', icon: faCarrot,
-    subs: [
-      { id: 'Legume', name: 'Legume', icon: faCarrot },
-      { id: 'Fructe', name: 'Fructe', icon: faAppleWhole },
-    ]
-  },
-  {
-    id: 'produse-animale', name: 'Produse Animale', icon: faCow,
-    subs: [
-      { id: 'Lactate', name: 'Lactate & Brânzeturi', icon: faCow },
-      { id: 'Carne', name: 'Carne', icon: faDrumstickBite },
-      { id: 'Ouă', name: 'Ouă', icon: faEgg },
-    ]
-  },
-  {
-    id: 'camara', name: 'Cămară', icon: faJar,
-    subs: [
-      { id: 'Miere', name: 'Miere', icon: faJar },
-      { id: 'Dulcețuri', name: 'Dulcețuri', icon: faJar },
-      { id: 'Uleiuri', name: 'Uleiuri', icon: faJar },
-    ]
-  },
-  {
-    id: 'gradinarit', name: 'Grădinărit & Răsaduri', icon: faSeedling,
-    subs: [
-      { id: 'Răsaduri', name: 'Răsaduri', icon: faSeedling },
-      { id: 'Semințe', name: 'Semințe', icon: faSeedling },
-    ]
-  },
-  {
-    id: 'Cereale', name: 'Cereale', icon: faWheatAwn,
-    subs: []
-  },
-  {
-    id: 'servicii-utilitati', name: 'Servicii & Utilități', icon: faTractor,
-    subs: [
-      { id: 'Servicii Teren',      name: 'Servicii Teren',      icon: faTractor },
-      { id: 'Protecția Plantelor', name: 'Protecția Plantelor', icon: faFlask   },
-      { id: 'Echipamente',         name: 'Echipamente',         icon: faWrench  },
-      { id: 'Sisteme de Irigare',  name: 'Sisteme de Irigare',  icon: faDroplet },
-    ]
-  },
-];
+// Detect UUID format (to distinguish new FK values from old varchar names)
+const isUUID = (str) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 // ── Price Range Filter ────────────────────────────────────────
 function PriceRangeFilter({ initialMin, initialMax, onApply, onClear }) {
@@ -193,26 +149,20 @@ function PriceRangeFilter({ initialMin, initialMax, onApply, onClear }) {
 function CategoryAccordionItem({ cat, selectedCategory, onSelect }) {
   const hasSubs = cat.subs && cat.subs.length > 0;
 
-  // Dacă categoria nu are subcategorii, e activ direct când e selectat
-  // Dacă are subcategorii, e "activ" (deschis) când una din sub-uri e selectată
   const isSubSelected = hasSubs && cat.subs.some(s => s.id === selectedCategory);
   const isDirectSelected = !hasSubs && selectedCategory === cat.id;
   const isActive = isSubSelected || isDirectSelected;
 
-  // Accordion deschis dacă e activ sau dacă utilizatorul l-a deschis manual
   const [open, setOpen] = useState(isActive);
 
-  // Sincronizare când se schimbă categoria din exterior (ex: reset)
   useEffect(() => {
     if (isActive) setOpen(true);
   }, [isActive]);
 
   const handleParentClick = () => {
     if (!hasSubs) {
-      // Selectează direct
       onSelect(isDirectSelected ? null : cat.id);
     } else {
-      // Toggle accordion
       setOpen(prev => !prev);
     }
   };
@@ -277,10 +227,37 @@ function CategoryAccordionItem({ cat, selectedCategory, onSelect }) {
 
 // ── Filter Sidebar ────────────────────────────────────────────
 function FilterSidebar({
-  filters, activeFiltersCount,
+  filters, activeFiltersCount, dbCategories,
   onCategoryChange, onLocationChange, onNegotiableChange,
   onClearFilter, onClearAll, onPriceApply, onPriceClear
 }) {
+  // Build accordion-ready structures from DB categories
+  const b2cCats = dbCategories
+    .filter(c => c.market_type !== 'b2b')
+    .map(c => ({
+      id: c.id,
+      name: c.name,
+      icon: ICON_MAP[c.icon] ?? faBoxesStacked,
+      subs: (c.subcategories || []).map(s => ({
+        id: s.id,
+        name: s.name,
+        icon: ICON_MAP[c.icon] ?? faBoxesStacked
+      }))
+    }));
+
+  const b2bCats = dbCategories
+    .filter(c => c.market_type !== 'b2c')
+    .map(c => ({
+      id: c.id,
+      name: c.name,
+      icon: ICON_MAP[c.icon] ?? faTractor,
+      subs: (c.subcategories || []).map(s => ({
+        id: s.id,
+        name: s.name,
+        icon: ICON_MAP[c.icon] ?? faTractor
+      }))
+    }));
+
   return (
     <div className="py-2">
       {/* Header */}
@@ -301,11 +278,11 @@ function FilterSidebar({
         {/* Produse Alimentare */}
         <h4 className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-3 px-1">Produse Alimentare</h4>
         <div className="space-y-0.5">
-          {PARENT_CATEGORIES.filter(cat => cat.id !== 'servicii-utilitati').map(cat => (
+          {b2cCats.map(cat => (
             <CategoryAccordionItem
               key={cat.id}
               cat={cat}
-              selectedCategory={filters.category}
+              selectedCategory={filters.categoryId}
               onSelect={onCategoryChange}
             />
           ))}
@@ -317,18 +294,18 @@ function FilterSidebar({
         {/* Servicii & Utilități */}
         <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 px-1">Servicii & Utilități</h4>
         <div className="space-y-0.5">
-          {PARENT_CATEGORIES.filter(cat => cat.id === 'servicii-utilitati').map(cat => (
+          {b2bCats.map(cat => (
             <CategoryAccordionItem
               key={cat.id}
               cat={cat}
-              selectedCategory={filters.category}
+              selectedCategory={filters.categoryId}
               onSelect={onCategoryChange}
             />
           ))}
         </div>
 
-        {filters.category && (
-          <button onClick={() => onClearFilter('category')}
+        {filters.categoryId && (
+          <button onClick={() => onClearFilter('categoryId')}
             className="text-xs text-emerald-600 hover:text-emerald-700 mt-2 ml-1">
             Șterge filtru categorie
           </button>
@@ -385,9 +362,10 @@ export default function AllProductsPage({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [dbCategories, setDbCategories] = useState([]);
 
   const [filters, setFilters] = useState({
-    category: initialCategory || null,
+    categoryId: initialCategory || null, // UUID (new) or name string (old compat)
     search: initialSearch || '',
     minPrice: '',
     maxPrice: '',
@@ -406,7 +384,24 @@ export default function AllProductsPage({
     { value: 'price_desc', label: 'Preț descrescător' },
   ];
 
-  useEffect(() => { fetchProducts(); }, [filters, currentPage]);
+  // Derived: UUIDs of B2B categories (updates when dbCategories loads)
+  const b2bIds = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.id);
+
+  // Fetch categories (with subcategories joined) once on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from('categories')
+        .select('*, subcategories(id, name, slug)')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (data) setDbCategories(data);
+    };
+    fetchCategories();
+  }, []);
+
+  // Fetch products whenever filters, page, or dbCategories change
+  useEffect(() => { fetchProducts(); }, [filters, currentPage, dbCategories]);
 
   const fetchProducts = async () => {
     try {
@@ -416,9 +411,20 @@ export default function AllProductsPage({
         .select('*', { count: 'exact' })
         .eq('status', 'active');
 
-      if (filters.category) query = query.eq('category', filters.category);
-      else if (filters.type === 'b2b') query = query.in('category', B2B_IDS);
-      else if (filters.type === 'b2c') B2B_IDS.forEach(id => { query = query.neq('category', id); });
+      if (filters.categoryId) {
+        if (isUUID(filters.categoryId)) {
+          // New FK-based filter: match either category_id or subcategory_id
+          query = query.or(`category_id.eq.${filters.categoryId},subcategory_id.eq.${filters.categoryId}`);
+        } else {
+          // Backward compat: old varchar name filter
+          query = query.eq('category', filters.categoryId);
+        }
+      } else if (filters.type === 'b2b') {
+        if (b2bIds.length > 0) query = query.in('category_id', b2bIds);
+      } else if (filters.type === 'b2c') {
+        if (b2bIds.length > 0) query = query.not('category_id', 'in', `(${b2bIds.join(',')})`);
+      }
+
       if (filters.search) query = query.ilike('name', `%${filters.search}%`);
       if (filters.location) query = query.ilike('location', `%${filters.location}%`);
       if (filters.negotiable) query = query.eq('is_negotiable', true);
@@ -473,18 +479,20 @@ export default function AllProductsPage({
   const clearFilter = useCallback((name) => {
     setFilters(prev => ({
       ...prev,
-      [name]: name === 'verified' || name === 'negotiable' ? false : (name === 'category' || name === 'type') ? null : ''
+      [name]: name === 'verified' || name === 'negotiable' ? false
+            : (name === 'categoryId' || name === 'type') ? null
+            : ''
     }));
     setCurrentPage(1);
   }, []);
 
   const clearAllFilters = useCallback(() => {
-    setFilters({ category: null, search: '', minPrice: '', maxPrice: '', location: '', negotiable: false, sortBy: 'newest', type: null });
+    setFilters({ categoryId: null, search: '', minPrice: '', maxPrice: '', location: '', negotiable: false, sortBy: 'newest', type: null });
     setCurrentPage(1);
   }, []);
 
   const handleCategoryChange = useCallback((id) => {
-    setFilters(p => ({ ...p, category: id, type: null }));
+    setFilters(p => ({ ...p, categoryId: id, type: null }));
     setCurrentPage(1);
   }, []);
   const handleLocationChange = useCallback((v) => { setFilters(p => ({ ...p, location: v })); setCurrentPage(1); }, []);
@@ -493,7 +501,7 @@ export default function AllProductsPage({
   const handlePriceClear = useCallback(() => { setFilters(p => ({ ...p, minPrice: '', maxPrice: '' })); setCurrentPage(1); }, []);
 
   const activeFiltersCount = [
-    filters.category, filters.search, filters.minPrice,
+    filters.categoryId, filters.search, filters.minPrice,
     filters.maxPrice, filters.location, filters.negotiable, filters.type
   ].filter(Boolean).length;
 
@@ -501,16 +509,16 @@ export default function AllProductsPage({
 
   const getCategoryDisplayName = (id) => {
     if (!id) return null;
-    for (const parent of PARENT_CATEGORIES) {
-      if (parent.id === id) return parent.name;
-      const sub = parent.subs?.find(s => s.id === id);
-      if (sub) return `${parent.name} → ${sub.name}`;
+    for (const cat of dbCategories) {
+      if (cat.id === id) return cat.name;
+      const sub = (cat.subcategories || []).find(s => s.id === id);
+      if (sub) return `${cat.name} → ${sub.name}`;
     }
-    return id;
+    return id; // fallback: show raw value (e.g. old name string)
   };
 
   const getPageTitle = () => {
-    if (filters.category) return getCategoryDisplayName(filters.category);
+    if (filters.categoryId) return getCategoryDisplayName(filters.categoryId);
     if (filters.type === 'b2b') return 'Servicii & Utilități';
     if (filters.type === 'b2c') return 'Produse Alimentare';
     return 'Toate produsele';
@@ -535,6 +543,7 @@ export default function AllProductsPage({
           <FilterSidebar
             filters={filters}
             activeFiltersCount={activeFiltersCount}
+            dbCategories={dbCategories}
             onCategoryChange={handleCategoryChange}
             onLocationChange={handleLocationChange}
             onNegotiableChange={handleNegotiableChange}
@@ -594,10 +603,10 @@ export default function AllProductsPage({
         {/* Active Filter Pills */}
         {activeFiltersCount > 0 && (
           <div className="flex flex-wrap gap-2 mb-5">
-            {filters.category && (
+            {filters.categoryId && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200">
-                {getCategoryDisplayName(filters.category)}
-                <button onClick={() => clearFilter('category')}><FontAwesomeIcon icon={faXmark} className="text-[10px]" /></button>
+                {getCategoryDisplayName(filters.categoryId)}
+                <button onClick={() => clearFilter('categoryId')}><FontAwesomeIcon icon={faXmark} className="text-[10px]" /></button>
               </span>
             )}
             {filters.search && (
@@ -654,6 +663,7 @@ export default function AllProductsPage({
               <FilterSidebar
                 filters={filters}
                 activeFiltersCount={activeFiltersCount}
+                dbCategories={dbCategories}
                 onCategoryChange={(id) => { handleCategoryChange(id); setShowMobileFilters(false); }}
                 onLocationChange={handleLocationChange}
                 onNegotiableChange={handleNegotiableChange}

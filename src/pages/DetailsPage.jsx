@@ -450,8 +450,8 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     </div>
                     <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                       <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md flex items-center gap-2">
-                        <FontAwesomeIcon icon={categoryIcons[product.category] || faBox} className="text-emerald-600" />
-                        <span className="text-gray-900 font-semibold text-sm">{product.category}</span>
+                        <FontAwesomeIcon icon={categoryIcons[product.categories?.name ?? product.category] || faBox} className="text-emerald-600" />
+                        <span className="text-gray-900 font-semibold text-sm">{product.categories?.name ?? product.category}</span>
                       </div>
                     </div>
                     <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
@@ -498,7 +498,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full bg-gray-50">
-                    <FontAwesomeIcon icon={categoryIcons[product.category] || faBox} className="text-9xl text-emerald-600" />
+                    <FontAwesomeIcon icon={categoryIcons[product.categories?.name ?? product.category] || faBox} className="text-9xl text-emerald-600" />
                   </div>
                 )}
               </div>

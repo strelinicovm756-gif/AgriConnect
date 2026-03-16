@@ -11,7 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot, faAppleWhole, faCow, faDrumstickBite,
   faEgg, faJar, faWheatAwn, faBox,
-  faLocationDot, faCalendarDays, faPhone, faAddressCard,
+  faLocationDot, faCalendarDays, faPhone,
   faCircleCheck, faMapMarkedAlt,
   faHandshake, faLeaf, faMessage,
   faStar,
@@ -19,22 +19,38 @@ import {
   faComments, faPaperPlane, faTrash, faPen, faFlag
 } from '@fortawesome/free-solid-svg-icons';
 
-function StarRating({ value = 0, onChange = null, size = 'text-xl' }) {
+function StarRating({ value = 0, onChange = null }) {
   const [hovered, setHovered] = useState(0);
   const active = hovered || value;
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
-        <button key={star} type="button" disabled={!onChange}
+        <button
+          key={star}
+          type="button"
+          disabled={!onChange}
           onClick={() => onChange && onChange(star)}
           onMouseEnter={() => onChange && setHovered(star)}
           onMouseLeave={() => onChange && setHovered(0)}
-          className={`${size} transition-transform duration-150 ${onChange ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
-          aria-label={`${star} stele`}>
-          {star <= active
-            ? <FontAwesomeIcon icon={faStar} className="text-yellow-400" />
-            : <svg viewBox="0 0 576 512" className="fill-current text-gray-300" style={{ width: '1em', height: '1em' }}><path d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.4 1.7L288 439.6 152.2 509.1c-8.1 4.3-17.9 3.7-25.4-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3L197.7 154.8 266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99.9 217.6l84.2 83c5.5 5.5 8.1 13.3 6.8 21L171 443l103.8-55.3c7.1-3.8 15.6-3.8 22.6 0L401.2 443l-19.9-121.4c-1.3-7.7 1.2-15.5 6.8-21l84.2-83-117.4-17.1c-7.9-1.2-14.6-6.1-18.1-13.3L287.9 79z" /></svg>
-          }
+          style={{ width: '1.5rem', height: '1.5rem', flexShrink: 0 }}
+          className={`flex items-center justify-center ${onChange ? 'cursor-pointer' : 'cursor-default'}`}
+          aria-label={`${star} stele`}
+        >
+          {star <= active ? (
+            <FontAwesomeIcon
+              icon={faStar}
+              className="text-yellow-400"
+              style={{ fontSize: '1.25rem', display: 'block' }}
+            />
+          ) : (
+            <svg
+              viewBox="0 0 576 512"
+              className="fill-current text-gray-300"
+              style={{ width: '1.25rem', height: '1.25rem', display: 'block' }}
+            >
+              <path d="M287.9 0c9.2 0 17.6 5.2 21.6 13.5l68.6 141.3 153.2 22.6c9 1.3 16.5 7.6 19.3 16.3s.5 18.1-5.9 24.5L433.6 328.4l26.2 155.6c1.5 9-2.2 18.1-9.7 23.5s-17.3 6-25.4 1.7L288 439.6 152.2 509.1c-8.1 4.3-17.9 3.7-25.4-1.7s-11.2-14.5-9.7-23.5l26.2-155.6L31.1 218.2c-6.5-6.4-8.7-15.9-5.9-24.5s10.3-14.9 19.3-16.3L197.7 154.8 266.3 13.5C270.4 5.2 278.7 0 287.9 0zm0 79L235.4 187.2c-3.5 7.1-10.2 12.1-18.1 13.3L99.9 217.6l84.2 83c5.5 5.5 8.1 13.3 6.8 21L171 443l103.8-55.3c7.1-3.8 15.6-3.8 22.6 0L401.2 443l-19.9-121.4c-1.3-7.7 1.2-15.5 6.8-21l84.2-83-117.4-17.1c-7.9-1.2-14.6-6.1-18.1-13.3L287.9 79z" />
+            </svg>
+          )}
         </button>
       ))}
     </div>
@@ -446,17 +462,30 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                   <>
                     <div className="relative w-full h-full">
                       <img src={allImages[selectedImageIndex]} alt={`${product.name} - Imagine ${selectedImageIndex + 1}`}
-                        className={`w-full h-full object-cover transition-all duration-300 ease-in-out ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`} />
+                        className={`w-full h-full object-cover transition-opacity duration-300 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`} />
                     </div>
                     <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                       <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md flex items-center gap-2">
-                        <FontAwesomeIcon icon={categoryIcons[product.categories?.name ?? product.category] || faBox} className="text-emerald-600" />
-                        <span className="text-gray-900 font-semibold text-sm">{product.categories?.name ?? product.category}</span>
+                        <FontAwesomeIcon
+                          icon={categoryIcons[product.categories?.name ?? product.category] || faBox}
+                          className="text-emerald-600"
+                        />
+                        <span className="text-gray-900 font-semibold text-sm">
+                          {product.categories?.name ?? product.category}
+                        </span>
+                        {(product.subcategories?.name ?? product.subcategory) && (
+                          <>
+                            <span className="text-gray-300 text-xs">›</span>
+                            <span className="text-gray-600 text-xs font-medium">
+                              {product.subcategories?.name ?? product.subcategory}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
                       {product.is_negotiable && (
-                        <div className="bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
+                        <div className="bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md self-end">
                           <span className="text-white font-semibold text-xs">NEGOCIABIL</span>
                         </div>
                       )}
@@ -486,13 +515,6 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                           aria-label="Imagine următoare">
                           <FontAwesomeIcon icon={faChevronRight} className="text-gray-800 text-lg" />
                         </button>
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-2 rounded-full">
-                          {allImages.map((_, index) => (
-                            <button key={index} onClick={() => changeImage(index)} disabled={isTransitioning}
-                              className={`transition-all duration-300 ease-out ${selectedImageIndex === index ? 'w-8 h-2 bg-emerald-500 rounded-full shadow-lg' : 'w-2 h-2 bg-white/60 rounded-full hover:bg-white/80'}`}
-                              aria-label={`Imagine ${index + 1}`} />
-                          ))}
-                        </div>
                       </>
                     )}
                   </>
@@ -503,23 +525,6 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                 )}
               </div>
 
-              {allImages.length > 1 && (
-                <div className="mb-4">
-                  <div className="grid grid-cols-4 gap-3">
-                    {allImages.map((imageUrl, index) => (
-                      <button key={index} onClick={() => changeImage(index)} disabled={isTransitioning}
-                        className={`aspect-square rounded-xl overflow-hidden transition-all duration-300 ease-out disabled:cursor-not-allowed ${selectedImageIndex === index ? 'border-4 border-emerald-500 shadow-lg ring-2 ring-emerald-200 scale-105 opacity-100' : 'border-2 border-gray-200 hover:border-emerald-300 opacity-60 hover:opacity-100 hover:scale-105'}`}>
-                        <img src={imageUrl} alt={`Miniatură ${index + 1}`} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                  <div className="text-center mt-3">
-                    <p className="text-sm text-gray-500">
-                      Imagine <span className="font-bold text-emerald-600">{selectedImageIndex + 1}</span> din <span className="font-semibold text-gray-900">{allImages.length}</span>
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Right - Info */}
@@ -548,84 +553,82 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     <span className="text-gray-400 text-sm">/ {product.unit}</span>
                   </div>
                 </div>
-
-                {/* Negociabil */}
-                {product.is_negotiable ? (
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-2.5">
-                    <FontAwesomeIcon icon={faHandshake} className="text-blue-500 text-lg shrink-0" />
-                    <div>
-                      <p className="text-xs text-blue-400 font-medium leading-none mb-0.5">Preț</p>
-                      <p className="text-sm font-bold text-blue-700">Negociabil</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-2.5">
-                    <FontAwesomeIcon icon={faHandshake} className="text-gray-300 text-lg shrink-0" />
-                    <div>
-                      <p className="text-xs text-gray-400 font-medium leading-none mb-0.5">Preț</p>
-                      <p className="text-sm font-bold text-gray-400">Fix</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Profil complet */}
-                <button
-                  onClick={() => onNavigate('producator', product.user_id)}
-                  className="bg-gray-50 border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 rounded-xl px-4 py-3 flex items-center gap-2.5 transition-all group"
-                >
-                  <FontAwesomeIcon icon={faAddressCard} className="text-emerald-500 text-lg shrink-0" />
-                  <div className="text-left">
-                    <p className="text-xs text-gray-400 font-medium leading-none mb-0.5">Vânzător</p>
-                    <p className="text-sm font-bold text-gray-700 group-hover:text-emerald-600 transition-colors">
-                      Vezi profil
-                    </p>
-                  </div>
-                </button>
-
               </div>
 
-
-
-
-              <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-6 mb-4 shadow-lg">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center border-4 border-white/30 shadow-lg"
+              {/* Seller card */}
+              <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
+                <button
+                  onClick={() => onNavigate('producator', product.user_id)}
+                  className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors text-left group"
+                >
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ background: getColorForName(product.seller_name) }}>
-                    <span className="text-white text-2xl font-black uppercase">{product.seller_name?.charAt(0) || '?'}</span>
+                    <span className="text-white text-xl font-black uppercase">{product.seller_name?.charAt(0) || '?'}</span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-emerald-100 text-sm">Vânzător</p>
-                    <p className="text-white text-xl font-bold">{product.seller_name || 'Producător Local'}</p>
-                    {/* ── Rating calculat din toate produsele furnizorului, inclusiv arhivate ── */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400 font-medium mb-0.5">Vânzător</p>
+                    <p className="text-base font-bold text-gray-900 group-hover:text-emerald-600 transition-colors truncate">
+                      {product.seller_name || 'Producător Local'}
+                    </p>
                     {sellerRating > 0 && (
-                      <p className="text-emerald-100 text-sm flex items-center gap-1">
-                        <FontAwesomeIcon icon={faStar} className="text-yellow-300" />
-                        Rating: {sellerRating.toFixed(1)}/5.0
+                      <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
+                        <FontAwesomeIcon icon={faStar} className="text-yellow-400 text-xs" />
+                        {sellerRating.toFixed(1)}/5.0
                       </p>
                     )}
                   </div>
+                  <div className="flex items-center gap-1 text-emerald-600 flex-shrink-0">
+                    <span className="text-xs font-semibold">Vezi profil</span>
+                    <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
+                  </div>
+                </button>
+                <div className="border-t border-gray-100 mx-5" />
+                <div className="p-4 grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => { if (!session) { onNavigate('login'); return; } setShowChatModal(true); }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
+                  >
+                    <FontAwesomeIcon icon={faMessage} /><span>Mesaj</span>
+                  </button>
+                  <button
+                    onClick={handleViewOnMap}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
+                  >
+                    <FontAwesomeIcon icon={faMapMarkedAlt} className="text-emerald-600" /><span>Pe hartă</span>
+                  </button>
                 </div>
-                {product.seller_phone && (
-                  <>
-                    <p className="text-emerald-100 text-sm mb-2">Telefon: {product.seller_phone}</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button onClick={handleContact}
-                        className="bg-white text-emerald-600 hover:bg-emerald-50 font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-md">
-                        <FontAwesomeIcon icon={faPhone} /> Sună Acum
-                      </button>
-                      <button onClick={() => { if (!session) { onNavigate('login'); return; } setShowChatModal(true); }}
-                        className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2">
-                        <FontAwesomeIcon icon={faMessage} /> Mesaj
-                      </button>
-                    </div>
-                  </>
-                )}
               </div>
 
-              <button onClick={handleViewOnMap}
-                className="w-full bg-emerald-700 border-2 border-gray-200 hover:bg-emerald-800 text-white hover:text-white font-medium py-3 rounded-xl transition flex items-center justify-center gap-2">
-                <FontAwesomeIcon icon={faMapMarkedAlt} /> Vezi locația pe hartă
-              </button>
+              {allImages.length > 1 && (
+                <div className="mt-4">
+                  <div className="grid grid-cols-4 gap-2">
+                    {allImages.map((imageUrl, index) => (
+                      <button
+                        key={index}
+                        onClick={() => changeImage(index)}
+                        disabled={isTransitioning}
+                        className={`aspect-square rounded-xl overflow-hidden transition-all duration-300
+                          disabled:cursor-not-allowed
+                          ${selectedImageIndex === index
+                            ? 'shadow-sm border border-gray-200 opacity-100 scale-105'
+                            : 'shadow-sm border border-gray-200 opacity-60 hover:scale-105'
+                          }`}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Miniatură ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 text-center mt-2">
+                    Imagine <span className="font-bold text-emerald-600">{selectedImageIndex + 1}</span>
+                    {' '}din{' '}
+                    <span className="font-semibold text-gray-700">{allImages.length}</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

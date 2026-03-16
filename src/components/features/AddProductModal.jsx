@@ -146,7 +146,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
     description: '',
     price: '',
     unit: '',
-    quantity: '',
+
     category: '',       // backward compat: category name string
     category_id: null,  // new FK
     subcategory: '',    // backward compat: subcategory name string
@@ -298,7 +298,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
     } else if (parseFloat(formData.price) > 999999) {
       e.price = 'Prețul nu poate depăși 999,999 lei';
     }
-    if (!formData.quantity || parseFloat(formData.quantity) <= 0) e.quantity = 'Cantitatea trebuie să fie mai mare ca 0';
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -323,7 +323,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
         description: formData.description,
         price: parseFloat(formData.price),
         unit: formData.unit,
-        quantity: parseFloat(formData.quantity),
+        quantity: null,
         category: formData.category,
         category_id: formData.category_id,
         subcategory: formData.subcategory || null,
@@ -338,7 +338,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
       if (error) throw error;
 
       toast.success('Produs adăugat cu succes!', { duration: 4000 });
-      setFormData({ name: '', description: '', price: '', unit: '', quantity: '', category: '', category_id: null, subcategory: '', subcategory_id: null, location: '', is_negotiable: false });
+      setFormData({ name: '', description: '', price: '', unit: '', category: '', category_id: null, subcategory: '', subcategory_id: null, location: '', is_negotiable: false });
       setGalleryImages([]); setErrors({}); setActiveGroup('b2c'); setExpiresAt('');
       setSubcategories([]);
       onClose(); if (onSuccess) onSuccess();

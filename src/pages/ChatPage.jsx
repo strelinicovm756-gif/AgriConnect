@@ -47,6 +47,7 @@ export default function ChatPage({ session, onNavigate }) {
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const unsubRef = useRef(null);
+  const selectedConvRef = useRef(null);
 
   const { fetchConversations, fetchMessages, sendMessage, subscribeToMessages, markMessagesAsRead } = useChat();
 
@@ -64,8 +65,9 @@ export default function ChatPage({ session, onNavigate }) {
 
   const selectConversation = async (conv) => {
     if (selectedConv?.id === conv.id) return;
+    if (loadingMsgs) return;
 
-    // Cleanup previous subscription
+    // Cleanup previous subscription BEFORE setting new state
     if (unsubRef.current) {
       unsubRef.current();
       unsubRef.current = null;
@@ -81,12 +83,13 @@ export default function ChatPage({ session, onNavigate }) {
     await markMessagesAsRead(conv.id, session.user.id);
     setLoadingMsgs(false);
 
-    // Update unread count in sidebar
     setConversations(prev =>
       prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
     );
 
-    unsubRef.current = subscribeToMessages(conv.id, (newMsg) => {
+    // Subscribe with convId captured in closure — NOT selectedConv
+    const convId = conv.id;
+    unsubRef.current = subscribeToMessages(convId, (newMsg) => {
       setMessages(prev => {
         const hasOptimistic = prev.some(
           m => m.id.startsWith('opt_') &&
@@ -102,11 +105,16 @@ export default function ChatPage({ session, onNavigate }) {
               : m
           );
         }
+        if (prev.some(m => m.id === newMsg.id)) return prev;
         return [...prev, newMsg];
       });
-      markMessagesAsRead(conv.id, session.user.id);
+      markMessagesAsRead(convId, session.user.id);
     });
   };
+
+  useEffect(() => {
+    selectedConvRef.current = selectedConv;
+  }, [selectedConv]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -118,19 +126,25 @@ export default function ChatPage({ session, onNavigate }) {
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => { if (unsubRef.current) unsubRef.current(); };
+    return () => {
+      if (unsubRef.current) {
+        unsubRef.current();
+        unsubRef.current = null;
+      }
+    };
   }, []);
 
   const handleSend = async () => {
+    const conv = selectedConvRef.current;
     const content = inputValue.trim();
-    if (!content || !selectedConv || sending) return;
+    if (!content || !conv || sending) return;
 
     setSending(true);
     setInputValue('');
 
     const optimistic = {
       id: `opt_${Date.now()}`,
-      conversation_id: selectedConv.id,
+      conversation_id: conv.id,
       sender_id: session.user.id,
       content,
       created_at: new Date().toISOString(),
@@ -138,11 +152,10 @@ export default function ChatPage({ session, onNavigate }) {
     };
     setMessages(prev => [...prev, optimistic]);
 
-    await sendMessage(selectedConv.id, session.user.id, content);
+    await sendMessage(conv.id, session.user.id, content);
 
-    // Update last message preview in sidebar
     setConversations(prev =>
-      prev.map(c => c.id === selectedConv.id
+      prev.map(c => c.id === conv.id
         ? { ...c, last_message: content, last_message_at: new Date().toISOString() }
         : c
       ).sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at))
@@ -170,13 +183,22 @@ export default function ChatPage({ session, onNavigate }) {
   const getOtherInitial = (conv) => getOtherName(conv).charAt(0).toUpperCase() || '?';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" style={{ height: 'calc(100vh - 120px)', minHeight: '500px' }}>
-          <div className="grid lg:grid-cols-3 h-full">
+    <>
+    <style>{`
+      .chat-scroll::-webkit-scrollbar { width: 4px; }
+      .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+      .chat-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+      .chat-scroll:hover::-webkit-scrollbar-thumb { background: #10b981; }
+      .chat-scroll { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
+      .chat-scroll:hover { scrollbar-color: #10b981 transparent; }
+    `}</style>
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="flex-1 max-w-6xl w-full mx-auto px-4 py-4 flex flex-col min-h-0">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1 flex flex-col min-h-0">
+          <div className="grid lg:grid-cols-3 h-full min-h-0 flex-1">
 
             {/* Sidebar */}
-            <div className={`border-r border-gray-100 flex flex-col h-full ${showMobileThread ? 'hidden lg:flex' : 'flex'}`}>
+            <div className={`border-r border-gray-100 flex flex-col min-h-0 overflow-hidden ${showMobileThread ? 'hidden lg:flex' : 'flex'}`}>
               <div className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
                 <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                   <MessageSquare size={20} className="text-emerald-600" />
@@ -184,7 +206,7 @@ export default function ChatPage({ session, onNavigate }) {
                 </h1>
               </div>
 
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto min-h-0 chat-scroll">
                 {loadingConvs ? (
                   <div className="flex items-center justify-center py-16">
                     <Metronome size="30" speed="1.6" color="#059669" />
@@ -244,7 +266,7 @@ export default function ChatPage({ session, onNavigate }) {
             </div>
 
             {/* Thread panel */}
-            <div className={`col-span-2 flex flex-col h-full ${!showMobileThread ? 'hidden lg:flex' : 'flex'}`}>
+            <div className={`col-span-2 flex flex-col min-h-0 overflow-hidden ${!showMobileThread ? 'hidden lg:flex' : 'flex'}`}>
               {!selectedConv ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
                   <MessageSquare size={48} className="text-gray-200 mb-4" />
@@ -274,7 +296,7 @@ export default function ChatPage({ session, onNavigate }) {
                   </div>
 
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1">
+                  <div className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-1 chat-scroll">
                     {loadingMsgs ? (
                       <div className="flex items-center justify-center h-full">
                         <Metronome size="30" speed="1.6" color="#059669" />
@@ -322,7 +344,7 @@ export default function ChatPage({ session, onNavigate }) {
                   </div>
 
                   {/* Input */}
-                  <div className="px-4 py-3 border-t border-gray-100 flex items-end gap-2 flex-shrink-0">
+                  <div className="px-4 py-3 border-t border-gray-100 flex items-end gap-2 flex-shrink-0 bg-white relative z-10">
                     <textarea
                       ref={textareaRef}
                       value={inputValue}
@@ -352,5 +374,6 @@ export default function ChatPage({ session, onNavigate }) {
         </div>
       </div>
     </div>
+    </>
   );
 }

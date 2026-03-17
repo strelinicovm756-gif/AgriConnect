@@ -148,10 +148,10 @@ function ReviewsSection({ productId, session, productOwnerId }) {
       </div>
 
       {stats.count > 0 && (
-        <div className="bg-gray-50 rounded-2xl p-6 mb-8 flex flex-col sm:flex-row gap-6 items-center">
+        <div className="bg-gray-50 rounded-2xl p-6 mb-8 flex flex-col sm:flex-row gap-6 items-center shadow-md">
           <div className="text-center flex-shrink-0">
             <p className="text-6xl font-black text-gray-900">{stats.avg.toFixed(1)}</p>
-            <StarRating value={Math.round(stats.avg)} size="text-lg" />
+            <StarRating value={Math.round(stats.avg)} />
             <p className="text-gray-500 text-sm mt-1">{stats.count} recenzie{stats.count !== 1 ? 'i' : ''}</p>
           </div>
           <div className="flex-1 w-full space-y-2">
@@ -214,7 +214,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
       {loadingComments ? (
         <div className="flex justify-center py-8"><Metronome size="30" speed="1.6" color="#059669" /></div>
       ) : comments.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12 text-gray-400" >
           <FontAwesomeIcon icon={faComments} className="text-5xl mb-3 opacity-30" />
           <p className="font-medium">Nicio recenzie încă</p>
           <p className="text-sm">Fii primul care lasă o recenzie!</p>
@@ -226,7 +226,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
             const isEditing = editingId === comment.id;
             const name = comment.profiles?.full_name || 'Utilizator';
             return (
-              <div key={comment.id} className={`rounded-2xl p-5 border transition-all ${isOwn ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-100'}`}>
+              <div key={comment.id} className={`rounded-2xl p-5 border transition-all ${isOwn ? ' shadow-md' : 'bg-gray-50 border-gray-100'}`}>
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0 uppercase shadow-sm"

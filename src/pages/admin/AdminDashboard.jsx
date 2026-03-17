@@ -709,8 +709,8 @@ function CategoryManagement() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2"><FontAwesomeIcon icon={faCartShopping} className="text-emerald-600" /> B2C — Produse Alimentare</span>, 'border-emerald-200 bg-emerald-50/30')}
-        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2"><FontAwesomeIcon icon={faIndustry} className="text-blue-600" /> B2B — Servicii &amp; Utilități</span>, 'border-blue-200 bg-blue-50/30')}
+        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2"><FontAwesomeIcon icon={faCartShopping} className="text-emerald-600" />Produse Alimentare</span>, 'border-emerald-200 bg-emerald-50/30')}
+        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2"><FontAwesomeIcon icon={faIndustry} className="text-blue-600" />Servicii &amp; Utilități</span>, 'border-blue-200 bg-blue-50/30')}
       </div>
     </div>
   );

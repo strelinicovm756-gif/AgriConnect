@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { supabase } from '../services/supabaseClient';
 import { useChat } from '../hooks/useChat';
 import { getColorForName } from '../lib/utils';
 import { Metronome } from 'ldrs/react';
@@ -44,10 +45,12 @@ export default function ChatPage({ session, onNavigate }) {
   const [inputValue, setInputValue] = useState('');
   const [sending, setSending] = useState(false);
   const [showMobileThread, setShowMobileThread] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const unsubRef = useRef(null);
   const selectedConvRef = useRef(null);
+  const presenceChannelRef = useRef(null);
 
   const { fetchConversations, fetchMessages, sendMessage, subscribeToMessages, markMessagesAsRead } = useChat();
 
@@ -134,6 +137,43 @@ export default function ChatPage({ session, onNavigate }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!session) return;
+
+    const channel = supabase.channel('online_users', {
+      config: { presence: { key: session.user.id } }
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const online = new Set(Object.keys(state));
+        setOnlineUsers(online);
+      })
+      .on('presence', { event: 'join' }, ({ key }) => {
+        setOnlineUsers(prev => new Set([...prev, key]));
+      })
+      .on('presence', { event: 'leave' }, ({ key }) => {
+        setOnlineUsers(prev => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ online_at: new Date().toISOString() });
+        }
+      });
+
+    presenceChannelRef.current = channel;
+
+    return () => {
+      channel.untrack();
+      supabase.removeChannel(channel);
+    };
+  }, [session]);
+
   const handleSend = async () => {
     const conv = selectedConvRef.current;
     const content = inputValue.trim();
@@ -182,6 +222,13 @@ export default function ChatPage({ session, onNavigate }) {
 
   const getOtherInitial = (conv) => getOtherName(conv).charAt(0).toUpperCase() || '?';
 
+  const getOtherId = (conv) => {
+    if (!conv) return null;
+    return conv.participant_1 === session.user.id
+      ? conv.participant_2
+      : conv.participant_1;
+  };
+
   return (
     <>
     <style>{`
@@ -192,9 +239,9 @@ export default function ChatPage({ session, onNavigate }) {
       .chat-scroll { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
       .chat-scroll:hover { scrollbar-color: #10b981 transparent; }
     `}</style>
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      <div className="flex-1 max-w-6xl w-full mx-auto px-4 py-4 flex flex-col min-h-0">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-1 flex flex-col min-h-0">
+    <div className="overflow-hidden h-[calc(100vh-64px)] bg-gray-50 flex flex-col overflow-hidden">
+      <div className=" flex-1 max-w-6xl w-full mx-auto px-4 py-4 flex flex-col min-h-0">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex-1 flex flex-col min-h-10">
           <div className="grid lg:grid-cols-3 h-full min-h-0 flex-1">
 
             {/* Sidebar */}
@@ -228,8 +275,10 @@ export default function ChatPage({ session, onNavigate }) {
                         <button
                           key={conv.id}
                           onClick={() => selectConversation(conv)}
-                          className={`w-full px-4 py-3.5 flex items-start gap-3 hover:bg-gray-50 transition text-left border-l-2 ${
-                            isActive ? 'border-emerald-500 bg-emerald-50/50' : 'border-transparent'
+                          className={`w-full px-4 py-3.5 flex items-start gap-3 transition text-left border-l-4 ${
+                            isActive
+                              ? 'border-emerald-500 bg-emerald-50'
+                              : 'border-transparent hover:bg-gray-50 hover:border-gray-200'
                           }`}
                         >
                           <div
@@ -245,9 +294,14 @@ export default function ChatPage({ session, onNavigate }) {
                               </p>
                               <span className="text-[10px] text-gray-400 flex-shrink-0">{timeAgo(conv.last_message_at)}</span>
                             </div>
-                            <p className="text-xs text-emerald-600 truncate font-medium">{conv.product_name}</p>
-                            <div className="flex items-center justify-between gap-1 mt-0.5">
-                              <p className={`text-xs truncate ${unread > 0 ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs text-emerald-600 truncate font-medium flex-1 min-w-0">{conv.product_name}</p>
+                              {onlineUsers.has(getOtherId(conv)) && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between gap-1 mt-0.5 min-w-0">
+                              <p className={`text-xs truncate flex-1 min-w-0 ${unread > 0 ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
                                 {conv.last_message || 'Conversație nouă'}
                               </p>
                               {unread > 0 && (
@@ -276,22 +330,38 @@ export default function ChatPage({ session, onNavigate }) {
               ) : (
                 <>
                   {/* Thread header */}
-                  <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 flex-shrink-0">
-                    <button
-                      onClick={() => setShowMobileThread(false)}
-                      className="lg:hidden w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-full transition"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 uppercase"
-                      style={{ background: getColorForName(getOtherName(selectedConv)) }}
-                    >
-                      {getOtherInitial(selectedConv)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-gray-900 text-sm truncate">{getOtherName(selectedConv)}</p>
-                      <p className="text-xs text-gray-400 truncate">{selectedConv.product_name}</p>
+                  <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0 bg-white">
+                    {/* Contact row */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setShowMobileThread(false)}
+                        className="lg:hidden w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-full transition"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 uppercase shadow-sm"
+                        style={{ background: getColorForName(getOtherName(selectedConv)) }}
+                      >
+                        {getOtherInitial(selectedConv)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-gray-900 text-sm truncate">
+                          {getOtherName(selectedConv)}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          {onlineUsers.has(getOtherId(selectedConv)) ? (
+                            <>
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0 animate-pulse" />
+                              <span className="text-xs text-emerald-500 font-medium">online</span>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 truncate">
+                              {selectedConv.product_name || 'Conversație directă'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -323,13 +393,14 @@ export default function ChatPage({ session, onNavigate }) {
                               </div>
                             )}
                             <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-1`}>
-                              <div className={`max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+                              <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`} style={{ maxWidth: '65%' }}>
                                 <div
-                                  className={`px-4 py-2.5 text-sm leading-relaxed break-words ${
+                                  className={`px-4 py-2.5 text-sm leading-relaxed break-words shadow-sm ${
                                     isOwn
-                                      ? 'bg-emerald-500 text-white rounded-2xl rounded-br-sm'
-                                      : 'bg-gray-100 text-gray-900 rounded-2xl rounded-bl-sm'
+                                      ? 'bg-emerald-500 text-white rounded-2xl rounded-tr-none'
+                                      : 'bg-white text-gray-900 rounded-2xl rounded-tl-none border border-gray-100'
                                   }`}
+                                  style={{ maxWidth: '100%' }}
                                 >
                                   {msg.content}
                                 </div>
@@ -344,27 +415,31 @@ export default function ChatPage({ session, onNavigate }) {
                   </div>
 
                   {/* Input */}
-                  <div className="px-4 py-3 border-t border-gray-100 flex items-end gap-2 flex-shrink-0 bg-white relative z-10">
-                    <textarea
-                      ref={textareaRef}
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Scrie un mesaj... (Enter pentru trimite)"
-                      rows={1}
-                      className="flex-1 resize-none border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-gray-50 max-h-28 overflow-y-auto"
-                      style={{ minHeight: '42px' }}
-                    />
-                    <button
-                      onClick={handleSend}
-                      disabled={!inputValue.trim() || sending}
-                      className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:cursor-not-allowed text-white rounded-xl transition"
-                    >
-                      {sending
-                        ? <Metronome size="14" speed="1.6" color="white" />
-                        : <FontAwesomeIcon icon={faPaperPlane} className="text-sm" />
-                      }
-                    </button>
+                  <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0 bg-white relative z-10">
+                    <div className="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2 focus-within:border-emerald-400 focus-within:bg-white transition-all">
+                      <textarea
+                        ref={textareaRef}
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Scrie un mesaj..."
+                        rows={1}
+                        className="flex-1 resize-none bg-transparent text-sm text-gray-900 focus:outline-none placeholder-gray-400 max-h-28 overflow-y-auto py-1"
+                        style={{ minHeight: '28px' }}
+                      />
+                      <button
+                        onClick={handleSend}
+                        disabled={!inputValue.trim() || sending}
+                        className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:cursor-not-allowed text-white rounded-xl transition mb-0.5"
+                      >
+                        {sending
+                          ? <Metronome size="12" speed="1.6" color="white" />
+                          : <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
+                        }
+                      </button>
+                    </div>
+                    <>
+                    </>
                   </div>
                 </>
               )}

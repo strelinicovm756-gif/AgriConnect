@@ -279,7 +279,7 @@ export function Navbar({ session, onNavigate }) {
           {/* Link Evenimente */}
           <button
             onClick={() => onNavigate('evenimente')}
-            className="hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
+            className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faCalendarDays} className="text-white" />
             <span>Evenimente</span>
@@ -289,7 +289,7 @@ export function Navbar({ session, onNavigate }) {
           <button
             ref={categoriiBtnRef}
             onClick={() => setShowMegaMenu(p => !p)}
-            className="hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
+            className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faLayerGroup} />
             <span>Categorii</span>

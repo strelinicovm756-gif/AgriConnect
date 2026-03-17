@@ -93,6 +93,17 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
     if (isOpen) setTimeout(() => textareaRef.current?.focus(), 100);
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const handleSend = async () => {
     const content = inputValue.trim();
     if (!content || !conversationId || sending) return;
@@ -125,7 +136,15 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-hidden">
+      <style>{`
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+        .custom-scroll:hover::-webkit-scrollbar-thumb { background: #10b981; }
+        .custom-scroll { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
+        .custom-scroll:hover { scrollbar-color: #10b981 transparent; }
+      `}</style>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg h-[580px] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-white flex-shrink-0">
@@ -162,7 +181,7 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
         ) : (
           <>
             {/* Messages list */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+            <div className="flex-1 overflow-y-auto custom-scroll px-4 py-4 space-y-1">
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <MessageSquare size={36} className="text-gray-200 mb-3" />
@@ -212,7 +231,7 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Scrie un mesaj... (Enter pentru trimite)"
+                placeholder="Scrie un mesaj..."
                 rows={1}
                 className="flex-1 resize-none border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-gray-50 max-h-28 overflow-y-auto"
                 style={{ minHeight: '42px' }}

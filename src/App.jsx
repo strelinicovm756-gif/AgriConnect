@@ -24,7 +24,15 @@ export default function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (_event === 'SIGNED_IN' && window.location.pathname === '/login') {
+        navigate('/');
+      }
+      if (_event === 'SIGNED_OUT') {
+        navigate('/');
+      }
+    });
     return () => subscription.unsubscribe();
   }, []);
 

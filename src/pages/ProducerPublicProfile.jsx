@@ -3,6 +3,7 @@ import { getColorForName } from '../lib/utils';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { ProductCard } from '../components/features/ProductCard';
+import ChatModal from '../components/features/ChatModal';
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
 import mapboxgl from 'mapbox-gl';
@@ -148,6 +149,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
     const [productPage, setProductPage] = useState(1);
     const [reviewsOpen, setReviewsOpen] = useState(false);
     const [reviewPage, setReviewPage] = useState(1);
+    const [showChatModal, setShowChatModal] = useState(false);
 
     useEffect(() => {
         const t = setTimeout(() => { setDebouncedQ(searchQuery); setProductPage(1); }, 300);
@@ -268,10 +270,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                             <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
                                     <h1 className="text-2xl font-bold text-gray-900">{producer.full_name || 'Producător'}</h1>
-                                    {producer.is_verified
-                                        ? <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-200"><BadgeCheck size={11} />VERIFICAT</span>
-                                        : <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-400 text-xs font-medium px-2.5 py-1 rounded-full border border-gray-200">NEVERIFICAT</span>
-                                    }
+
                                 </div>
                                 {producer.official_name && producer.official_name !== producer.full_name && (
                                     <p className="text-gray-500 text-sm mb-2">{producer.official_name}</p>
@@ -283,16 +282,6 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                             {producer.location}
                                         </span>
                                     )}
-                                    {producer.phone && (
-                                        <span className="flex items-center gap-1.5 font-mono">
-                                            <Phone size={13} className="text-emerald-600" />
-                                            {formatPhone(producer.phone)}
-                                        </span>
-                                    )}
-                                    <span className="flex items-center gap-1.5">
-                                        <Leaf size={13} className="text-emerald-600" />
-                                        Producător Local
-                                    </span>
                                 </div>
                             </div>
 
@@ -300,13 +289,11 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 {!isOwnProfile ? (
                                     <>
-                                        {producer.phone && (
-                                            <a href={`tel:${producer.phone}`}
-                                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all hover:shadow-lg text-sm">
-                                                <Phone size={14} />Sună
-                                            </a>
-                                        )}
-                                        <button onClick={() => toast('Mesajele sunt în dezvoltare', { icon: '💬' })}
+                                        <button
+                                            onClick={() => {
+                                                if (!session) { onNavigate('login'); return; }
+                                                setShowChatModal(true);
+                                            }}
                                             className="flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 hover:border-emerald-300 text-gray-700 hover:text-emerald-700 font-semibold px-5 py-2.5 rounded-xl transition-all text-sm">
                                             <MessageSquare size={14} />Mesaj
                                         </button>
@@ -500,8 +487,8 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                             <button onClick={() => setReviewsOpen(!reviewsOpen)}
                                 className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 bg-yellow-50 border border-yellow-100 rounded-xl flex items-center justify-center">
-                                        <MessageCircle size={16} className="text-yellow-500" />
+                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center">
+                                        <MessageCircle size={16} className="text-emerald-600" />
                                     </div>
                                     <div className="text-left">
                                         <p className="font-bold text-gray-900">Recenzii Primite</p>
@@ -514,7 +501,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {reviewStats.count > 0 && (
-                                        <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2.5 py-1 rounded-full border border-yellow-200">
+                                        <span className="bg-gray-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">
                                             {reviewStats.count}
                                         </span>
                                     )}
@@ -556,6 +543,30 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                     </div>
                 </div>
             </main>
+
+            <style>{`
+                .custom-scroll::-webkit-scrollbar { width: 5px; }
+                .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+                .custom-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+                .custom-scroll:hover::-webkit-scrollbar-thumb { background: #10b981; }
+                .custom-scroll { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
+                .custom-scroll:hover { scrollbar-color: #10b981 transparent; }
+            `}</style>
+
+            {showChatModal && session && producer && (
+                <ChatModal
+                    isOpen={showChatModal}
+                    onClose={() => setShowChatModal(false)}
+                    session={session}
+                    product={{
+                        id: null,
+                        name: `Discuție cu ${producer.full_name || 'Producător'}`,
+                        user_id: producer.id,
+                        seller_name: producer.full_name,
+                        seller_phone: producer.phone,
+                    }}
+                />
+            )}
         </div>
     );
 }

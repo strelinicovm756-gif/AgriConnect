@@ -229,6 +229,17 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
     }
   }, [isOpen, session]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const checkProfile = async () => {
     try {
       setCheckingProfile(true);
@@ -354,7 +365,15 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white overflow-hidden rounded-b-3xl rounded-3xl max-w-3xl w-full my-8 shadow-2xl max-h-[90vh] flex flex-col">
+      <style>{`
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+        .custom-scroll:hover::-webkit-scrollbar-thumb { background: #10b981; }
+        .custom-scroll { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
+        .custom-scroll:hover { scrollbar-color: #10b981 transparent; }
+      `}</style>
+      <div className="bg-white overflow-hidden rounded-b-3xl rounded-3xl max-w-3xl w-full shadow-2xl flex flex-col" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
 
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5 flex justify-between items-center rounded-t-3xl flex-shrink-0">
@@ -372,7 +391,8 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
             <p className="text-gray-600">Verificare profil...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="overflow-y-auto flex-grow">
+          <>
+          <form onSubmit={handleSubmit} className="overflow-y-auto flex-grow custom-scroll min-h-0">
             <div className="p-6 space-y-8">
 
               {/* SECȚIUNEA 1: Tip produs */}
@@ -697,24 +717,26 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
             </div>{/* end inner padding */}
 
-            {/* Submit — sticky bottom */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex gap-3 rounded-b-3xl flex-shrink-0">
-              <button type="submit" disabled={loading || hasUploadingImages}
-                className={`flex-1 font-semibold py-3.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-white
-                  ${isB2B ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />
-                    Se adaugă...
-                  </span>
-                ) : hasUploadingImages ? 'Se încarcă imaginile...' : 'Adaugă Produs'}
-              </button>
-              <button type="button" onClick={onClose} disabled={loading}
-                className="px-8 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3.5 rounded-xl transition disabled:opacity-50">
-                Anulează
-              </button>
-            </div>
           </form>
+
+          {/* Submit — outside form, stays fixed at bottom */}
+          <div className="bg-white border-t border-gray-100 px-6 py-4 flex gap-3 rounded-b-3xl flex-shrink-0">
+            <button type="button" onClick={handleSubmit} disabled={loading || hasUploadingImages}
+              className={`flex-1 font-semibold py-3.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-white
+                ${isB2B ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />
+                  Se adaugă...
+                </span>
+              ) : hasUploadingImages ? 'Se încarcă imaginile...' : 'Adaugă Produs'}
+            </button>
+            <button type="button" onClick={onClose} disabled={loading}
+              className="px-8 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3.5 rounded-xl transition disabled:opacity-50">
+              Anulează
+            </button>
+          </div>
+          </>
         )}
       </div>
     </div>

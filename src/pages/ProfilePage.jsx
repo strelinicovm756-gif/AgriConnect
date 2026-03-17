@@ -10,13 +10,14 @@ import EditProductModal from '../components/features/EditProductModal';
 import { toast, Toaster } from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faChevronDown, faChevronUp, faBoxesStacked, faTriangleExclamation,
+    faChevronDown, faBoxesStacked, faTriangleExclamation,
     faCircleCheck, faHourglassHalf, faXmark, faUser, faPhone,
     faLocationDot, faIdCard, faPenToSquare, faFloppyDisk, faBan,
-     faRightFromBracket, faImages, faScroll, faRotateRight
+    faRightFromBracket, faImages, faScroll, faRotateRight,
+    faCheck, faPen, faStar, faFileLines
 } from '@fortawesome/free-solid-svg-icons';
 import {
-    Star, MessageSquare, Package, ChevronDown, ChevronUp,
+    Star, MessageSquare, Package,
     ExternalLink, Pencil, Trash2, Calendar
 } from 'lucide-react';
 
@@ -152,11 +153,25 @@ function MyReviewsSection({ session, onNavigate }) {
                             {reviews.length}
                         </span>
                     )}
-                    {open ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+                    <FontAwesomeIcon
+                        icon={faChevronDown}
+                        className="text-gray-400 text-sm"
+                        style={{
+                            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.3s ease-in-out',
+                        }}
+                    />
                 </div>
             </button>
 
-            {open && (
+            <div
+                style={{
+                    overflow: 'hidden',
+                    maxHeight: open ? '2000px' : '0px',
+                    opacity: open ? 1 : 0,
+                    transition: 'max-height 0.4s ease-in-out, opacity 0.3s ease-in-out',
+                }}
+            >
                 <div className="border-t border-gray-100 p-6">
                     {loading ? (
                         <div className="flex justify-center py-8">
@@ -283,10 +298,37 @@ function MyReviewsSection({ session, onNavigate }) {
                         </div>
                     )}
                 </div>
-            )}
+            </div>
         </div>
     );
 }
+
+// ─── Profile completion helpers ───────────────────────────────
+const getProfileCompletion = (profile) => {
+    if (!profile) return 0;
+    const fields = [
+        profile.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name)
+            && profile.full_name.trim().length >= 2,
+        profile.phone && profile.phone.length >= 10,
+        profile.location && profile.location.trim().length > 0,
+        profile.bio && profile.bio.trim().length > 0,
+        profile.avatar_url && profile.avatar_url.length > 0,
+    ];
+    const completed = fields.filter(Boolean).length;
+    return Math.round((completed / fields.length) * 100);
+};
+
+const getMissingFields = (profile) => {
+    if (!profile) return [];
+    const missing = [];
+    const isNameValid = profile.full_name &&
+        /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) &&
+        profile.full_name.trim().length >= 2;
+    if (!isNameValid) missing.push({ key: 'full_name', label: 'Nume valid', desc: 'Doar litere, minim 2 caractere', icon: faUser });
+    if (!profile.phone || profile.phone.length < 10) missing.push({ key: 'phone', label: 'Număr de telefon', desc: 'Format: +373 + 8 cifre', icon: faPhone });
+    if (!profile.location) missing.push({ key: 'location', label: 'Localitate', desc: 'Orașul sau satul tău', icon: faLocationDot });
+    return missing;
+};
 
 // ─── ProfilePage principal ────────────────────────────────────
 export default function ProfilePage({ session, onNavigate }) {
@@ -526,87 +568,110 @@ export default function ProfilePage({ session, onNavigate }) {
 
     return (
         <div className="bg-white">
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
                 <div className="grid md:grid-cols-3 gap-10">
 
                     {/* ── SIDEBAR ── */}
                     <div className="md:col-span-1">
-                        <div className="bg-white rounded-3xl border border-gray-200 p-8 text-center shadow-lg sticky top-24">
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center gap-4 sticky top-24">
                             {/* Avatar */}
-                            <div
-                                className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden border-4 flex items-center justify-center transition-all duration-300 hover:scale-105 cursor-pointer group shadow-lg"
-                                style={{
-                                    background: `linear-gradient(135deg, ${getColorForName(profile?.full_name || session.user.email)} 0%, ${getColorForName(profile?.full_name || session.user.email, true)} 100%)`,
-                                    borderColor: getColorForName(profile?.full_name || session.user.email) + '40'
-                                }}
-                            >
-                                <span className="text-white text-5xl font-black uppercase drop-shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                    {profile?.full_name?.charAt(0) || session.user.email?.charAt(0) || '?'}
-                                </span>
-                            </div>
-
-                            <p className="text-gray-900 font-bold text-xl mb-2">{profile?.full_name || 'Nume necunoscut'}</p>
-                            <p className="text-gray-500 text-sm mb-6">{session.user.email}</p>
-
-                            <div className="flex flex-wrap justify-center gap-2 mb-8">
-                                <span className="px-3 py-1.5 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200 font-medium">
-                                    <FontAwesomeIcon icon={faUser} className="mr-2 text-gray-500" />
-                                    Vânzător
-                                </span>
-                            </div>
-
-                            {/* STATS cu rating real  */}
-                            <div className="pt-6 border-t border-gray-100 mb-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    {/* Card Anunțuri */}
-                                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2">
-                                           <FontAwesomeIcon icon={faScroll} className="text-emerald-600" />
-                                        </div>
-                                        <p className="text-2xl font-bold text-gray-900 leading-none">{productsCount}</p>
-                                        <p className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold mt-2">Anunțuri</p>
-                                    </div>
-
-                                    {/* Card Rating */}
-                                    <div className="flex flex-col items-center justify-center rounded-2xl bg-white border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2">
-                                            <Star size={20} className="text-yellow-300 fill-yellow-400" />
-                                        </div>
-                                        <p className="text-2xl font-bold text-gray-900 leading-none">
-                                            {avgRating > 0 ? avgRating.toFixed(1) : "N/A"}
-                                        </p>
-                                        <p className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold mt-2">
-                                            Rating {reviewCount > 0 ? `(${reviewCount})` : ''}
-                                        </p>
-                                    </div>
+                            <div className="relative">
+                                <div
+                                    className="w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl font-black shadow-lg"
+                                    style={{ background: getColorForName(profile?.full_name || session.user.email) }}
+                                >
+                                    {(profile?.full_name?.[0] || session.user.email[0]).toUpperCase()}
                                 </div>
+                                {profile?.is_verified && (
+                                    <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-md border-2 border-white">
+                                        <FontAwesomeIcon icon={faCircleCheck} className="text-white text-sm" />
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Toggle products */}
-                            {productsCount > 0 && (
-                                <div className="mb-4">
-                                    <button
-                                        id="toggle-products-button"
-                                        onClick={handleToggleProducts}
-                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-95"
-                                    >
-                                        <span>{showProducts ? 'Ascunde anunțurile' : `Vezi anunțurile (${productsCount})`}</span>
-                                        <div className="bg-white/20 w-5 h-5 rounded-full flex items-center justify-center">
-                                            <FontAwesomeIcon icon={showProducts ? faChevronUp : faChevronDown} className="text-[10px]" />
-                                        </div>
-                                    </button>
-                                </div>
+                            {/* Name */}
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">
+                                    {profile?.full_name || 'Utilizator nou'}
+                                </h2>
+                                <p className="text-sm text-gray-400">{session.user.email}</p>
+                            </div>
+
+                            {/* Trust badge */}
+                            {profile?.is_verified ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-semibold">
+                                    <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
+                                    Profil Verificat
+                                </span>
+                            ) : getMissingFields(profile).length === 0 ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-semibold">
+                                    <FontAwesomeIcon icon={faUser} className="text-xs" />
+                                    Vânzător nou
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-semibold">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-xs" />
+                                    Profil incomplet
+                                </span>
                             )}
 
-                            <button
-                                onClick={handleLogout}
-                                className="w-full bg-rose-500 hover:bg-rose-600 text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-                            >
-                                <span>Deconectare</span>
-                                <div className="bg-white/20 w-5 h-5 rounded-full flex items-center justify-center">
-                                    <FontAwesomeIcon icon={faRightFromBracket} className="text-[10px]" />
+                            {/* Completion progress bar */}
+                            {/* {(() => {
+                                const pct = getProfileCompletion(profile);
+                                return (
+                                    <div className="w-full">
+                                        <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                                            <span>Completare profil</span>
+                                            <span className="font-semibold text-gray-600">{pct}%</span>
+                                        </div>
+                                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${
+                                                    pct === 100 ? 'bg-emerald-500' :
+                                                    pct >= 60 ? 'bg-blue-500' :
+                                                    'bg-amber-500'
+                                                }`}
+                                                style={{ width: `${pct}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })()} */}
+
+                            {/* Stats */}
+                            <div className="w-full grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+                                <div className="text-center">
+                                    <p className="text-2xl font-black text-gray-900">{productsCount}</p>
+                                    <p className="text-xs text-gray-400">Anunțuri</p>
                                 </div>
-                            </button>
+                                <div className="text-center">
+                                    {avgRating > 0 ? (
+                                        <>
+                                            <p className="text-2xl font-black text-gray-900 flex items-center justify-center gap-1">
+                                                <FontAwesomeIcon icon={faStar} className="text-yellow-400 text-lg" />
+                                                {avgRating.toFixed(1)}
+                                            </p>
+                                            <p className="text-xs text-gray-400">Rating</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-2xl font-black text-gray-300">—</p>
+                                            <p className="text-xs text-gray-400">Fără recenzii</p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Logout */}
+                            <div className="w-full">
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-2xl transition-all"
+                                >
+                                    <span>Deconectare</span>
+                                    <FontAwesomeIcon icon={faRightFromBracket} className="text-[10px]" />
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -735,47 +800,147 @@ export default function ProfilePage({ session, onNavigate }) {
                                 </form>
                             ) : (
                                 <div className="space-y-4">
-                                    <ProfileRow icon={faIdCard} label="Nume"
-                                        value={profile?.full_name ? profile.full_name : <span className="inline-flex items-center gap-2 text-red-600"><FontAwesomeIcon icon={faTriangleExclamation} />Nu e setat</span>}
-                                        invalid={!profile?.full_name || profileNameInvalid}
-                                        right={profile?.full_name && !profileNameInvalid
-                                            ? <Badge variant="success"><span className="inline-flex items-center gap-2"><FontAwesomeIcon icon={faCircleCheck} />OK</span></Badge>
-                                            : <Badge variant="danger"><span className="inline-flex items-center gap-2"><FontAwesomeIcon icon={faTriangleExclamation} />INVALID</span></Badge>}
-                                        sub={profileNameInvalid ? 'Numele conține caractere invalide.' : 'Acest nume apare în anunțuri.'}
-                                    />
-                                    <ProfileRow icon={faPhone} label="Telefon"
-                                        value={profile?.phone ? <span className="font-mono text-lg">{formatPhoneDisplay(profile.phone)}</span> : <span className="inline-flex items-center gap-2 text-red-600"><FontAwesomeIcon icon={faTriangleExclamation} />Nu e setat</span>}
-                                        invalid={!profile?.phone || profilePhoneInvalid}
-                                        right={profile?.phone && !profilePhoneInvalid
-                                            ? <Badge variant="success"><span className="inline-flex items-center gap-2"><FontAwesomeIcon icon={faCircleCheck} />OK</span></Badge>
-                                            : <Badge variant="danger"><span className="inline-flex items-center gap-2"><FontAwesomeIcon icon={faTriangleExclamation} />INVALID</span></Badge>}
-                                        sub={profilePhoneInvalid ? 'Format invalid.' : 'Format: +373 + 8 cifre.'}
-                                    />
-                                    <ProfileRow icon={faLocationDot} label="Locație"
-                                        value={profile?.location ? profile.location : <span className="inline-flex items-center gap-2 text-red-600"><FontAwesomeIcon icon={faTriangleExclamation} />Nu e setată</span>}
-                                        invalid={!profile?.location}
-                                        right={profile?.location
-                                            ? <Badge variant="success"><span className="inline-flex items-center gap-2"><FontAwesomeIcon icon={faCircleCheck} />OK</span></Badge>
-                                            : <Badge variant="danger"><span className="inline-flex items-center gap-2"><FontAwesomeIcon icon={faTriangleExclamation} />LIPSEȘTE</span></Badge>}
-                                        sub="Ajută utilizatorii să găsească anunțuri în zona ta."
-                                    />
-                                    <ProfileRow icon={faUser} label="Despre mine" value={profile?.bio || 'Nu există descriere'} />
+                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                                            Informații Profil
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {/* Name field */}
+                                            {(() => {
+                                                const isValid = profile?.full_name &&
+                                                    /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) &&
+                                                    profile.full_name.trim().length >= 2;
+                                                return (
+                                                    <div className="flex items-center gap-3 py-2 border-b border-gray-50">
+                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                                                            <FontAwesomeIcon icon={faUser} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nume</p>
+                                                            <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
+                                                                {profile?.full_name || 'Nu este setat'}
+                                                            </p>
+                                                        </div>
+                                                        {isValid ? (
+                                                            <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">LIPSEȘTE</span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
 
-                                    {missingOrInvalidForAds && (
-                                        <Alert variant="danger" title="Nu poți adăuga anunțuri!" className="mt-6">
-                                            Trebuie să completezi/corectezi:
-                                            <ul className="text-red-800 text-sm space-y-1 mt-2">
-                                                {(!profile?.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile?.full_name || '')) && <li>• Nume oficial valid</li>}
-                                                {(!profile?.phone || !/^\+373\d{8}$/.test(profile?.phone || '')) && <li>• Telefon valid</li>}
-                                                {!profile?.location && <li>• Locație</li>}
-                                            </ul>
-                                            <div className="mt-3">
-                                                <Button onClick={() => setEditing(true)} size="sm" className="w-full flex items-center justify-center gap-2">
-                                                    <FontAwesomeIcon icon={faPenToSquare} />
-                                                    Completează Acum
-                                                </Button>
+                                            {/* Phone field */}
+                                            {(() => {
+                                                const isValid = profile?.phone && profile.phone.length >= 10;
+                                                return (
+                                                    <div className="flex items-center gap-3 py-2 border-b border-gray-50">
+                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                                                            <FontAwesomeIcon icon={faPhone} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Telefon</p>
+                                                            <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
+                                                                {profile?.phone || 'Nu este setat'}
+                                                            </p>
+                                                        </div>
+                                                        {isValid ? (
+                                                            <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">LIPSEȘTE</span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+
+                                            {/* Location field */}
+                                            {(() => {
+                                                const isValid = profile?.location && profile.location.trim().length > 0;
+                                                return (
+                                                    <div className="flex items-center gap-3 py-2 border-b border-gray-50">
+                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                                                            <FontAwesomeIcon icon={faLocationDot} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Localitate</p>
+                                                            <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
+                                                                {profile?.location || 'Nu este setat'}
+                                                            </p>
+                                                        </div>
+                                                        {isValid ? (
+                                                            <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">LIPSEȘTE</span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+
+                                            {/* Bio field */}
+                                            {(() => {
+                                                const isValid = profile?.bio && profile.bio.trim().length > 0;
+                                                return (
+                                                    <div className="flex items-start gap-3 py-2">
+                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-gray-50'}`}>
+                                                            <FontAwesomeIcon icon={faFileLines} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-gray-300'}`} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Despre mine</p>
+                                                            <p className={`text-sm leading-relaxed ${isValid ? 'text-gray-700' : 'text-gray-300 italic'}`}>
+                                                                {profile?.bio || 'Nu ai adăugat o descriere încă.'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+
+                                    {/* Incomplete profile alert */}
+                                    {getMissingFields(profile).length > 0 && (
+                                        <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+                                            <div className="flex items-start gap-3 mb-4">
+                                                <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-500 text-sm" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-red-700 text-sm">Nu poți adăuga anunțuri</h3>
+                                                    <p className="text-xs text-red-500 mt-0.5">Completează profilul pentru a debloca această funcționalitate.</p>
+                                                </div>
                                             </div>
-                                        </Alert>
+                                            <div className="space-y-2 mb-4">
+                                                {[
+                                                    {
+                                                        done: profile?.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) && profile.full_name.trim().length >= 2,
+                                                        label: 'Nume valid (doar litere)'
+                                                    },
+                                                    {
+                                                        done: profile?.phone && profile.phone.length >= 10,
+                                                        label: 'Număr de telefon (+373...)'
+                                                    },
+                                                    {
+                                                        done: profile?.location && profile.location.trim().length > 0,
+                                                        label: 'Localitate'
+                                                    },
+                                                ].map((item, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2.5">
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${item.done ? 'bg-emerald-500' : 'bg-white border-2 border-red-300'}`}>
+                                                            {item.done && <FontAwesomeIcon icon={faCheck} className="text-white text-[9px]" />}
+                                                        </div>
+                                                        <span className={`text-sm ${item.done ? 'text-emerald-700 line-through opacity-60' : 'text-red-600 font-medium'}`}>
+                                                            {item.label}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button
+                                                onClick={() => setEditing(true)}
+                                                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <FontAwesomeIcon icon={faPen} className="text-xs" />
+                                                Completează Acum
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -783,6 +948,139 @@ export default function ProfilePage({ session, onNavigate }) {
 
                         {/* Recenzii lăsate */}
                         <MyReviewsSection session={session} onNavigate={onNavigate} />
+
+                        {/* ── ANUNȚURILE MELE ── */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mt-8">
+                            <button
+                                onClick={handleToggleProducts}
+                                className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                        <FontAwesomeIcon icon={faBoxesStacked} className="text-emerald-600 text-sm" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="font-bold text-gray-900 text-sm">Anunțurile Mele</p>
+                                        <p className="text-xs text-gray-400">
+                                            {productsCount} {productsCount === 1 ? 'anunț activ' : 'anunțuri active'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <FontAwesomeIcon
+                                    icon={faChevronDown}
+                                    className="text-gray-400 text-sm"
+                                    style={{
+                                        transform: showProducts ? 'rotate(180deg)' : 'rotate(0deg)',
+                                        transition: 'transform 0.3s ease-in-out',
+                                    }}
+                                />
+                            </button>
+
+                            <div
+                                style={{
+                                    overflow: 'hidden',
+                                    maxHeight: showProducts ? '2000px' : '0px',
+                                    opacity: showProducts ? 1 : 0,
+                                    transition: 'max-height 0.4s ease-in-out, opacity 0.3s ease-in-out',
+                                }}
+                            >
+                                <div className="px-6 pb-6 border-t border-gray-50">
+                                    {loadingProducts ? (
+                                        <div className="text-center py-12">
+                                            <Metronome size="40" speed="1.6" color="#059669" />
+                                            <p className="text-gray-600 mt-3">Se încarcă anunțurile...</p>
+                                        </div>
+                                    ) : myProducts.length > 0 ? (
+                                        <div className="grid md:grid-cols-2 gap-6 mt-4">
+                                            {myProducts.map((product) => {
+                                                const now = new Date();
+                                                const expiresDate = product.expires_at ? new Date(product.expires_at) : null;
+                                                const isExpired = expiresDate && expiresDate < now;
+                                                const isExpiringSoon = expiresDate && !isExpired && (expiresDate - now) < 48 * 60 * 60 * 1000;
+                                                return (
+                                                    <div key={product.id} className={`relative rounded-2xl border bg-white hover:shadow-lg transition-all duration-300 overflow-hidden ${product.status === 'rejected' ? 'border-red-400' :
+                                                            product.status === 'inactive' || isExpired ? 'border-red-300' :
+                                                                isExpiringSoon ? 'border-orange-400' :
+                                                                    product.status === 'pending' ? 'border-yellow-400' :
+                                                                        'border-gray-200'
+                                                        }`}>
+                                                        <ProductCard product={product} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
+                                                        {/* Edit action bar */}
+                                                        <div className="px-4 pb-3 bg-white flex gap-2">
+                                                            <button
+                                                                onClick={() => setEditingProductId(product.id)}
+                                                                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs rounded-xl transition-all"
+                                                            >
+                                                                <FontAwesomeIcon icon={faPen} className="text-xs" />
+                                                                Editează
+                                                            </button>
+                                                        </div>
+                                                        <div className="absolute top-4 right-4 flex gap-2 z-10">
+                                                            {product.status === 'rejected' ? (
+                                                                <button onClick={() => handleResubmit(product.id)}
+                                                                    className="bg-orange-500 hover:bg-orange-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110"
+                                                                    title="Retrimite pentru aprobare">
+                                                                    <FontAwesomeIcon icon={faRotateRight} />
+                                                                </button>
+                                                            ) : (
+                                                                <button onClick={() => setEditingProductId(product.id)}
+                                                                    className="bg-blue-500 hover:bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Editează galeria foto">
+                                                                    <FontAwesomeIcon icon={faImages} />
+                                                                </button>
+                                                            )}
+                                                            <button onClick={() => handleDeleteProduct(product.id)}
+                                                                className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Arhivează anunțul">
+                                                                <FontAwesomeIcon icon={faXmark} />
+                                                            </button>
+                                                            <Toaster position="bottom-right" reverseOrder={false} />
+                                                        </div>
+                                                        {product.status === 'archived' && (
+                                                            <div className="absolute top-16 right-4 z-10">
+                                                                <Badge variant="default">ARHIVAT</Badge>
+                                                            </div>
+                                                        )}
+                                                        {product.status === 'rejected' && (
+                                                            <div className="absolute top-16 right-4 z-10" title={product.reject_reason || 'Neconform cu regulamentul'}>
+                                                                <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full cursor-help">RESPINS</span>
+                                                            </div>
+                                                        )}
+                                                        {product.status === 'pending' && (
+                                                            <div className="absolute top-16 right-4 z-10">
+                                                                <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2.5 py-1 rounded-full">ÎN AȘTEPTARE</span>
+                                                            </div>
+                                                        )}
+                                                        {(product.status === 'inactive' || isExpired) && (
+                                                            <div className="absolute top-16 right-4 z-10">
+                                                                <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRAT</span>
+                                                            </div>
+                                                        )}
+                                                        {isExpiringSoon && product.status !== 'inactive' && (
+                                                            <div className="absolute top-16 right-4 z-10">
+                                                                <span className="bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRĂ ÎN CURÂND</span>
+                                                            </div>
+                                                        )}
+                                                        {expiresDate && (
+                                                            <div className={`absolute bottom-0 left-0 right-0 px-4 py-1.5 text-xs flex items-center gap-1.5 ${isExpired || product.status === 'inactive' ? 'bg-red-50 text-red-500' :
+                                                                    isExpiringSoon ? 'bg-orange-50 text-orange-600' :
+                                                                        'bg-gray-50 text-gray-400'
+                                                                }`}>
+                                                                <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
+                                                                Valabil până: {expiresDate.toLocaleDateString('ro-RO')}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <FontAwesomeIcon icon={faBoxesStacked} className="text-gray-400 text-6xl mb-4" />
+                                            <p className="text-gray-600">Nu ai încă anunțuri active</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -810,107 +1108,6 @@ export default function ProfilePage({ session, onNavigate }) {
                             </button>
                         </div>
                     )}
-
-                {/* ── PRODUSE ── */}
-                {showProducts && (
-                    <div className="mt-10" id="my-products">
-                        <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-lg">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                    <FontAwesomeIcon icon={faBoxesStacked} className="text-emerald-600" />
-                                    Anunțurile Mele
-                                </h2>
-                                <span className="text-gray-500 text-sm">
-                                    {productsCount} {productsCount === 1 ? 'anunț activ' : 'anunțuri active'}
-                                </span>
-                            </div>
-
-                            {loadingProducts ? (
-                                <div className="text-center py-12">
-                                    <Metronome size="40" speed="1.6" color="#059669" />
-                                    <p className="text-gray-600 mt-3">Se încarcă anunțurile...</p>
-                                </div>
-                            ) : myProducts.length > 0 ? (
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    {myProducts.map((product) => {
-                                        const now = new Date();
-                                        const expiresDate = product.expires_at ? new Date(product.expires_at) : null;
-                                        const isExpired = expiresDate && expiresDate < now;
-                                        const isExpiringSoon = expiresDate && !isExpired && (expiresDate - now) < 48 * 60 * 60 * 1000;
-                                        return (
-                                            <div key={product.id} className={`relative rounded-2xl border bg-white hover:shadow-lg transition-all duration-300 overflow-hidden ${product.status === 'rejected' ? 'border-red-400' :
-                                                    product.status === 'inactive' || isExpired ? 'border-red-300' :
-                                                        isExpiringSoon ? 'border-orange-400' :
-                                                            product.status === 'pending' ? 'border-yellow-400' :
-                                                                'border-gray-200'
-                                                }`}>
-                                                <ProductCard product={product} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
-                                                <div className="absolute top-4 right-4 flex gap-2 z-10">
-                                                    {product.status === 'rejected' ? (
-                                                        <button onClick={() => handleResubmit(product.id)}
-                                                            className="bg-orange-500 hover:bg-orange-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110"
-                                                            title="Retrimite pentru aprobare">
-                                                            <FontAwesomeIcon icon={faRotateRight} />
-                                                        </button>
-                                                    ) : (
-                                                        <button onClick={() => setEditingProductId(product.id)}
-                                                            className="bg-blue-500 hover:bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Editează galeria foto">
-                                                            <FontAwesomeIcon icon={faImages} />
-                                                        </button>
-                                                    )}
-                                                    <button onClick={() => handleDeleteProduct(product.id)}
-                                                        className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Arhivează anunțul">
-                                                        <FontAwesomeIcon icon={faXmark} />
-                                                    </button>
-                                                    <Toaster position="bottom-right" reverseOrder={false} />
-                                                </div>
-                                                {product.status === 'archived' && (
-                                                    <div className="absolute top-16 right-4 z-10">
-                                                        <Badge variant="default">ARHIVAT</Badge>
-                                                    </div>
-                                                )}
-                                                {product.status === 'rejected' && (
-                                                    <div className="absolute top-16 right-4 z-10" title={product.reject_reason || 'Neconform cu regulamentul'}>
-                                                        <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full cursor-help">RESPINS</span>
-                                                    </div>
-                                                )}
-                                                {product.status === 'pending' && (
-                                                    <div className="absolute top-16 right-4 z-10">
-                                                        <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2.5 py-1 rounded-full">ÎN AȘTEPTARE</span>
-                                                    </div>
-                                                )}
-                                                {(product.status === 'inactive' || isExpired) && (
-                                                    <div className="absolute top-16 right-4 z-10">
-                                                        <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRAT</span>
-                                                    </div>
-                                                )}
-                                                {isExpiringSoon && product.status !== 'inactive' && (
-                                                    <div className="absolute top-16 right-4 z-10">
-                                                        <span className="bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRĂ ÎN CURÂND</span>
-                                                    </div>
-                                                )}
-                                                {expiresDate && (
-                                                    <div className={`absolute bottom-0 left-0 right-0 px-4 py-1.5 text-xs flex items-center gap-1.5 ${isExpired || product.status === 'inactive' ? 'bg-red-50 text-red-500' :
-                                                            isExpiringSoon ? 'bg-orange-50 text-orange-600' :
-                                                                'bg-gray-50 text-gray-400'
-                                                        }`}>
-                                                        <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
-                                                        Valabil până: {expiresDate.toLocaleDateString('ro-RO')}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="text-center py-12">
-                                    <FontAwesomeIcon icon={faBoxesStacked} className="text-gray-400 text-6xl mb-4" />
-                                    <p className="text-gray-600">Nu ai încă anunțuri active</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
             </main>
 
             {editingProductId && (

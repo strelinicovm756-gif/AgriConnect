@@ -186,6 +186,7 @@ export default function LoginPage({ onNavigate }) {
 
       toast.success("Bine ai revenit! 👋");
       setLoginData({ email: '', password: '' });
+      onNavigate('home');
 
     } catch (error) {
       console.error('Login error:', error);

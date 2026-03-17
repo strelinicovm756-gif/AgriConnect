@@ -306,7 +306,7 @@ export function Navbar({ session, onNavigate }) {
               className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-300 hover:bg-white transition-all group shadow-sm"
             >
               <SearchAnimated animateOnHover color="#c2c2c2" strokeWidth={2} size={20} />
-              <span className="flex-1">Caută produse, localitate, categorii...</span>
+              <span className="flex-1">Caută produse, localitate... </span>
             </button>
             <button
               onClick={() => setShowOverlay(true)}

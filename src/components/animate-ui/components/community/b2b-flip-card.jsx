@@ -89,14 +89,14 @@ export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
 
       {/* ── BACK: întunecat cu butoane ── */}
       <motion.div
-        className="absolute inset-0 backface-hidden rounded-2xl bg-emerald-600 flex flex-col p-5 gap-4"
+        className="absolute inset-0 backface-hidden rounded-2xl bg-emerald-700 flex flex-col p-5 gap-4"
         animate={isFlipped ? 'front' : 'back'}
         variants={cardVariants}
         style={{ transformStyle: 'preserve-3d', rotateY: 180 }}
       >
         {/* Services */}
         <div className="flex-1">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+          <p className="text-xs font-bold text-white uppercase tracking-wider mb-3">
             Servicii Oferite
           </p>
           <ul className="space-y-2">
@@ -116,13 +116,13 @@ export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
         <div className="flex flex-col gap-2">
           <button
             onClick={(e) => { e.stopPropagation(); onRequestOffer(); }}
-            className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-white text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Solicită Ofertă
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onNavigate(); }}
-            className="w-full py-2.5 rounded-xl border border-gray-600 text-gray-300 hover:border-gray-400 hover:text-white text-sm font-semibold transition-all"
+            className="w-full py-2.5 rounded-xl  bg-emerald-400 text-white hover:bg-emerald-300 hover:text-white text-sm font-semibold transition-all"
           >
             Vezi Profil Complet
           </button>

@@ -213,10 +213,6 @@ function CategoryAccordionItem({ cat, selectedCategory, onSelect }) {
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
               >
-                <FontAwesomeIcon
-                  icon={sub.icon}
-                  className={`text-xs flex-shrink-0 ${isSubActive ? 'text-emerald-600' : 'text-gray-400'}`}
-                />
                 <span className="text-xs">{sub.name}</span>
                 {isSubActive && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />

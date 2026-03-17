@@ -422,7 +422,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50/50 via-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50/50 via-white to-wight">
 
       {/* ── HERO — Dynamic Events Slider ─────────────────────── */}
       <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
@@ -582,36 +582,8 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
       {!loading && (
         <>
-          {/* ── FERMIERI VERIFICAȚI ─────────────────────────── */}
-          {verifiedFarmers.length > 0 && (
-            <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
-                    <FontAwesomeIcon icon={faShieldHalved} className="text-emerald-600 text-base" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Fermieri Verificați</h3>
-                </div>
-                <button onClick={() => onNavigate('toate-produsele')}
-                  className="px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all hover:scale-105 active:scale-95">
-                  <span>Toți fermierii</span>
-                  <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
-                </button>
-              </div>
-              {/* Wrapper relativ pentru fermieri */}
-              <div className="relative">
-                <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-4">
-                  <PillNavButton direction="left" onClick={() => scroll('left', farmersRef)} ariaLabel="Stânga" />
-                  <PillNavButton direction="right" onClick={() => scroll('right', farmersRef)} ariaLabel="Dreapta" />
-                  <div ref={farmersRef}
-                    className="flex overflow-x-auto gap-4 py-2 snap-x snap-mandatory"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {verifiedFarmers.map(f => <FarmerCard key={f.id} farmer={f} onNavigate={onNavigate} />)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* FERMIERI VERIFICAȚI */}
+          
 
           {/* ── B2C ─────────────────────────────────────────── */}
           <B2CBlock

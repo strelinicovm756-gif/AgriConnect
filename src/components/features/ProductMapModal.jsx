@@ -101,7 +101,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
 
       if (!coords) {
         setLoading(false);
-        toast.error('Nu am putut determina coordonatele locației');
+        toast.error('Could not determine location coordinates');
         return;
       }
 
@@ -137,14 +137,13 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
         const markerEl = document.createElement('div');
         markerEl.className = 'custom-marker-light';
         markerEl.innerHTML = `
-      <div class="marker-pulse-light"></div>
-      <div class="marker-pin-light">
-        <svg width="40" height="50" viewBox="0 0 40 50" fill="none">
-          <path d="M20 0C8.95 0 0 8.95 0 20c0 15 20 30 20 30s20-15 20-30c0-11.05-8.95-20-20-20z" fill="#10b981"/>
-          <circle cx="20" cy="20" r="8" fill="white"/>
-          <circle cx="20" cy="20" r="5" fill="#10b981"/>
-        </svg>
-      </div>
+    <div style="cursor:pointer">
+      <svg width="36" height="44" viewBox="0 0 40 50" fill="none">
+        <path d="M20 0C8.95 0 0 8.95 0 20c0 15 20 30 20 30s20-15 20-30C40 8.95 31.05 0 20 0z" fill="#10b981"/>
+        <circle cx="20" cy="20" r="8" fill="white"/>
+        <circle cx="20" cy="20" r="5" fill="#10b981"/>
+      </svg>
+    </div>
     `;
 
         markerRef.current = new mapboxgl.Marker({ element: markerEl })
@@ -180,7 +179,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
 
   const handleCopyAddress = async () => {
     if (!exactCoords && !productCoords) {
-      toast.error('Nu există coordonate disponibile');
+      toast.error('No coordinates available');
       return;
     }
 
@@ -192,10 +191,10 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
 
     if (success) {
       setCopied(true);
-      toast.success('Adresă copiată!', { duration: 3000 });
+      toast.success('Address copied!', { duration: 3000 });
       setTimeout(() => setCopied(false), 2000);
     } else {
-      toast.error('Nu am putut copia adresa');
+      toast.error('Could not copy address');
     }
   };
 

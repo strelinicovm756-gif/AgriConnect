@@ -84,7 +84,7 @@ export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
           </span>
         )}
 
-        <p className="text-[10px] text-gray-300 mt-auto">Hover pentru detalii</p>
+        <p className="text-[10px] text-gray-300 mt-auto">Hover for details</p>
       </motion.div>
 
       {/* ── BACK: întunecat cu butoane ── */}
@@ -97,7 +97,7 @@ export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
         {/* Services */}
         <div className="flex-1">
           <p className="text-xs font-bold text-white uppercase tracking-wider mb-3">
-            Servicii Oferite
+            Services Offered
           </p>
           <ul className="space-y-2">
             {provider.services?.slice(0, 4).map(svc => (
@@ -107,7 +107,7 @@ export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
               </li>
             ))}
             {(!provider.services || provider.services.length === 0) && (
-              <li className="text-sm text-gray-500 italic">Servicii generale</li>
+              <li className="text-sm text-gray-500 italic">General services</li>
             )}
           </ul>
         </div>
@@ -118,13 +118,13 @@ export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
             onClick={(e) => { e.stopPropagation(); onRequestOffer(); }}
             className="w-full py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-white text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            Solicită Ofertă
+            Request Quote
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onNavigate(); }}
             className="w-full py-2.5 rounded-xl  bg-emerald-400 text-white hover:bg-emerald-300 hover:text-white text-sm font-semibold transition-all"
           >
-            Vezi Profil Complet
+            View Full Profile
           </button>
         </div>
       </motion.div>

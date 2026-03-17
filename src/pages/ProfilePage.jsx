@@ -108,29 +108,29 @@ function MyReviewsSection({ session, onNavigate }) {
     useEffect(() => { if (session) fetchReviews(); }, [session]);
 
     const handleDelete = async (id) => {
-        if (!confirm('Sigur vrei să ștergi această recenzie?')) return;
+        if (!confirm('Are you sure you want to delete this review?')) return;
         try {
             const { error } = await supabase.from('comments').delete().eq('id', id);
             if (error) throw error;
-            toast.success('Recenzie ștearsă!');
+            toast.success('Review deleted!');
             setReviews(reviews.filter(r => r.id !== id));
-        } catch { toast.error('Eroare la ștergere'); }
+        } catch { toast.error('Error deleting review'); }
     };
 
     const handleEdit = async (id) => {
-        if (!editContent.trim()) return toast.error('Recenzia nu poate fi goală');
-        if (!editRating) return toast.error('Selectează un rating');
+        if (!editContent.trim()) return toast.error('Review cannot be empty');
+        if (!editRating) return toast.error('Select a rating');
         try {
             const { error } = await supabase.from('comments')
                 .update({ content: editContent.trim(), rating: editRating }).eq('id', id);
             if (error) throw error;
-            toast.success('Recenzie actualizată!');
+            toast.success('Review updated!');
             setEditingId(null);
             fetchReviews();
-        } catch { toast.error('Eroare la actualizare'); }
+        } catch { toast.error('Error updating review'); }
     };
 
-    const ratingLabels = ['', 'Slab', 'Acceptabil', 'Bun', 'Foarte bun', 'Excelent'];
+    const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 
     return (
         <div className="bg-white rounded-3xl border border-gray-200 shadow-lg overflow-hidden mt-8">
@@ -141,9 +141,9 @@ function MyReviewsSection({ session, onNavigate }) {
                         <MessageSquare size={18} className="text-emerald-600" />
                     </div>
                     <div className="text-left">
-                        <p className="font-bold text-gray-900">Recenziile mele</p>
+                        <p className="font-bold text-gray-900">My reviews</p>
                         <p className="text-gray-500 text-sm">
-                            {loading ? 'Se încarcă...' : `${reviews.length} recenzie${reviews.length !== 1 ? 'i' : ''} lăsate`}
+                            {loading ? 'Loading...' : `${reviews.length} review${reviews.length !== 1 ? 's' : ''} left`}
                         </p>
                     </div>
                 </div>
@@ -180,8 +180,8 @@ function MyReviewsSection({ session, onNavigate }) {
                     ) : reviews.length === 0 ? (
                         <div className="text-center py-10 text-gray-400">
                             <MessageSquare size={40} className="mx-auto mb-3 opacity-30" />
-                            <p className="font-medium text-gray-500">Nu ai lăsat nicio recenzie încă</p>
-                            <p className="text-sm mt-1">Cumpără produse și lasă feedback producătorilor!</p>
+                            <p className="font-medium text-gray-500">You haven't left any reviews yet</p>
+                            <p className="text-sm mt-1">Buy products and leave feedback for producers!</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -202,7 +202,7 @@ function MyReviewsSection({ session, onNavigate }) {
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-gray-900 truncate">{product?.name || 'Produs șters'}</p>
+                                                <p className="font-bold text-gray-900 truncate">{product?.name || 'Deleted product'}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     {product?.category && (
                                                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{product.category}</span>
@@ -218,7 +218,7 @@ function MyReviewsSection({ session, onNavigate }) {
                                             {product?.status === 'active' && (
                                                 <button onClick={() => onNavigate('detalii', product.id)}
                                                     className="flex-shrink-0 flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-semibold bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors border border-emerald-200">
-                                                    <ExternalLink size={12} /> Vezi
+                                                    <ExternalLink size={12} /> View
                                                 </button>
                                             )}
                                         </div>
@@ -253,11 +253,11 @@ function MyReviewsSection({ session, onNavigate }) {
                                                     <div className="flex gap-2">
                                                         <button onClick={() => handleEdit(review.id)}
                                                             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
-                                                            <FontAwesomeIcon icon={faCircleCheck} /> Salvează
+                                                            <FontAwesomeIcon icon={faCircleCheck} /> Save
                                                         </button>
                                                         <button onClick={() => setEditingId(null)}
                                                             className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-4 py-2 rounded-lg transition">
-                                                            Anulează
+                                                            Cancel
                                                         </button>
                                                     </div>
                                                 </div>
@@ -270,11 +270,11 @@ function MyReviewsSection({ session, onNavigate }) {
                                                         </div>
                                                         <div className="flex items-center gap-1 flex-shrink-0">
                                                             <button onClick={() => { setEditingId(review.id); setEditContent(review.content); setEditRating(review.rating || 0); setHovered(0); }}
-                                                                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="Editează">
+                                                                className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="Edit">
                                                                 <Pencil size={13} />
                                                             </button>
                                                             <button onClick={() => handleDelete(review.id)}
-                                                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition" title="Șterge">
+                                                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition" title="Delete">
                                                                 <Trash2 size={13} />
                                                             </button>
                                                             <Toaster
@@ -287,7 +287,7 @@ function MyReviewsSection({ session, onNavigate }) {
                                                     <p className="text-gray-400 text-xs mt-2 flex items-center gap-1">
                                                         <Calendar size={11} />
                                                         {new Date(review.created_at).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                        {review.updated_at !== review.created_at && <span className="ml-1 text-gray-300">(editat)</span>}
+                                                        {review.updated_at !== review.created_at && <span className="ml-1 text-gray-300">(edited)</span>}
                                                     </p>
                                                 </div>
                                             )}
@@ -324,9 +324,9 @@ const getMissingFields = (profile) => {
     const isNameValid = profile.full_name &&
         /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) &&
         profile.full_name.trim().length >= 2;
-    if (!isNameValid) missing.push({ key: 'full_name', label: 'Nume valid', desc: 'Doar litere, minim 2 caractere', icon: faUser });
-    if (!profile.phone || profile.phone.length < 10) missing.push({ key: 'phone', label: 'Număr de telefon', desc: 'Format: +373 + 8 cifre', icon: faPhone });
-    if (!profile.location) missing.push({ key: 'location', label: 'Localitate', desc: 'Orașul sau satul tău', icon: faLocationDot });
+    if (!isNameValid) missing.push({ key: 'full_name', label: 'Valid name', desc: 'Letters only, minimum 2 characters', icon: faUser });
+    if (!profile.phone || profile.phone.length < 10) missing.push({ key: 'phone', label: 'Phone number', desc: 'Format: +373 + 8 digits', icon: faPhone });
+    if (!profile.location) missing.push({ key: 'location', label: 'Location', desc: 'Your city or village', icon: faLocationDot });
     return missing;
 };
 
@@ -419,10 +419,10 @@ export default function ProfilePage({ session, onNavigate }) {
             if (error) throw error;
             setProfile(data);
             setFormData({ full_name: data.full_name || '', phone: '', location: '', bio: '' });
-            toast.success('Profil creat! Completează-ți datele.');
+            toast.success('Profile created! Please complete your details.');
         } catch (error) {
-            if (error.code === '23505') { toast.error('Profilul există deja. Se reîncarcă...'); loadProfile(); }
-            else toast.error('Eroare: ' + error.message);
+            if (error.code === '23505') { toast.error('Profile already exists. Reloading...'); loadProfile(); }
+            else toast.error('Error: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -478,7 +478,7 @@ export default function ProfilePage({ session, onNavigate }) {
             }
             setMyProducts((data || []).map(p => toMark.find(m => m.id === p.id) ? { ...p, status: 'inactive' } : p));
         } catch (error) {
-            toast.error('Eroare la încărcarea produselor');
+            toast.error('Error loading products');
         } finally {
             setLoadingProducts(false);
         }
@@ -490,21 +490,21 @@ export default function ProfilePage({ session, onNavigate }) {
     };
 
     const handleViewDetails = (productId) => onNavigate('detalii', productId);
-    const handleContactClick = async () => { toast('Acesta este propriul tău produs!', { icon: 'ℹ️' }); };
+    const handleContactClick = async () => { toast('This is your own product!', { icon: 'ℹ️' }); };
 
     const handleDeleteProduct = async (productId) => {
-        if (!confirm('Sigur vrei să arhivezi acest produs?')) return;
+        if (!confirm('Are you sure you want to archive this product?')) return;
         try {
             const { error } = await supabase.rpc('archive_my_product', { product_id: productId });
             if (error) throw error;
-            toast.success('Produs arhivat cu succes!');
+            toast.success('Product archived successfully!');
             setMyProducts(myProducts.filter(p => p.id !== productId));
             setProductsCount(productsCount - 1);
         } catch (error) {
-            console.error('Eroare:', error);
-            if (error.message.includes('permission')) toast.error('Nu ai permisiunea să arhivezi acest produs');
-            else if (error.message.includes('not found')) toast.error('Produsul nu a fost găsit');
-            else toast.error('Eroare: ' + error.message);
+            console.error('Error:', error);
+            if (error.message.includes('permission')) toast.error('You do not have permission to archive this product');
+            else if (error.message.includes('not found')) toast.error('Product not found');
+            else toast.error('Error: ' + error.message);
         }
     };
 
@@ -514,16 +514,16 @@ export default function ProfilePage({ session, onNavigate }) {
                 .update({ status: 'pending', reject_reason: null })
                 .eq('id', productId);
             if (error) throw error;
-            toast.success('Anunț retrimis pentru aprobare!');
+            toast.success('Listing resubmitted for approval!');
             setMyProducts(prev => prev.map(p => p.id === productId ? { ...p, status: 'pending', reject_reason: null } : p));
-        } catch { toast.error('Eroare la retrimitere'); }
+        } catch { toast.error('Error resubmitting'); }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.phone || !/^\+373\d{8}$/.test(formData.phone)) return toast.error('Telefonul trebuie să aibă formatul: +373 + 8 cifre');
-        if (!formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) return toast.error('Numele poate conține doar litere și spații');
-        if (formData.full_name.trim().length < 2) return toast.error('Numele trebuie să aibă minim 2 caractere');
+        if (!formData.phone || !/^\+373\d{8}$/.test(formData.phone)) return toast.error('Phone must have the format: +373 + 8 digits');
+        if (!formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) return toast.error('Name can only contain letters and spaces');
+        if (formData.full_name.trim().length < 2) return toast.error('Name must be at least 2 characters');
         try {
             setLoading(true);
             const { error } = await supabase.from('profiles').update({
@@ -531,19 +531,19 @@ export default function ProfilePage({ session, onNavigate }) {
                 location: formData.location.trim(), bio: formData.bio.trim()
             }).eq('id', session.user.id);
             if (error) throw error;
-            toast.success('Profil actualizat cu succes!');
+            toast.success('Profile updated successfully!');
             setEditing(false);
             loadProfile();
         } catch (error) {
-            toast.error('Eroare la actualizare: ' + error.message);
+            toast.error('Error updating profile: ' + error.message);
             setLoading(false);
         }
     };
 
     const handleLogout = async () => {
         const { error } = await supabase.auth.signOut();
-        if (error) toast.error('Eroare la deconectare');
-        else toast.success('Te-ai deconectat cu succes!');
+        if (error) toast.error('Error signing out');
+        else toast.success('You have been signed out!');
     };
 
     const nameInvalidLive = !!formData.full_name && !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name);
@@ -560,7 +560,7 @@ export default function ProfilePage({ session, onNavigate }) {
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <div className="text-center">
                     <Metronome size="40" speed="1.6" color="#059669" />
-                    <p className="text-gray-500 mt-3 text-sm">Se încarcă profilul...</p>
+                    <p className="text-gray-500 mt-3 text-sm">Loading profile...</p>
                 </div>
             </div>
         );
@@ -578,7 +578,7 @@ export default function ProfilePage({ session, onNavigate }) {
                             <div className="relative">
                                 <div
                                     className="w-24 h-24 rounded-full flex items-center justify-center text-white text-4xl font-black shadow-lg"
-                                    style={{ background: getColorForName(profile?.full_name || session.user.email) }}
+                                    style={{ background: getColorForName(profile?.id || profile?.full_name) }}
                                 >
                                     {(profile?.full_name?.[0] || session.user.email[0]).toUpperCase()}
                                 </div>
@@ -592,7 +592,7 @@ export default function ProfilePage({ session, onNavigate }) {
                             {/* Name */}
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">
-                                    {profile?.full_name || 'Utilizator nou'}
+                                    {profile?.full_name || 'New user'}
                                 </h2>
                                 <p className="text-sm text-gray-400">{session.user.email}</p>
                             </div>
@@ -601,17 +601,17 @@ export default function ProfilePage({ session, onNavigate }) {
                             {profile?.is_verified ? (
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-semibold">
                                     <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
-                                    Profil Verificat
+                                    Verified Profile
                                 </span>
                             ) : getMissingFields(profile).length === 0 ? (
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-semibold">
                                     <FontAwesomeIcon icon={faUser} className="text-xs" />
-                                    Vânzător nou
+                                    New seller
                                 </span>
                             ) : (
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-xs font-semibold">
                                     <FontAwesomeIcon icon={faTriangleExclamation} className="text-xs" />
-                                    Profil incomplet
+                                    Incomplete profile
                                 </span>
                             )}
 
@@ -642,7 +642,7 @@ export default function ProfilePage({ session, onNavigate }) {
                             <div className="w-full grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
                                 <div className="text-center">
                                     <p className="text-2xl font-black text-gray-900">{productsCount}</p>
-                                    <p className="text-xs text-gray-400">Anunțuri</p>
+                                    <p className="text-xs text-gray-400">Listings</p>
                                 </div>
                                 <div className="text-center">
                                     {avgRating > 0 ? (
@@ -656,7 +656,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                     ) : (
                                         <>
                                             <p className="text-2xl font-black text-gray-300">—</p>
-                                            <p className="text-xs text-gray-400">Fără recenzii</p>
+                                            <p className="text-xs text-gray-400">No reviews</p>
                                         </>
                                     )}
                                 </div>
@@ -668,7 +668,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                     onClick={handleLogout}
                                     className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold text-sm rounded-2xl transition-all"
                                 >
-                                    <span>Deconectare</span>
+                                    <span>Sign out</span>
                                     <FontAwesomeIcon icon={faRightFromBracket} className="text-[10px]" />
                                 </button>
                             </div>
@@ -679,11 +679,11 @@ export default function ProfilePage({ session, onNavigate }) {
                     <div className="md:col-span-2">
                         <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-lg">
                             <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-2xl font-bold text-gray-900">Informații Profil</h2>
+                                <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
                                 {!editing && (
                                     <Button onClick={() => setEditing(true)} size="sm" className="flex items-center gap-2">
                                         <FontAwesomeIcon icon={faPenToSquare} />
-                                        Editează Profil
+                                        Edit Profile
                                     </Button>
                                 )}
                             </div>
@@ -693,27 +693,27 @@ export default function ProfilePage({ session, onNavigate }) {
                                     {/* Nume */}
                                     <div>
                                         <Input
-                                            label="Nume (pentru anunțuri)"
+                                            label="Name (for listings)"
                                             value={formData.full_name}
                                             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                            placeholder="ex: Maxim, Ion Popescu"
+                                            placeholder="e.g.: Maxim, Ion Popescu"
                                             required
-                                            error={nameInvalidLive ? 'Doar litere și spații (fără cifre sau simboluri).' : ''}
+                                            error={nameInvalidLive ? 'Letters and spaces only (no digits or symbols).' : ''}
                                             className={nameValidLive ? 'border-emerald-500/60' : ''}
                                         />
                                         {nameInvalidLive && (
-                                            <Alert variant="danger" className="mt-3" title="Nume invalid">
-                                                Numele poate conține <strong>doar litere și spații</strong>.
-                                                <div className="text-xs text-red-700 mt-2">✓ Exemple: "Maxim", "Ion Popescu", "Maria Ștefan"</div>
+                                            <Alert variant="danger" className="mt-3" title="Invalid name">
+                                                Name can only contain <strong>letters and spaces</strong>.
+                                                <div className="text-xs text-red-700 mt-2">✓ Examples: "Maxim", "Ion Popescu", "Maria Stefan"</div>
                                             </Alert>
                                         )}
-                                        {nameValidLive && <Alert variant="success" className="mt-3" title="Nume valid">Poți adăuga anunțuri cu acest nume.</Alert>}
+                                        {nameValidLive && <Alert variant="success" className="mt-3" title="Valid name">You can add listings with this name.</Alert>}
                                     </div>
 
                                     {/* Telefon */}
                                     <div>
                                         <label className="block text-gray-700 text-sm font-medium mb-2">
-                                            Telefon <span className="text-red-500">*</span>
+                                            Phone <span className="text-red-500">*</span>
                                         </label>
                                         <div className="relative">
                                             <div className={`flex items-stretch rounded-xl overflow-hidden bg-white transition-colors border ${formData.phone && !phoneValid ? 'border-amber-300' : 'border-gray-200'} focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-200`}>
@@ -742,43 +742,43 @@ export default function ProfilePage({ session, onNavigate }) {
                                                     {phoneValid ? (
                                                         <p className="text-emerald-600 text-sm flex items-center gap-2">
                                                             <FontAwesomeIcon icon={faCircleCheck} />
-                                                            Număr complet și valid: {formatPhoneDisplay(formData.phone)}
+                                                            Complete and valid number: {formatPhoneDisplay(formData.phone)}
                                                         </p>
                                                     ) : (
                                                         <p className="text-amber-600 text-sm flex items-center gap-2">
                                                             <FontAwesomeIcon icon={faHourglassHalf} />
-                                                            Mai trebuie {8 - phoneDigits.length} cifre
+                                                            {8 - phoneDigits.length} more digits needed
                                                         </p>
                                                     )}
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-gray-500 text-xs mt-1">Exemplu: +373 12 34 56 78</p>
+                                        <p className="text-gray-500 text-xs mt-1">Example: +373 12 34 56 78</p>
                                     </div>
 
                                     <Input
-                                        label="Locație" value={formData.location}
+                                        label="Location" value={formData.location}
                                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        placeholder="Chișinău, Moldova" required
+                                        placeholder="Chisinau, Moldova" required
                                     />
 
                                     <div>
-                                        <label className="block text-gray-700 text-sm font-medium mb-2">Despre mine</label>
+                                        <label className="block text-gray-700 text-sm font-medium mb-2">About me</label>
                                         <textarea
                                             value={formData.bio}
                                             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                            placeholder="Scrie câteva cuvinte despre tine și activitatea ta..."
+                                            placeholder="Write a few words about yourself and your activity..."
                                             rows={4}
                                             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-colors placeholder:text-gray-400"
                                         />
                                     </div>
 
                                     {(!formData.phone || !formData.location || !formData.full_name || !/^\+373\d{8}$/.test(formData.phone) || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) && (
-                                        <Alert variant="warning" title="Pentru a adăuga anunțuri trebuie să completezi:">
+                                        <Alert variant="warning" title="To add listings you must complete:">
                                             <ul className="text-amber-800 text-sm space-y-1">
-                                                {(!formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) && <li>• Nume oficial valid</li>}
-                                                {(!formData.phone || !/^\+373\d{8}$/.test(formData.phone)) && <li>• Telefon complet (+373 + 8 cifre)</li>}
-                                                {!formData.location && <li>• Locație</li>}
+                                                {(!formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) && <li>• Valid official name</li>}
+                                                {(!formData.phone || !/^\+373\d{8}$/.test(formData.phone)) && <li>• Complete phone (+373 + 8 digits)</li>}
+                                                {!formData.location && <li>• Location</li>}
                                             </ul>
                                         </Alert>
                                     )}
@@ -788,13 +788,13 @@ export default function ProfilePage({ session, onNavigate }) {
                                             disabled={loading || !formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name) || !formData.phone || !/^\+373\d{8}$/.test(formData.phone) || !formData.location}
                                             className="flex items-center gap-2 shadow-lg shadow-emerald-600/15">
                                             <FontAwesomeIcon icon={faFloppyDisk} />
-                                            {loading ? 'Se salvează...' : 'Salvează'}
+                                            {loading ? 'Saving...' : 'Save'}
                                         </Button>
                                         <Button variant="secondary"
                                             onClick={() => { setEditing(false); setFormData({ full_name: profile?.full_name || '', phone: profile?.phone || '', location: profile?.location || '', bio: profile?.bio || '' }); }}
                                             type="button" className="flex items-center gap-2">
                                             <FontAwesomeIcon icon={faBan} />
-                                            Anulează
+                                            Cancel
                                         </Button>
                                     </div>
                                 </form>
@@ -802,7 +802,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                 <div className="space-y-4">
                                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-                                            Informații Profil
+                                            Profile Information
                                         </h3>
                                         <div className="space-y-4">
                                             {/* Name field */}
@@ -816,15 +816,15 @@ export default function ProfilePage({ session, onNavigate }) {
                                                             <FontAwesomeIcon icon={faUser} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Nume</p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Name</p>
                                                             <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
-                                                                {profile?.full_name || 'Nu este setat'}
+                                                                {profile?.full_name || 'Not set'}
                                                             </p>
                                                         </div>
                                                         {isValid ? (
                                                             <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
                                                         ) : (
-                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">LIPSEȘTE</span>
+                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">MISSING</span>
                                                         )}
                                                     </div>
                                                 );
@@ -839,15 +839,15 @@ export default function ProfilePage({ session, onNavigate }) {
                                                             <FontAwesomeIcon icon={faPhone} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Telefon</p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</p>
                                                             <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
-                                                                {profile?.phone || 'Nu este setat'}
+                                                                {profile?.phone || 'Not set'}
                                                             </p>
                                                         </div>
                                                         {isValid ? (
                                                             <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
                                                         ) : (
-                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">LIPSEȘTE</span>
+                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">MISSING</span>
                                                         )}
                                                     </div>
                                                 );
@@ -862,15 +862,15 @@ export default function ProfilePage({ session, onNavigate }) {
                                                             <FontAwesomeIcon icon={faLocationDot} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Localitate</p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Location</p>
                                                             <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
-                                                                {profile?.location || 'Nu este setat'}
+                                                                {profile?.location || 'Not set'}
                                                             </p>
                                                         </div>
                                                         {isValid ? (
                                                             <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
                                                         ) : (
-                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">LIPSEȘTE</span>
+                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">MISSING</span>
                                                         )}
                                                     </div>
                                                 );
@@ -885,9 +885,9 @@ export default function ProfilePage({ session, onNavigate }) {
                                                             <FontAwesomeIcon icon={faFileLines} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-gray-300'}`} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Despre mine</p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">About me</p>
                                                             <p className={`text-sm leading-relaxed ${isValid ? 'text-gray-700' : 'text-gray-300 italic'}`}>
-                                                                {profile?.bio || 'Nu ai adăugat o descriere încă.'}
+                                                                {profile?.bio || "You haven't added a description yet."}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -904,23 +904,23 @@ export default function ProfilePage({ session, onNavigate }) {
                                                     <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-500 text-sm" />
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-red-700 text-sm">Nu poți adăuga anunțuri</h3>
-                                                    <p className="text-xs text-red-500 mt-0.5">Completează profilul pentru a debloca această funcționalitate.</p>
+                                                    <h3 className="font-bold text-red-700 text-sm">You cannot add listings</h3>
+                                                    <p className="text-xs text-red-500 mt-0.5">Complete your profile to unlock this feature.</p>
                                                 </div>
                                             </div>
                                             <div className="space-y-2 mb-4">
                                                 {[
                                                     {
                                                         done: profile?.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) && profile.full_name.trim().length >= 2,
-                                                        label: 'Nume valid (doar litere)'
+                                                        label: 'Valid name (letters only)'
                                                     },
                                                     {
                                                         done: profile?.phone && profile.phone.length >= 10,
-                                                        label: 'Număr de telefon (+373...)'
+                                                        label: 'Phone number (+373...)'
                                                     },
                                                     {
                                                         done: profile?.location && profile.location.trim().length > 0,
-                                                        label: 'Localitate'
+                                                        label: 'Location'
                                                     },
                                                 ].map((item, idx) => (
                                                     <div key={idx} className="flex items-center gap-2.5">
@@ -938,7 +938,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                                 className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl transition-all flex items-center justify-center gap-2"
                                             >
                                                 <FontAwesomeIcon icon={faPen} className="text-xs" />
-                                                Completează Acum
+                                                Complete Now
                                             </button>
                                         </div>
                                     )}
@@ -960,9 +960,9 @@ export default function ProfilePage({ session, onNavigate }) {
                                         <FontAwesomeIcon icon={faBoxesStacked} className="text-emerald-600 text-sm" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-bold text-gray-900 text-sm">Anunțurile Mele</p>
+                                        <p className="font-bold text-gray-900 text-sm">My Listings</p>
                                         <p className="text-xs text-gray-400">
-                                            {productsCount} {productsCount === 1 ? 'anunț activ' : 'anunțuri active'}
+                                            {productsCount} active listing{productsCount !== 1 ? 's' : ''}
                                         </p>
                                     </div>
                                 </div>
@@ -988,7 +988,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                     {loadingProducts ? (
                                         <div className="text-center py-12">
                                             <Metronome size="40" speed="1.6" color="#059669" />
-                                            <p className="text-gray-600 mt-3">Se încarcă anunțurile...</p>
+                                            <p className="text-gray-600 mt-3">Loading listings...</p>
                                         </div>
                                     ) : myProducts.length > 0 ? (
                                         <div className="grid md:grid-cols-2 gap-6 mt-4">
@@ -1012,51 +1012,51 @@ export default function ProfilePage({ session, onNavigate }) {
                                                                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs rounded-xl transition-all"
                                                             >
                                                                 <FontAwesomeIcon icon={faPen} className="text-xs" />
-                                                                Editează
+                                                                Edit
                                                             </button>
                                                         </div>
                                                         <div className="absolute top-4 right-4 flex gap-2 z-10">
                                                             {product.status === 'rejected' ? (
                                                                 <button onClick={() => handleResubmit(product.id)}
                                                                     className="bg-orange-500 hover:bg-orange-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110"
-                                                                    title="Retrimite pentru aprobare">
+                                                                    title="Resubmit for approval">
                                                                     <FontAwesomeIcon icon={faRotateRight} />
                                                                 </button>
                                                             ) : (
                                                                 <button onClick={() => setEditingProductId(product.id)}
-                                                                    className="bg-blue-500 hover:bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Editează galeria foto">
+                                                                    className="bg-blue-500 hover:bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Edit photo gallery">
                                                                     <FontAwesomeIcon icon={faImages} />
                                                                 </button>
                                                             )}
                                                             <button onClick={() => handleDeleteProduct(product.id)}
-                                                                className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Arhivează anunțul">
+                                                                className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Archive listing">
                                                                 <FontAwesomeIcon icon={faXmark} />
                                                             </button>
                                                             <Toaster position="bottom-right" reverseOrder={false} />
                                                         </div>
                                                         {product.status === 'archived' && (
                                                             <div className="absolute top-16 right-4 z-10">
-                                                                <Badge variant="default">ARHIVAT</Badge>
+                                                                <Badge variant="default">ARCHIVED</Badge>
                                                             </div>
                                                         )}
                                                         {product.status === 'rejected' && (
-                                                            <div className="absolute top-16 right-4 z-10" title={product.reject_reason || 'Neconform cu regulamentul'}>
-                                                                <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full cursor-help">RESPINS</span>
+                                                            <div className="absolute top-16 right-4 z-10" title={product.reject_reason || 'Does not comply with regulations'}>
+                                                                <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full cursor-help">REJECTED</span>
                                                             </div>
                                                         )}
                                                         {product.status === 'pending' && (
                                                             <div className="absolute top-16 right-4 z-10">
-                                                                <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2.5 py-1 rounded-full">ÎN AȘTEPTARE</span>
+                                                                <span className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2.5 py-1 rounded-full">PENDING</span>
                                                             </div>
                                                         )}
                                                         {(product.status === 'inactive' || isExpired) && (
                                                             <div className="absolute top-16 right-4 z-10">
-                                                                <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRAT</span>
+                                                                <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRED</span>
                                                             </div>
                                                         )}
                                                         {isExpiringSoon && product.status !== 'inactive' && (
                                                             <div className="absolute top-16 right-4 z-10">
-                                                                <span className="bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRĂ ÎN CURÂND</span>
+                                                                <span className="bg-orange-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">EXPIRING SOON</span>
                                                             </div>
                                                         )}
                                                         {expiresDate && (
@@ -1065,7 +1065,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                                                         'bg-gray-50 text-gray-400'
                                                                 }`}>
                                                                 <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
-                                                                Valabil până: {expiresDate.toLocaleDateString('ro-RO')}
+                                                                Valid until: {expiresDate.toLocaleDateString('en-GB')}
                                                             </div>
                                                         )}
                                                     </div>
@@ -1075,7 +1075,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                     ) : (
                                         <div className="text-center py-12">
                                             <FontAwesomeIcon icon={faBoxesStacked} className="text-gray-400 text-6xl mb-4" />
-                                            <p className="text-gray-600">Nu ai încă anunțuri active</p>
+                                            <p className="text-gray-600">You have no active listings yet</p>
                                         </div>
                                     )}
                                 </div>
@@ -1088,7 +1088,7 @@ export default function ProfilePage({ session, onNavigate }) {
                 {!dismissedBanner && myProducts.some(p => p.status === 'rejected') && (
                     <div className="mt-6 bg-amber-50 border border-amber-300 text-amber-800 rounded-xl px-5 py-4 flex items-start gap-3">
                         <span className="text-lg flex-shrink-0">⚠️</span>
-                        <p className="flex-1 text-sm font-medium">Unul sau mai multe anunțuri au fost respinse. Verifică și corectează anunțurile tale.</p>
+                        <p className="flex-1 text-sm font-medium">One or more listings were rejected. Please review and correct your listings.</p>
                         <button onClick={() => setDismissedBanner(true)} className="text-amber-600 hover:text-amber-900 transition flex-shrink-0 mt-0.5">
                             <FontAwesomeIcon icon={faXmark} />
                         </button>
@@ -1102,7 +1102,7 @@ export default function ProfilePage({ session, onNavigate }) {
                 }) && (
                         <div className="mt-4 bg-orange-50 border border-orange-300 text-orange-800 rounded-xl px-5 py-4 flex items-start gap-3">
                             <FontAwesomeIcon icon={faTriangleExclamation} className="flex-shrink-0 mt-0.5" />
-                            <p className="flex-1 text-sm font-medium">Ai anunțuri care expiră în curând. Verifică anunțurile tale.</p>
+                            <p className="flex-1 text-sm font-medium">You have listings expiring soon. Check your listings.</p>
                             <button onClick={() => setDismissedExpiryBanner(true)} className="text-orange-600 hover:text-orange-900 transition flex-shrink-0 mt-0.5">
                                 <FontAwesomeIcon icon={faXmark} />
                             </button>

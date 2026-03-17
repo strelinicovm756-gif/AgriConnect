@@ -34,7 +34,7 @@ function StarRating({ value = 0, onChange = null }) {
           onMouseLeave={() => onChange && setHovered(0)}
           style={{ width: '1.5rem', height: '1.5rem', flexShrink: 0 }}
           className={`flex items-center justify-center ${onChange ? 'cursor-pointer' : 'cursor-default'}`}
-          aria-label={`${star} stele`}
+          aria-label={`${star} stars`}
         >
           {star <= active ? (
             <FontAwesomeIcon
@@ -98,23 +98,23 @@ function ReviewsSection({ productId, session, productOwnerId }) {
   }, [comments]);
 
   const handleSubmit = async () => {
-    if (!session) return toast.error('Trebuie să fii autentificat');
-    if (!newRating) return toast.error('Selectează un rating (1-5 stele)');
-    if (!newContent.trim()) return toast.error('Scrie o recenzie');
+    if (!session) return toast.error('You must be signed in');
+    if (!newRating) return toast.error('Select a rating (1-5 stars)');
+    if (!newContent.trim()) return toast.error('Write a review');
     setSubmitting(true);
     try {
       const { error } = await supabase.from('comments').insert({ id_profiles: session.user.id, id_produit: productId, content: newContent.trim(), rating: newRating });
       if (error) {
         if (error.code === '23505') {
-          toast.error('Ai lăsat deja o recenzie pentru acest produs');
+          toast.error('You have already left a review for this product');
         } else {
           throw error;
         }
         return;
       }
-      toast.success('Recenzie adăugată!');
+      toast.success('Review added!');
       setNewContent(''); setNewRating(0); fetchComments();
-    } catch (err) { toast.error('Eroare la trimitere'); console.error(err); }
+    } catch (err) { toast.error('Error submitting review'); console.error(err); }
     finally { setSubmitting(false); }
   };
 
@@ -122,18 +122,18 @@ function ReviewsSection({ productId, session, productOwnerId }) {
     try {
       const { error } = await supabase.from('comments').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Recenzie ștearsă'); fetchComments();
-    } catch { toast.error('Eroare la ștergere'); }
+      toast.success('Review deleted'); fetchComments();
+    } catch { toast.error('Error deleting review'); }
   };
 
   const handleEdit = async (id) => {
-    if (!editContent.trim()) return toast.error('Recenzia nu poate fi goală');
-    if (!editRating) return toast.error('Selectează un rating');
+    if (!editContent.trim()) return toast.error('Review cannot be empty');
+    if (!editRating) return toast.error('Select a rating');
     try {
       const { error } = await supabase.from('comments').update({ content: editContent.trim(), rating: editRating }).eq('id', id);
       if (error) throw error;
-      toast.success('Recenzie actualizată!'); setEditingId(null); fetchComments();
-    } catch { toast.error('Eroare la actualizare'); }
+      toast.success('Review updated!'); setEditingId(null); fetchComments();
+    } catch { toast.error('Error updating review'); }
   };
 
 
@@ -142,7 +142,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <FontAwesomeIcon icon={faComments} className="text-emerald-600" />
-          Recenzii
+          Reviews
           {stats.count > 0 && <span className="text-base font-normal text-gray-500 ml-1">({stats.count})</span>}
         </h2>
       </div>
@@ -152,7 +152,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
           <div className="text-center flex-shrink-0">
             <p className="text-6xl font-black text-gray-900">{stats.avg.toFixed(1)}</p>
             <StarRating value={Math.round(stats.avg)} />
-            <p className="text-gray-500 text-sm mt-1">{stats.count} recenzie{stats.count !== 1 ? 'i' : ''}</p>
+            <p className="text-gray-500 text-sm mt-1">{stats.count} review{stats.count !== 1 ? 's' : ''}</p>
           </div>
           <div className="flex-1 w-full space-y-2">
             {[5, 4, 3, 2, 1].map((star) => {
@@ -175,7 +175,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
 
       {session && isProductOwner && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-8 text-center">
-          <p className="text-amber-700 text-sm font-medium">Nu poți lăsa o recenzie la propriul tău produs.</p>
+          <p className="text-amber-700 text-sm font-medium">You cannot leave a review on your own product.</p>
         </div>
       )}
 
@@ -183,31 +183,31 @@ function ReviewsSection({ productId, session, productOwnerId }) {
         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8">
           <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faPen} className="text-emerald-600" />
-            Lasă o recenzie
+            Leave a review
           </h3>
           <div className="mb-4">
             <p className="text-sm text-gray-600 mb-2 font-medium">Rating</p>
             <StarRating value={newRating} onChange={setNewRating} size="text-3xl" />
-            {newRating > 0 && <p className="text-xs text-emerald-600 mt-1 font-medium">{['', 'Slab', 'Acceptabil', 'Bun', 'Foarte bun', 'Excelent'][newRating]}</p>}
+            {newRating > 0 && <p className="text-xs text-emerald-600 mt-1 font-medium">{['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'][newRating]}</p>}
           </div>
           <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2 font-medium">Recenzie</p>
+            <p className="text-sm text-gray-600 mb-2 font-medium">Review</p>
             <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)}
-              placeholder="Spune-ne experiența ta cu acest produs..." rows={4} maxLength={1000}
+              placeholder="Tell us about your experience with this product..." rows={4} maxLength={1000}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white" />
             <p className="text-xs text-gray-400 text-right mt-1">{newContent.length}/1000</p>
           </div>
           <button onClick={handleSubmit} disabled={submitting || !newRating || !newContent.trim()}
             className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl transition flex items-center gap-2 text-sm">
             {submitting ? <Metronome size="16" speed="1.6" color="white" /> : <FontAwesomeIcon icon={faPaperPlane} />}
-            Trimite recenzia
+            Submit review
           </button>
         </div>
       )}
 
       {!session && (
         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 mb-8 text-center">
-          <p className="text-gray-500 text-sm"><span className="font-semibold text-gray-700">Autentifică-te</span> pentru a lăsa o recenzie.</p>
+          <p className="text-gray-500 text-sm"><span className="font-semibold text-gray-700">Sign in</span> to leave a review.</p>
         </div>
       )}
 
@@ -216,8 +216,8 @@ function ReviewsSection({ productId, session, productOwnerId }) {
       ) : comments.length === 0 ? (
         <div className="text-center py-12 text-gray-400" >
           <FontAwesomeIcon icon={faComments} className="text-5xl mb-3 opacity-30" />
-          <p className="font-medium">Nicio recenzie încă</p>
-          <p className="text-sm">Fii primul care lasă o recenzie!</p>
+          <p className="font-medium">No reviews yet</p>
+          <p className="text-sm">Be the first to leave a review!</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -230,11 +230,11 @@ function ReviewsSection({ productId, session, productOwnerId }) {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0 uppercase shadow-sm"
-                      style={{ background: getColorForName(name) }}>{name.charAt(0)}</div>
+                      style={{ background: getColorForName(comment.id_profiles || name) }}>{name.charAt(0)}</div>
                     <div>
                       <p className="font-bold text-gray-900 text-sm flex items-center gap-2">
                         {name}
-                        {isOwn && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Tu</span>}
+                        {isOwn && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">You</span>}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <StarRating value={comment.rating || 0} size="text-xs" />
@@ -247,11 +247,11 @@ function ReviewsSection({ productId, session, productOwnerId }) {
                   {isOwn && !isEditing && (
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button onClick={() => { setEditingId(comment.id); setEditContent(comment.content); setEditRating(comment.rating || 0); }}
-                        className="text-gray-400 hover:text-emerald-600 transition p-1.5 rounded-lg hover:bg-emerald-100" title="Editează">
+                        className="text-gray-400 hover:text-emerald-600 transition p-1.5 rounded-lg hover:bg-emerald-100" title="Edit">
                         <FontAwesomeIcon icon={faPen} className="text-sm" />
                       </button>
                       <button onClick={() => handleDelete(comment.id)}
-                        className="text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50" title="Șterge">
+                        className="text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-red-50" title="Delete">
                         <FontAwesomeIcon icon={faTrash} className="text-sm" />
                       </button>
                     </div>
@@ -268,11 +268,11 @@ function ReviewsSection({ productId, session, productOwnerId }) {
                     <div className="flex gap-2">
                       <button onClick={() => handleEdit(comment.id)}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
-                        <FontAwesomeIcon icon={faCircleCheck} /> Salvează
+                        <FontAwesomeIcon icon={faCircleCheck} /> Save
                       </button>
                       <button onClick={() => setEditingId(null)}
                         className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-4 py-2 rounded-lg transition">
-                        Anulează
+                        Cancel
                       </button>
                     </div>
                   </div>
@@ -347,7 +347,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
       }
     } catch (error) {
       console.error('Eroare la încărcare produs:', error);
-      toast.error('Produsul nu a fost găsit');
+      toast.error('Product not found');
       onNavigate('home');
     } finally {
       setLoading(false);
@@ -380,7 +380,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
   };
 
   const handleReport = async () => {
-    if (!reportReason) return toast.error('Selectează un motiv');
+    if (!reportReason) return toast.error('Select a reason');
     setReportSubmitting(true);
     try {
       const { error } = await supabase.from('reports').insert({
@@ -388,11 +388,11 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
         reason: reportReason, description: reportDesc.trim() || null
       });
       if (error) throw error;
-      toast.success('Raportare trimisă. Mulțumim!');
+      toast.success('Report submitted. Thank you!');
       setShowReportModal(false);
       setAlreadyReported(true);
       setReportReason(''); setReportDesc('');
-    } catch { toast.error('Eroare la trimiterea raportării'); }
+    } catch { toast.error('Error submitting report'); }
     finally { setReportSubmitting(false); }
   };
 
@@ -440,7 +440,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
       <div className="min-h-screen bg-gradient-to-b from-white flex items-center justify-center">
         <div className="text-center">
           <Metronome size="40" speed="1.6" color="#059669" />
-          <p className="text-gray-600">Se încarcă...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -486,14 +486,14 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
                       {product.is_negotiable && (
                         <div className="bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md self-end">
-                          <span className="text-white font-semibold text-xs">NEGOCIABIL</span>
+                          <span className="text-white font-semibold text-xs">NEGOTIABLE</span>
                         </div>
                       )}
                       {session && session.user.id !== product.user_id && (
                         <button
                           onClick={() => { if (!alreadyReported) setShowReportModal(true); }}
                           disabled={alreadyReported}
-                          title={alreadyReported ? 'Ai raportat deja acest anunț' : 'Raportează anunțul'}
+                          title={alreadyReported ? 'You have already reported this listing' : 'Report listing'}
                           className={`self-end w-8 h-8 rounded-full backdrop-blur-sm shadow-md flex items-center justify-center transition ${alreadyReported
                             ? 'bg-red-500/95 cursor-not-allowed'
                             : 'bg-white/80 hover:bg-red-100 text-gray-400 hover:text-red-500'
@@ -562,11 +562,11 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                   className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors text-left group"
                 >
                   <div className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: getColorForName(product.seller_name) }}>
+                    style={{ background: getColorForName(product.user_id || product.seller_name) }}>
                     <span className="text-white text-xl font-black uppercase">{product.seller_name?.charAt(0) || '?'}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-400 font-medium mb-0.5">Vânzător</p>
+                    <p className="text-xs text-gray-400 font-medium mb-0.5">Seller</p>
                     <p className="text-base font-bold text-gray-900 group-hover:text-emerald-600 transition-colors truncate">
                       {product.seller_name || 'Producător Local'}
                     </p>
@@ -578,7 +578,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     )}
                   </div>
                   <div className="flex items-center gap-1 text-emerald-600 flex-shrink-0">
-                    <span className="text-xs font-semibold">Vezi profil</span>
+                    <span className="text-xs font-semibold">View profile</span>
                     <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
                   </div>
                 </button>
@@ -588,13 +588,13 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     onClick={() => { if (!session) { onNavigate('login'); return; } setShowChatModal(true); }}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
                   >
-                    <FontAwesomeIcon icon={faMessage} /><span>Mesaj</span>
+                    <FontAwesomeIcon icon={faMessage} /><span>Message</span>
                   </button>
                   <button
                     onClick={handleViewOnMap}
                     className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
                   >
-                    <FontAwesomeIcon icon={faMapMarkedAlt} className="text-emerald-600" /><span>Pe hartă</span>
+                    <FontAwesomeIcon icon={faMapMarkedAlt} className="text-emerald-600" /><span>On map</span>
                   </button>
                 </div>
               </div>
@@ -616,15 +616,15 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                       >
                         <img
                           src={imageUrl}
-                          alt={`Miniatură ${index + 1}`}
+                          alt={`Thumbnail ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
                       </button>
                     ))}
                   </div>
                   <p className="text-xs text-gray-400 text-center mt-2">
-                    Imagine <span className="font-bold text-emerald-600">{selectedImageIndex + 1}</span>
-                    {' '}din{' '}
+                    Image <span className="font-bold text-emerald-600">{selectedImageIndex + 1}</span>
+                    {' '}of{' '}
                     <span className="font-semibold text-gray-700">{allImages.length}</span>
                   </p>
                 </div>
@@ -637,7 +637,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
           <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <FontAwesomeIcon icon={faLeaf} className="text-emerald-600" />
-              Despre acest produs
+              About this product
             </h2>
             <p className="text-gray-700 leading-relaxed whitespace-pre-line text-lg">{product.description}</p>
           </div>
@@ -651,11 +651,11 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center gap-2">
               <FontAwesomeIcon icon={faFlag} className="text-red-500" />
-              Raportează anunț
+              Report listing
             </h3>
-            <p className="text-sm text-gray-500 mb-4">Selectează motivul raportării:</p>
+            <p className="text-sm text-gray-500 mb-4">Select the reason for reporting:</p>
             <div className="space-y-2 mb-5">
-              {['Spam sau duplicat', 'Preț fals / înșelător', 'Categorie greșită', 'Fraudă sau escrocherie'].map(r => (
+              {['Spam or duplicate', 'False / misleading price', 'Wrong category', 'Fraud or scam'].map(r => (
                 <button
                   key={r}
                   onClick={() => setReportReason(r)}
@@ -669,11 +669,11 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
               ))}
             </div>
             <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Detalii suplimentare (opțional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Additional details (optional)</label>
               <textarea
                 value={reportDesc}
                 onChange={e => setReportDesc(e.target.value)}
-                placeholder="Descrie problema mai detaliat..."
+                placeholder="Describe the issue in more detail..."
                 rows={3}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
               />
@@ -683,7 +683,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                 onClick={() => { setShowReportModal(false); setReportReason(''); setReportDesc(''); }}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
               >
-                Anulează
+                Cancel
               </button>
               <button
                 onClick={handleReport}
@@ -691,7 +691,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-60 flex items-center gap-2"
               >
                 {reportSubmitting && <FontAwesomeIcon icon={faFlag} className="animate-pulse" />}
-                Trimite raportarea
+                Submit report
               </button>
             </div>
           </div>

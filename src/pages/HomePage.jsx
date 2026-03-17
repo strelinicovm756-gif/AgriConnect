@@ -49,7 +49,7 @@ function PillNavButton({ direction, onClick, ariaLabel }) {
 
 // Verified Farmer Card
 function FarmerCard({ farmer, onNavigate }) {
-  const color = getColorForName(farmer.full_name);
+  const color = getColorForName(farmer.id || farmer.full_name);
   return (
     <button onClick={() => onNavigate('producator', farmer.id)}
       className="min-w-[180px] w-[180px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:border-emerald-200 hover:-translate-y-1 transition-all duration-300 text-left group">
@@ -107,8 +107,8 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
           <div className="text-left">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FontAwesomeIcon icon={faSeedling} className="text-emerald-600" />
-              Produse Alimentare
-              <span className={`ml-4 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
+              Food Products
+              <span className={`ml-15 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                 <FontAwesomeIcon icon={faChevronDown} />
               </span>
             </h3>
@@ -130,7 +130,7 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
           <div className="flex justify-end mb-5">
             <button onClick={viewAll}
               className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-              <span>Vezi tot</span>
+              <span>See all</span>
               <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
             </button>
           </div>
@@ -153,7 +153,7 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
                   </div>
                 )) : (
                   <div className="flex-1 py-14 flex items-center justify-center text-gray-400 min-w-[200px]">
-                    <p className="text-sm">Niciun produs momentan.</p>
+                    <p className="text-sm">No products at the moment.</p>
                   </div>
                 )}
               </div>
@@ -184,8 +184,8 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
           <div className="text-left">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FontAwesomeIcon icon={faTractor} className="text-emerald-600" />
-              Servicii & Utilități
-              <span className={`ml-[38px] text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
+              Services & Utilities
+              <span className={`ml-[10.5px] text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                 <FontAwesomeIcon icon={faChevronDown} />
               </span>
             </h3>
@@ -207,7 +207,7 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
           <div className="flex justify-end mb-5">
             <button onClick={() => onNavigate('toate-produsele', null, { type: 'b2b' })}
               className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-              <span>Vezi tot</span>
+              <span>See all</span>
               <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
             </button>
           </div>
@@ -432,7 +432,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 to-emerald-700 flex items-center justify-center">
             <div className="text-white text-center">
               <FontAwesomeIcon icon={faCalendarDays} className="text-5xl opacity-40 mb-3" />
-              <p className="text-emerald-200 text-sm">Se încarcă...</p>
+              <p className="text-emerald-200 text-sm">Loading...</p>
             </div>
           </div>
         )}
@@ -449,16 +449,16 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                     AgriConnect Moldova
                   </span>
                   <h2 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
-                    Produse proaspete direct de la producător
+                    Fresh products direct from source
                   </h2>
                   <p className="text-lg md:text-xl text-gray-200 mb-8 font-light">
-                    Susținem micii antreprenori locali. Calitate garantată fără intermediari.
+                    We support local entrepreneurs. Guaranteed quality, no middlemen.
                   </p>
                   <button
                     onClick={() => onNavigate('toate-produsele')}
                     className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-4 rounded-2xl hover:bg-emerald-50 transition-all shadow-xl hover:scale-105 active:scale-95"
                   >
-                    Explorează produsele
+                    Explore products
                     <FontAwesomeIcon icon={faArrowRight} />
                   </button>
                 </div>
@@ -472,9 +472,9 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
           <>
             {heroEvents.map((ev, i) => {
               const TYPE_CONFIG = {
-                iarmaroc:     { label: 'Iarmaroc',     color: 'bg-emerald-500/90' },
-                curs_agricol: { label: 'Curs Agricol', color: 'bg-blue-500/90' },
-                piata_locala: { label: 'Piață Locală', color: 'bg-amber-500/90' },
+                iarmaroc:     { label: 'Fair',                color: 'bg-emerald-500/90' },
+                curs_agricol: { label: 'Agricultural Course', color: 'bg-blue-500/90' },
+                piata_locala: { label: 'Local Market',        color: 'bg-amber-500/90' },
               };
               const typeInfo = TYPE_CONFIG[ev.type] || TYPE_CONFIG.iarmaroc;
               const isActive = i === currentSlide;
@@ -520,7 +520,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                           onClick={() => onNavigate('eveniment', ev.id)}
                           className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-4 rounded-2xl hover:bg-emerald-50 transition-all shadow-xl hover:scale-105 active:scale-95"
                         >
-                          Află mai mult
+                          Learn more
                           <FontAwesomeIcon icon={faArrowRight} />
                         </button>
                       </div>
@@ -576,7 +576,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
       {loading && (
         <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl py-20 flex flex-col items-center gap-4">
           <Metronome size="40" speed="1.6" color="#059669" />
-          <p className="text-gray-500 text-sm">Se încarcă produsele...</p>
+          <p className="text-gray-500 text-sm">Loading products...</p>
         </div>
       )}
 
@@ -609,54 +609,6 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             b2cExpanded={b2cExpanded}
           />
 
-          {/* CATEGORII B2B GRID  */}
-          {b2bGridCategories.length > 0 && (
-          <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
-            <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
-              <h3 className="text-lg font-bold text-gray-500 uppercase tracking-wider mb-6 border-b border-gray-100 pb-3">
-                Servicii & Utilități
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
-                {b2bGridCategories.map(cat => (
-                  <div key={cat.id} className="relative p-6 bg-white hover:bg-gray-50 transition-colors group overflow-hidden">
-                    <FontAwesomeIcon
-                      icon={cat.icon}
-                      className="absolute right-4 bottom-4 text-gray-100 group-hover:text-emerald-600 transition-colors"
-                      style={{ fontSize: '72px' }}
-                    />
-                    <button
-                      onClick={() => onNavigate('toate-produsele', null, { category: cat.id, type: 'b2b' })}
-                      className="font-bold text-gray-900 hover:text-emerald-700 transition-colors text-left mb-3 block text-base"
-                    >
-                      {cat.name}
-                    </button>
-                    {cat.subs.length > 0 && (
-                    <ul className="space-y-1.5 mb-3">
-                      {cat.subs.map(sub => (
-                        <li key={sub.id}>
-                          <button
-                            onClick={() => onNavigate('toate-produsele', null, { category: cat.id, subcategory: sub.id, type: 'b2b' })}
-                            className="text-sm text-gray-500 hover:text-emerald-600 transition-colors text-left"
-                          >
-                            {sub.name}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    )}
-                    <button
-                      onClick={() => onNavigate('toate-produsele', null, { category: cat.id, type: 'b2b' })}
-                      className="text-sm text-emerald-600 font-semibold hover:underline"
-                    >
-                      Vezi toate →
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          )}
-
           {/* ── PRESTATORI B2B ────────────────────────────────── */}
           {b2bProviders.length > 0 && (
             <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
@@ -664,7 +616,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <FontAwesomeIcon icon={faHandshake} className="text-emerald-600" />
-                    Prestatori de Servicii
+                    Service Providers
                   </h3>
                 </div>
                 <div className="relative">
@@ -684,7 +636,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
                 <div className="flex items-center gap-2 mb-6">
                   <FontAwesomeIcon icon={faSeedling} className="text-emerald-600 text-xl" />
-                  <h3 className="text-2xl font-bold text-gray-900">Producători Alimentari</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">Food Producers</h3>
                 </div>
                 <div className="relative">
                   <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
@@ -703,9 +655,9 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl p-8 md:p-12 shadow-xl">
                 <div className="grid md:grid-cols-3 gap-8 text-white">
                   {[
-                    { icon: faTruck, title: 'Direct de la Sursă', desc: 'Fără intermediari, produse proaspete direct de la producător' },
-                    { icon: faCircleCheck, title: 'Producători Verificați', desc: 'Toți vânzătorii sunt verificați pentru calitate și autenticitate' },
-                    { icon: faHandshake, title: 'Fără Comisioane', desc: 'Platformă gratuită pentru toți producătorii locali' },
+                    { icon: faTruck, title: 'Direct from Source', desc: 'No middlemen, fresh products directly from the producer' },
+                    { icon: faCircleCheck, title: 'Verified Producers', desc: 'All sellers are verified for quality and authenticity' },
+                    { icon: faHandshake, title: 'No Commissions', desc: 'Free platform for all local producers' },
                   ].map(({ icon, title, desc }) => (
                     <div key={title} className="text-center">
                       <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -722,14 +674,14 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             {session && (
               <section className="mb-12">
                 <div className="bg-white rounded-3xl p-8 md:p-12 text-center border border-gray-200 shadow-sm">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-3">Ești producător?</h3>
+                  <h3 className="text-3xl font-bold text-gray-900 mb-3">Are you a producer?</h3>
                   <p className="text-gray-500 mb-6 max-w-xl mx-auto">
-                    Adaugă-ți produsele gratuit și ajunge la mii de cumpărători din zona ta.
+                    Add your products for free and reach thousands of buyers in your area.
                   </p>
                   <Button onClick={() => setShowAddProductModal(true)}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all hover:scale-105">
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    Adaugă un produs acum
+                    Add a product now
                   </Button>
                 </div>
               </section>
@@ -745,7 +697,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             <FontAwesomeIcon icon={faLeaf} className="text-emerald-600 text-xl" />
             <span className="text-lg font-bold text-gray-900">AgriConnect</span>
           </div>
-          <p className="text-gray-500 text-sm">Sprijină economia locală. Cumpără direct de la producător.</p>
+          <p className="text-gray-500 text-sm">Support the local economy. Buy directly from the producer.</p>
         </div>
       </footer>
 

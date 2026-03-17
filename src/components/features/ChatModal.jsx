@@ -151,7 +151,7 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
           <div className="flex items-center gap-3 min-w-0">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 uppercase"
-              style={{ background: getColorForName(product?.seller_name || '') }}
+              style={{ background: getColorForName(product?.user_id || product?.seller_name) }}
             >
               {(product?.seller_name || '?').charAt(0)}
             </div>

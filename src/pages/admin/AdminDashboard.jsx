@@ -17,18 +17,18 @@ import {
 
 
 const ROLE_LABELS = {
-  user: { label: 'Utilizator', color: 'bg-gray-100 text-gray-700', icon: faUser },
+  user: { label: 'User', color: 'bg-gray-100 text-gray-700', icon: faUser },
   admin: { label: 'Admin', color: 'bg-blue-100 text-blue-700', icon: faUserShield },
   super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-purple-700', icon: faCrown },
 };
 
 const REPORT_REASONS = [
-  'Conținut fals / înșelător',
-  'Preț abuziv',
-  'Produs interzis',
-  'Imagini neadecvate',
-  'Spam / duplicat',
-  'Altele',
+  'False / misleading content',
+  'Abusive price',
+  'Prohibited product',
+  'Inappropriate images',
+  'Spam / duplicate',
+  'Other',
 ];
 
 // Sub-componente helpers
@@ -97,7 +97,7 @@ function ApprovalQueue({ userRole }) {
       if (error) throw error;
       setProducts(data || []);
     } catch (e) {
-      toast.error('Eroare la încărcarea produselor');
+      toast.error('Error loading products');
     } finally {
       setLoading(false);
     }
@@ -110,25 +110,25 @@ function ApprovalQueue({ userRole }) {
     try {
       const { error } = await supabase.from('products').update({ status: 'active' }).eq('id', id);
       if (error) throw error;
-      toast.success('Produs aprobat!');
+      toast.success('Product approved!');
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch {
-      toast.error('Eroare la aprobare');
+      toast.error('Error approving product');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Ești sigur că vrei să ștergi definitiv acest anunț?')) return;
+    if (!window.confirm('Are you sure you want to permanently delete this listing?')) return;
     setActionLoading(id + '_delete');
     try {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Anunț șters!');
+      toast.success('Listing deleted!');
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch {
-      toast.error('Eroare la ștergere');
+      toast.error('Error deleting');
     } finally {
       setActionLoading(null);
     }
@@ -140,24 +140,24 @@ function ApprovalQueue({ userRole }) {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ status: 'rejected', reject_reason: rejectReason || 'Neconform cu regulamentul platformei' })
+        .update({ status: 'rejected', reject_reason: rejectReason || 'Does not comply with platform regulations' })
         .eq('id', rejectModal);
       if (error) throw error;
-      toast.success('Produs respins!');
+      toast.success('Product rejected!');
       setProducts(prev => prev.filter(p => p.id !== rejectModal));
       setRejectModal(null);
       setRejectReason('');
     } catch {
-      toast.error('Eroare la respingere');
+      toast.error('Error rejecting product');
     } finally {
       setActionLoading(null);
     }
   };
 
   const filterBtns = [
-    { key: 'pending', label: 'În așteptare' },
-    { key: 'active', label: 'Aprobate' },
-    { key: 'rejected', label: 'Respinse' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'active', label: 'Approved' },
+    { key: 'rejected', label: 'Rejected' },
   ];
 
   return (
@@ -184,20 +184,20 @@ function ApprovalQueue({ userRole }) {
           <FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <EmptyState icon={faBoxOpen} message={`Niciun produs ${filter === 'pending' ? 'în așteptare' : filter === 'active' ? 'aprobat' : 'respins'}`} />
+        <EmptyState icon={faBoxOpen} message={`No ${filter === 'pending' ? 'pending' : filter === 'active' ? 'approved' : 'rejected'} products`} />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200 text-left">
                 <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Img</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Produs</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vânzător</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Locație</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Preț</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Data</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Seller</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Location</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Date</th>
                 <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acțiuni</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -228,7 +228,7 @@ function ApprovalQueue({ userRole }) {
                       p.status === 'rejected' ? 'bg-red-100 text-red-700' :
                       'bg-yellow-100 text-yellow-700'
                     }`}>
-                      {p.status === 'active' ? 'Activ' : p.status === 'rejected' ? 'Respins' : 'Așteptare'}
+                      {p.status === 'active' ? 'Active' : p.status === 'rejected' ? 'Rejected' : 'Pending'}
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
@@ -240,7 +240,7 @@ function ApprovalQueue({ userRole }) {
                           className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
                         >
                           {actionLoading === p.id + '_approve' ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faCheck} />}
-                          Aprobă
+                          Approve
                         </button>
                         <button
                           onClick={() => { setRejectModal(p.id); setRejectReason(''); }}
@@ -248,7 +248,7 @@ function ApprovalQueue({ userRole }) {
                           className="flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-200 transition disabled:opacity-60"
                         >
                           <FontAwesomeIcon icon={faXmark} />
-                          Respinge
+                          Reject
                         </button>
                       </div>
                     )}
@@ -259,7 +259,7 @@ function ApprovalQueue({ userRole }) {
                         className="flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-200 transition disabled:opacity-60"
                       >
                         {actionLoading === p.id + '_delete' ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faTrash} />}
-                        Șterge
+                        Delete
                       </button>
                     )}
                     {filter === 'rejected' && p.reject_reason && (
@@ -282,10 +282,10 @@ function ApprovalQueue({ userRole }) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
               <FontAwesomeIcon icon={faXmark} className="text-red-500" />
-              Motiv respingere
+              Rejection reason
             </h3>
             <div className="space-y-2 mb-4">
-              {['Neconform cu regulamentul platformei', 'Produs interzis', 'Imagini neadecvate', 'Descriere falsă / înșelătoare', 'Preț abuziv'].map(r => (
+              {['Does not comply with platform regulations', 'Prohibited product', 'Inappropriate images', 'False / misleading description', 'Abusive price'].map(r => (
                 <button
                   key={r}
                   onClick={() => setRejectReason(r)}
@@ -296,21 +296,21 @@ function ApprovalQueue({ userRole }) {
               ))}
             </div>
             <textarea
-              placeholder="Sau scrie un motiv personalizat..."
+              placeholder="Or write a custom reason..."
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400 mb-4"
               rows={3}
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setRejectModal(null)} className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Anulează</button>
+              <button onClick={() => setRejectModal(null)} className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
               <button
                 onClick={handleReject}
                 disabled={actionLoading?.includes('_reject')}
                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-60"
               >
                 {actionLoading?.includes('_reject') ? <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-1" /> : null}
-                Respinge
+                Reject
               </button>
             </div>
           </div>
@@ -344,7 +344,7 @@ function FlagSystem() {
       setReports(data || []);
     } catch (e) {
       console.error(e);
-      toast.error('Eroare la încărcarea raportărilor');
+      toast.error('Error loading reports');
     } finally {
       setLoading(false);
     }
@@ -364,19 +364,19 @@ function FlagSystem() {
         .update({ status: action === 'dismiss' ? 'dismissed' : 'resolved', resolved_at: new Date().toISOString() })
         .eq('id', reportId);
       if (error) throw error;
-      toast.success(action === 'dismiss' ? 'Raportare respinsă' : 'Raportare rezolvată!');
+      toast.success(action === 'dismiss' ? 'Report dismissed' : 'Report resolved!');
       setReports(prev => prev.filter(r => r.id !== reportId));
     } catch {
-      toast.error('Eroare la procesarea raportării');
+      toast.error('Error processing report');
     } finally {
       setActionLoading(null);
     }
   };
 
   const filterBtns = [
-    { key: 'pending', label: 'În așteptare' },
-    { key: 'resolved', label: 'Rezolvate' },
-    { key: 'dismissed', label: 'Respinse' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'resolved', label: 'Resolved' },
+    { key: 'dismissed', label: 'Dismissed' },
   ];
 
   return (
@@ -400,7 +400,7 @@ function FlagSystem() {
           <FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" />
         </div>
       ) : reports.length === 0 ? (
-        <EmptyState icon={faFlag} message="Nicio raportare în această categorie" />
+        <EmptyState icon={faFlag} message="No reports in this category" />
       ) : (
         <div className="space-y-4">
           {reports.map(r => (
@@ -420,11 +420,11 @@ function FlagSystem() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 flex-wrap">
                     <div>
-                      <h3 className="font-bold text-gray-900">{r.product?.name || 'Produs șters'}</h3>
+                      <h3 className="font-bold text-gray-900">{r.product?.name || 'Deleted product'}</h3>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Categorie: <span className="font-medium">{r.product?.category || '—'}</span>
+                        Category: <span className="font-medium">{r.product?.category || '—'}</span>
                         {' · '}
-                        Raportat de: <span className="font-medium">{r.reporter?.full_name || 'Anonim'}</span>
+                        Reported by: <span className="font-medium">{r.reporter?.full_name || 'Anonymous'}</span>
                         {' · '}
                         {new Date(r.created_at).toLocaleDateString('ro-RO')}
                       </p>
@@ -434,12 +434,12 @@ function FlagSystem() {
                       r.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
                       'bg-gray-100 text-gray-600'
                     }`}>
-                      {r.status === 'pending' ? 'În așteptare' : r.status === 'resolved' ? 'Rezolvat' : 'Respins'}
+                      {r.status === 'pending' ? 'Pending' : r.status === 'resolved' ? 'Resolved' : 'Dismissed'}
                     </span>
                   </div>
 
                   <div className="mt-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5">
-                    <p className="text-xs font-semibold text-orange-700 mb-0.5">Motiv raportare:</p>
+                    <p className="text-xs font-semibold text-orange-700 mb-0.5">Report reason:</p>
                     <p className="text-sm text-orange-800">{r.reason}</p>
                     {r.description && <p className="text-xs text-orange-600 mt-1">{r.description}</p>}
                   </div>
@@ -452,7 +452,7 @@ function FlagSystem() {
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition disabled:opacity-60"
                       >
                         <FontAwesomeIcon icon={faBan} />
-                        Elimină produsul
+                        Remove product
                       </button>
                       <button
                         onClick={() => handleAction(r.id, r.product_id, 'resolve')}
@@ -460,7 +460,7 @@ function FlagSystem() {
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-200 transition disabled:opacity-60"
                       >
                         <FontAwesomeIcon icon={faCheck} />
-                        Marchează rezolvat
+                        Mark as resolved
                       </button>
                       <button
                         onClick={() => handleAction(r.id, r.product_id, 'dismiss')}
@@ -468,7 +468,7 @@ function FlagSystem() {
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-200 transition disabled:opacity-60"
                       >
                         <FontAwesomeIcon icon={faXmark} />
-                        Respinge raportarea
+                        Dismiss report
                       </button>
                     </div>
                   )}
@@ -503,7 +503,7 @@ function CategoryManagement() {
       setB2cCategories(data.filter(c => c.market_type !== 'b2b'));
       setB2bCategories(data.filter(c => c.market_type !== 'b2c'));
     } catch {
-      toast.error('Eroare la încărcarea categoriilor');
+      toast.error('Error loading categories');
     } finally {
       setLoading(false);
     }
@@ -524,23 +524,23 @@ function CategoryManagement() {
         name: name.trim(), slug, market_type, sort_order: maxOrder, is_active: true,
       });
       if (error) throw error;
-      toast.success('Categorie adăugată!');
+      toast.success('Category added!');
       setNewCatInput({ group: null, value: '' });
       load();
     } catch (e) {
-      toast.error(e.message.includes('unique') ? 'Această categorie există deja' : 'Eroare la adăugare');
+      toast.error(e.message.includes('unique') ? 'This category already exists' : 'Error adding category');
     }
   };
 
   const handleDeleteCategory = async (catId) => {
-    if (!window.confirm('Ștergi această categorie? Produsele asociate nu vor fi afectate.')) return;
+    if (!window.confirm('Delete this category? Associated products will not be affected.')) return;
     try {
       const { error } = await supabase.from('categories').update({ is_active: false }).eq('id', catId);
       if (error) throw error;
-      toast.success('Categorie dezactivată!');
+      toast.success('Category deactivated!');
       load();
     } catch {
-      toast.error('Eroare la ștergere');
+      toast.error('Error deleting category');
     }
   };
 
@@ -548,10 +548,10 @@ function CategoryManagement() {
     try {
       const { error } = await supabase.from('categories').update({ market_type: toGroup }).eq('id', catId);
       if (error) throw error;
-      toast.success('Categorie mutată!');
+      toast.success('Category moved!');
       load();
     } catch {
-      toast.error('Eroare la mutare');
+      toast.error('Error moving category');
     }
   };
 
@@ -566,11 +566,11 @@ function CategoryManagement() {
         category_id: catId, name: name.trim(), slug, sort_order: 0, is_active: true,
       });
       if (error) throw error;
-      toast.success('Subcategorie adăugată!');
+      toast.success('Subcategory added!');
       setNewSubInput({ catId: null, group: null, value: '' });
       load();
     } catch (e) {
-      toast.error(e.message.includes('unique') ? 'Subcategoria există deja' : 'Eroare la adăugare');
+      toast.error(e.message.includes('unique') ? 'Subcategory already exists' : 'Error adding subcategory');
     }
   };
 
@@ -578,10 +578,10 @@ function CategoryManagement() {
     try {
       const { error } = await supabase.from('subcategories').update({ is_active: false }).eq('id', subId);
       if (error) throw error;
-      toast.success('Subcategorie eliminată!');
+      toast.success('Subcategory removed!');
       load();
     } catch {
-      toast.error('Eroare la ștergere');
+      toast.error('Error deleting subcategory');
     }
   };
 
@@ -597,7 +597,7 @@ function CategoryManagement() {
         <div>
           <h3 className="font-bold text-gray-900 text-base leading-tight">{title}</h3>
           <span className="text-xs font-medium text-gray-400">
-            {categoriesArray?.length || 0} categorii
+            {categoriesArray?.length || 0} categories
           </span>
         </div>
       </div>
@@ -637,7 +637,7 @@ function CategoryManagement() {
                   <button
                     onClick={() => handleMoveCategory(cat.id, otherGroup)}
                     className="p-1.5 rounded-lg text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition text-xs"
-                    title={`Mută în ${group === 'b2c' ? 'B2B' : 'B2C'}`}
+                    title={`Move to ${group === 'b2c' ? 'B2B' : 'B2C'}`}
                   >
                     {group === 'b2c' ? <FontAwesomeIcon icon={faArrowRight} /> : <FontAwesomeIcon icon={faArrowLeft} />}
                   </button>
@@ -669,7 +669,7 @@ function CategoryManagement() {
                         value={newSubInput.value}
                         onChange={e => setNewSubInput(prev => ({ ...prev, value: e.target.value }))}
                         onKeyDown={e => e.key === 'Enter' && handleAddSubcategory(cat.id, newSubInput.value)}
-                        placeholder="Nume subcategorie..."
+                        placeholder="Subcategory name..."
                         className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400"
                       />
                       <button onClick={() => handleAddSubcategory(cat.id, newSubInput.value)} className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition">
@@ -685,7 +685,7 @@ function CategoryManagement() {
                       className="mt-3 flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-800 font-medium transition"
                     >
                       <FontAwesomeIcon icon={faPlus} />
-                      Adaugă subcategorie
+                      Add subcategory
                     </button>
                   )}
                 </div>
@@ -702,7 +702,7 @@ function CategoryManagement() {
               value={newCatInput.value}
               onChange={e => setNewCatInput(prev => ({ ...prev, value: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && handleAddCategory(group, newCatInput.value)}
-              placeholder="Nume categorie nouă..."
+              placeholder="New category name..."
               className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
             />
             <button onClick={() => handleAddCategory(group, newCatInput.value)} className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">
@@ -718,7 +718,7 @@ function CategoryManagement() {
             className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm font-medium hover:border-emerald-300 hover:text-emerald-500 hover:bg-emerald-50/30 transition-all duration-200"
           >
             <FontAwesomeIcon icon={faPlus} />
-            Adaugă categorie
+            Add category
           </button>
         )}
       </div>
@@ -730,8 +730,8 @@ function CategoryManagement() {
   return (
     <div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2">Produse Alimentare</span>)}
-        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2">Servicii &amp; Utilități</span>)}
+        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2">Food Products</span>)}
+        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2">Services &amp; Utilities</span>)}
       </div>
     </div>
   );
@@ -755,7 +755,7 @@ function UserManagement({ userRole }) {
       if (error) throw error;
       setUsers(data || []);
     } catch {
-      toast.error('Eroare la încărcarea utilizatorilor');
+      toast.error('Error loading users');
     } finally {
       setLoading(false);
     }
@@ -764,31 +764,31 @@ function UserManagement({ userRole }) {
   useEffect(() => { load(); }, [load]);
 
   const handleRoleChange = async (userId, newRole) => {
-    if (userRole !== 'super_admin') return toast.error('Doar Super Admin poate schimba rolurile');
+    if (userRole !== 'super_admin') return toast.error('Only Super Admin can change roles');
     setActionLoading(userId + '_role');
     try {
       const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
       if (error) throw error;
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      toast.success('Rol actualizat!');
+      toast.success('Role updated!');
     } catch {
-      toast.error('Eroare la schimbarea rolului');
+      toast.error('Error changing role');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleBan = async (userId, currentRole) => {
-    if (userRole !== 'super_admin') return toast.error('Doar Super Admin poate bana utilizatori');
+    if (userRole !== 'super_admin') return toast.error('Only Super Admin can ban users');
     const newRole = currentRole === 'banned' ? 'user' : 'banned';
     setActionLoading(userId + '_ban');
     try {
       const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
       if (error) throw error;
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      toast.success(newRole === 'banned' ? 'Utilizator banat!' : 'Utilizator reactivat!');
+      toast.success(newRole === 'banned' ? 'User banned!' : 'User reactivated!');
     } catch {
-      toast.error('Eroare');
+      toast.error('Error');
     } finally {
       setActionLoading(null);
     }
@@ -803,7 +803,7 @@ function UserManagement({ userRole }) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-gray-400">
         <FontAwesomeIcon icon={faCrown} className="text-4xl mb-3 opacity-30" />
-        <p className="text-sm">Această secțiune este accesibilă doar Super Adminilor</p>
+        <p className="text-sm">This section is accessible only to Super Admins</p>
       </div>
     );
   }
@@ -816,7 +816,7 @@ function UserManagement({ userRole }) {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Caută utilizatori după nume sau localitate..."
+          placeholder="Search users by name or location..."
           className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
         />
       </div>
@@ -824,19 +824,19 @@ function UserManagement({ userRole }) {
       {loading ? (
         <div className="flex justify-center py-16"><FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" /></div>
       ) : filtered.length === 0 ? (
-        <EmptyState icon={faUsers} message="Niciun utilizator găsit" />
+        <EmptyState icon={faUsers} message="No users found" />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
           <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200 text-left">
                 <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-10">Av.</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nume</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Telefon</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Locație</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Înregistrat</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acțiuni</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Phone</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Location</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Registered</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -852,7 +852,7 @@ function UserManagement({ userRole }) {
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-gray-900 text-sm">{u.full_name || 'Fără nume'}</span>
+                        <span className="font-semibold text-gray-900 text-sm">{u.full_name || 'No name'}</span>
                         {u.is_verified && <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 text-xs" title="Verificat" />}
                       </div>
                     </td>
@@ -861,7 +861,7 @@ function UserManagement({ userRole }) {
                     <td className="px-3 py-2.5">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 ${isBanned ? 'bg-red-100 text-red-700' : roleInfo.color}`}>
                         <FontAwesomeIcon icon={isBanned ? faBan : roleInfo.icon} />
-                        {isBanned ? 'Banat' : roleInfo.label}
+                        {isBanned ? 'Banned' : roleInfo.label}
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-xs text-gray-400 hidden lg:table-cell whitespace-nowrap">{new Date(u.created_at).toLocaleDateString('ro-RO')}</td>
@@ -874,7 +874,7 @@ function UserManagement({ userRole }) {
                             disabled={actionLoading === u.id + '_role'}
                             className="text-xs border border-gray-200 rounded-lg px-1.5 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
                           >
-                            <option value="user">Utilizator</option>
+                            <option value="user">User</option>
                             <option value="admin">Admin</option>
                             <option value="super_admin">Super Admin</option>
                           </select>
@@ -887,7 +887,7 @@ function UserManagement({ userRole }) {
                           }`}
                         >
                           <FontAwesomeIcon icon={isBanned ? faUnlock : faBan} />
-                          {isBanned ? 'Reactivează' : 'Banează'}
+                          {isBanned ? 'Reactivate' : 'Ban'}
                         </button>
                       </div>
                     </td>
@@ -982,7 +982,7 @@ function EventManagement() {
       if (error) throw error;
       setEvents(data || []);
     } catch {
-      toast.error('Eroare la încărcarea evenimentelor');
+      toast.error('Error loading events');
     } finally {
       setLoading(false);
     }
@@ -1179,8 +1179,8 @@ function EventManagement() {
   };
 
   const handleSave = async () => {
-    if (!form.title.trim()) return toast.error('Titlul este obligatoriu');
-    if (!form.event_date) return toast.error('Data evenimentului este obligatorie');
+    if (!form.title.trim()) return toast.error('Title is required');
+    if (!form.event_date) return toast.error('Event date is required');
     setActionLoading('save');
     try {
       const payload = {
@@ -1199,18 +1199,18 @@ function EventManagement() {
       if (editingEvent) {
         const { error } = await supabase.from('events').update(payload).eq('id', editingEvent.id);
         if (error) throw error;
-        toast.success('Eveniment actualizat!');
+        toast.success('Event updated!');
       } else {
         const { error } = await supabase.from('events').insert(payload);
         if (error) throw error;
-        toast.success('Eveniment creat!');
+        toast.success('Event created!');
       }
       setShowForm(false);
       setEditingEvent(null);
       setForm(emptyForm);
       load();
     } catch {
-      toast.error('Eroare la salvare');
+      toast.error('Error saving event');
     } finally {
       setActionLoading(null);
     }
@@ -1221,25 +1221,25 @@ function EventManagement() {
     try {
       const { error } = await supabase.from('events').update({ is_published: !ev.is_published }).eq('id', ev.id);
       if (error) throw error;
-      toast.success(ev.is_published ? 'Eveniment ascuns!' : 'Eveniment publicat!');
+      toast.success(ev.is_published ? 'Event hidden!' : 'Event published!');
       load();
     } catch {
-      toast.error('Eroare');
+      toast.error('Error');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Ștergi definitiv acest eveniment?')) return;
+    if (!window.confirm('Permanently delete this event?')) return;
     setActionLoading(id + '_delete');
     try {
       const { error } = await supabase.from('events').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Eveniment șters!');
+      toast.success('Event deleted!');
       load();
     } catch {
-      toast.error('Eroare la ștergere');
+      toast.error('Error deleting event');
     } finally {
       setActionLoading(null);
     }
@@ -1248,11 +1248,11 @@ function EventManagement() {
   const handleImageUpload = async (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      toast.error('Selectează un fișier imagine (JPG, PNG, WebP)');
+      toast.error('Select an image file (JPG, PNG, WebP)');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Imaginea trebuie să fie sub 5MB');
+      toast.error('Image must be under 5MB');
       return;
     }
     setUploadingImage(true);
@@ -1267,18 +1267,18 @@ function EventManagement() {
         .from('events')
         .getPublicUrl(fileName);
       setForm(p => ({ ...p, image_url: urlData.publicUrl }));
-      toast.success('Imagine încărcată!');
+      toast.success('Image uploaded!');
     } catch (err) {
-      toast.error('Eroare la încărcarea imaginii: ' + err.message);
+      toast.error('Error uploading image: ' + err.message);
     } finally {
       setUploadingImage(false);
     }
   };
 
   const TYPE_CONFIG = {
-    iarmaroc:     { label: 'Iarmaroc',     color: 'bg-emerald-100 text-emerald-700' },
-    curs_agricol: { label: 'Curs Agricol', color: 'bg-blue-100 text-blue-700' },
-    piata_locala: { label: 'Piață Locală', color: 'bg-amber-100 text-amber-800' },
+    iarmaroc:     { label: 'Fair',              color: 'bg-emerald-100 text-emerald-700' },
+    curs_agricol: { label: 'Agricultural Course', color: 'bg-blue-100 text-blue-700' },
+    piata_locala: { label: 'Local Market',       color: 'bg-amber-100 text-amber-800' },
   };
 
   return (
@@ -1286,14 +1286,14 @@ function EventManagement() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <p className="text-sm text-gray-500">
-          Evenimentele publicate apar în slider-ul de pe pagina principală.
+          Published events appear in the slider on the main page.
         </p>
         <button
           onClick={openCreate}
           className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-md"
         >
           <FontAwesomeIcon icon={faPlus} />
-          Eveniment nou
+          New event
         </button>
       </div>
 
@@ -1304,7 +1304,7 @@ function EventManagement() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
                 <FontAwesomeIcon icon={faCalendarDays} className="text-emerald-600" />
-                {editingEvent ? 'Editează eveniment' : 'Eveniment nou'}
+                {editingEvent ? 'Edit event' : 'New event'}
               </h3>
               <button
                 onClick={() => { setShowForm(false); setEditingEvent(null); }}
@@ -1318,12 +1318,12 @@ function EventManagement() {
               {/* Titlu */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Titlu <span className="text-red-500">*</span>
+                  Title <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.title}
                   onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                  placeholder="ex: Iarmaroc de Toamnă Pirita 2026"
+                  placeholder="e.g.: Autumn Fair Pirita 2026"
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 />
               </div>
@@ -1331,15 +1331,15 @@ function EventManagement() {
               {/* Tip + Publicat */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tip eveniment</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Event type</label>
                   <select
                     value={form.type}
                     onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
                   >
-                    <option value="iarmaroc">Iarmaroc</option>
-                    <option value="curs_agricol">Curs Agricol</option>
-                    <option value="piata_locala">Piață Locală</option>
+                    <option value="iarmaroc">Fair</option>
+                    <option value="curs_agricol">Agricultural Course</option>
+                    <option value="piata_locala">Local Market</option>
                   </select>
                 </div>
                 <div className="flex items-end">
@@ -1351,7 +1351,7 @@ function EventManagement() {
                       <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.is_published ? 'translate-x-5' : 'translate-x-0.5'}`} />
                     </div>
                     <span className="text-sm font-medium text-gray-700">
-                      {form.is_published ? 'Publicat' : 'Ascuns'}
+                      {form.is_published ? 'Published' : 'Hidden'}
                     </span>
                   </label>
                 </div>
@@ -1361,7 +1361,7 @@ function EventManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Data start <span className="text-red-500">*</span>
+                    Start date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="datetime-local"
@@ -1371,7 +1371,7 @@ function EventManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Data sfârșit</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">End date</label>
                   <input
                     type="datetime-local"
                     value={form.end_date}
@@ -1386,7 +1386,7 @@ function EventManagement() {
                 <div className="flex items-center justify-between mb-3">
                   <label className="block text-sm font-semibold text-gray-700">
                     <FontAwesomeIcon icon={faLocationDot} className="text-emerald-500 mr-1.5" />
-                    Locație
+                    Location
                   </label>
                   {/* Toggle buttons */}
                   <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
@@ -1399,7 +1399,7 @@ function EventManagement() {
                           : 'text-gray-500 hover:text-gray-700'
                       }`}
                     >
-                      Hartă
+                      Map
                     </button>
                     <button
                       type="button"
@@ -1419,7 +1419,7 @@ function EventManagement() {
                 <input
                   value={form.location_text}
                   onChange={e => setForm(p => ({ ...p, location_text: e.target.value }))}
-                  placeholder="ex: s. Pîrița, Școala Gimnazială"
+                  placeholder="e.g.: Pirita village, Middle School"
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl
                     text-sm text-gray-900 placeholder-gray-400
                     focus:outline-none focus:border-emerald-500 focus:bg-white
@@ -1444,7 +1444,7 @@ function EventManagement() {
                         </span>
                       ) : (
                         <span className="text-xs text-gray-400">
-                          Click pe hartă pentru a seta locația exactă
+                          Click on the map to set the exact location
                         </span>
                       )}
                       {form.latitude && form.longitude && (
@@ -1453,7 +1453,7 @@ function EventManagement() {
                           onClick={() => setForm(p => ({ ...p, latitude: '', longitude: '' }))}
                           className="text-xs text-red-400 hover:text-red-600 transition"
                         >
-                          Șterge pin
+                          Remove pin
                         </button>
                       )}
                     </div>
@@ -1466,7 +1466,7 @@ function EventManagement() {
                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm
                           px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 z-10">
                           <FontAwesomeIcon icon={faSpinner} className="animate-spin text-emerald-600 text-xs" />
-                          <span className="text-xs text-gray-600 font-medium">Se caută...</span>
+                          <span className="text-xs text-gray-600 font-medium">Searching...</span>
                         </div>
                       )}
 
@@ -1474,12 +1474,12 @@ function EventManagement() {
                         <div className="absolute bottom-3 left-1/2 -translate-x-1/2
                           bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1.5
                           rounded-full pointer-events-none z-10">
-                          Click pe hartă pentru a plasa pin-ul
+                          Click on the map to place the pin
                         </div>
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-2 mb-1">
-                      Scrie adresa mai sus pentru geocodare automată, sau click direct pe hartă.
+                      Type the address above for automatic geocoding, or click directly on the map.
                     </p>
                   </div>
                 </div>
@@ -1496,7 +1496,7 @@ function EventManagement() {
                   <div className="grid grid-cols-2 gap-3 pt-1">
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                        Latitudine
+                        Latitude
                       </label>
                       <input
                         type="number"
@@ -1512,7 +1512,7 @@ function EventManagement() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                        Longitudine
+                        Longitude
                       </label>
                       <input
                         type="number"
@@ -1527,10 +1527,10 @@ function EventManagement() {
                       />
                     </div>
                     <p className="col-span-2 text-xs text-gray-400">
-                      Găsește coordonatele pe
+                      Find coordinates on
                       <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer"
                         className="text-emerald-600 underline ml-1">Google Maps</a>
-                      → click dreapta pe locație.
+                      → right-click on a location.
                     </p>
                   </div>
                 </div>
@@ -1539,7 +1539,7 @@ function EventManagement() {
               {/* Imagine eveniment */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Imagine eveniment (opțional)
+                  Event image (optional)
                 </label>
 
                 {!form.image_url ? (
@@ -1552,13 +1552,13 @@ function EventManagement() {
                     {uploadingImage ? (
                       <>
                         <FontAwesomeIcon icon={faSpinner} className="animate-spin text-emerald-600 text-xl" />
-                        <p className="text-xs text-gray-500">Se încarcă...</p>
+                        <p className="text-xs text-gray-500">Uploading...</p>
                       </>
                     ) : (
                       <>
                         <FontAwesomeIcon icon={faFileImage} className="text-gray-300 text-2xl" />
                         <p className="text-sm font-medium text-gray-500">
-                          Click pentru a alege imaginea
+                          Click to choose an image
                         </p>
                         <p className="text-xs text-gray-400">JPG, PNG, WebP · max 5MB</p>
                       </>
@@ -1585,7 +1585,7 @@ function EventManagement() {
                       className="absolute bottom-2 right-2 px-3 py-1.5 bg-black/50
                         hover:bg-black/70 text-white text-xs rounded-lg transition"
                     >
-                      Schimbă
+                      Change
                     </button>
                   </div>
                 )}
@@ -1605,11 +1605,11 @@ function EventManagement() {
 
               {/* Descriere */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Descriere</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
                 <textarea
                   value={form.description}
                   onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                  placeholder="Descrie evenimentul..."
+                  placeholder="Describe the event..."
                   rows={3}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 />
@@ -1617,11 +1617,11 @@ function EventManagement() {
 
               {/* Program */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Program (opțional)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Schedule (optional)</label>
                 <textarea
                   value={form.schedule}
                   onChange={e => setForm(p => ({ ...p, schedule: e.target.value }))}
-                  placeholder={'ex: 09:00 — Deschidere\n10:00 — Concurs produse locale\n14:00 — Premierea câștigătorilor'}
+                  placeholder={'e.g.: 09:00 — Opening\n10:00 — Local products contest\n14:00 — Award ceremony'}
                   rows={4}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 />
@@ -1633,7 +1633,7 @@ function EventManagement() {
                 onClick={() => { setShowForm(false); setEditingEvent(null); }}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
               >
-                Anulează
+                Cancel
               </button>
               <button
                 onClick={handleSave}
@@ -1644,7 +1644,7 @@ function EventManagement() {
                   ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
                   : <FontAwesomeIcon icon={faFloppyDisk} />
                 }
-                {editingEvent ? 'Salvează modificările' : 'Creează evenimentul'}
+                {editingEvent ? 'Save changes' : 'Create event'}
               </button>
             </div>
           </div>
@@ -1657,7 +1657,7 @@ function EventManagement() {
           <FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" />
         </div>
       ) : events.length === 0 ? (
-        <EmptyState icon={faCalendarDays} message="Niciun eveniment creat încă" />
+        <EmptyState icon={faCalendarDays} message="No events created yet" />
       ) : (
         <div className="space-y-3">
           {events.map(ev => {
@@ -1682,21 +1682,21 @@ function EventManagement() {
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                         ev.is_published ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
                       }`}>
-                        {ev.is_published ? '● Publicat' : '○ Ascuns'}
+                        {ev.is_published ? '● Published' : '○ Hidden'}
                       </span>
                     </div>
                     <div className="flex gap-1.5 flex-shrink-0">
                       <button
                         onClick={() => handleTogglePublish(ev)}
                         disabled={!!actionLoading}
-                        title={ev.is_published ? 'Ascunde' : 'Publică'}
+                        title={ev.is_published ? 'Hide' : 'Publish'}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50 ${
                           ev.is_published
                             ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                         }`}
                       >
-                        {ev.is_published ? 'Ascunde' : 'Publică'}
+                        {ev.is_published ? 'Hide' : 'Publish'}
                       </button>
                       <button
                         onClick={() => openEdit(ev)}
@@ -1765,7 +1765,7 @@ export default function AdminDashboard({ session, onNavigate }) {
 
       const role = profileRes.data?.role;
       if (!role || !['admin', 'super_admin'].includes(role)) {
-        toast.error('Acces interzis');
+        toast.error('Access denied');
         onNavigate('home');
         return;
       }
@@ -1776,7 +1776,7 @@ export default function AdminDashboard({ session, onNavigate }) {
         users: usersRes.count || 0,
       });
     } catch {
-      toast.error('Eroare la verificarea accesului');
+      toast.error('Error verifying access');
       onNavigate('home');
     } finally {
       setLoading(false);
@@ -1794,11 +1794,11 @@ export default function AdminDashboard({ session, onNavigate }) {
   if (!userRole) return null;
 
   const tabs = [
-    { key: 'approvals', label: 'Queue Aprobare', icon: faClockRotateLeft, badge: stats.pending },
-    { key: 'flags', label: 'Raportări', icon: faFlag, badge: stats.reports },
-    { key: 'categories', label: 'Categorii', icon: faLayerGroup, badge: 0 },
-    { key: 'events', label: 'Evenimente', icon: faCalendarDays, badge: 0 },
-    { key: 'users', label: 'Utilizatori', icon: faUsers, badge: 0 },
+    { key: 'approvals', label: 'Approval Queue', icon: faClockRotateLeft, badge: stats.pending },
+    { key: 'flags', label: 'Reports', icon: faFlag, badge: stats.reports },
+    { key: 'categories', label: 'Categories', icon: faLayerGroup, badge: 0 },
+    { key: 'events', label: 'Events', icon: faCalendarDays, badge: 0 },
+    { key: 'users', label: 'Users', icon: faUsers, badge: 0 },
   ];
 
   return (

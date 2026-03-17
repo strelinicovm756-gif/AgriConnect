@@ -104,7 +104,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
 
         mapRef.current = new mapboxgl.Map({
             container: mapContainerRef.current,
-            style: 'mapbox://styles/mapbox/light-v11',
+            style: 'mapbox://styles/mapbox/outdoors-v12',
             center: [userLocation.lon, userLocation.lat],
             zoom: radiusToZoom(radiusKm),
         });
@@ -115,7 +115,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
         userEl.innerHTML = `<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 0 4px rgba(59,130,246,0.3);"></div>`;
         new mapboxgl.Marker({ element: userEl, anchor: 'center' })
             .setLngLat([userLocation.lon, userLocation.lat])
-            .setPopup(new mapboxgl.Popup({ offset: 15 }).setText('Tu esti aici'))
+            .setPopup(new mapboxgl.Popup({ offset: 15 }).setText('You are here'))
             .addTo(mapRef.current);
 
         mapRef.current.on('load', () => {
@@ -250,14 +250,14 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                     <div className="text-left">
                         <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                             <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600" />
-                            Furnizori langa tine
+                            Nearby Producers
                             <span className={`ml-5 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                                 <FontAwesomeIcon icon={faChevronDown} />
                             </span>
                         </h3>
                         <p className="text-gray-500 text-sm mt-1">
                             {locationStatus === 'granted' && nearbyCount > 0
-                                ? `${nearbyCount} furnizori in raza de ${radiusKm} km`
+                                ? `${nearbyCount} producers within ${radiusKm} km`
                                 : null }
                         </p>
                     </div>
@@ -284,12 +284,12 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                                 <FontAwesomeIcon icon={faLocationCrosshairs} className="text-emerald-600 text-3xl" />
                             </div>
                             <div className="text-center px-6">
-                                <p className="text-gray-900 font-bold text-lg mb-1">Unde esti?</p>
-                                <p className="text-gray-500 text-sm">Permite accesul la locatie pentru a vedea producatorii din apropierea ta</p>
+                                <p className="text-gray-900 font-bold text-lg mb-1">Where are you?</p>
+                                <p className="text-gray-500 text-sm">Allow location access to see producers near you</p>
                             </div>
                             <button onClick={requestLocation} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-semibold shadow-lg transition-all hover:scale-105">
                                 <FontAwesomeIcon icon={faLocationDot} className="mr-2" />
-                                Permite locatia
+                                Allow location
                             </button>
                         </div>
                     )}
@@ -298,7 +298,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                     {locationStatus === 'loading' && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white z-10">
                             <FontAwesomeIcon icon={faSpinner} className="text-emerald-600 text-4xl animate-spin" />
-                            <p className="text-gray-600 font-medium">Se detecteaza locatia...</p>
+                            <p className="text-gray-600 font-medium">Locating...</p>
                         </div>
                     )}
 
@@ -308,11 +308,11 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                                 <FontAwesomeIcon icon={faLocationCrosshairs} className="text-gray-400 text-2xl" />
                             </div>
-                            <p className="text-gray-700 font-semibold">Locatie indisponibila</p>
-                            <p className="text-gray-500 text-sm max-w-xs">Ai refuzat accesul la locatie. Poti vedea toti furnizorii din pagina de produse.</p>
+                            <p className="text-gray-700 font-semibold">Location unavailable</p>
+                            <p className="text-gray-500 text-sm max-w-xs">You denied location access. You can view all producers on the products page.</p>
                             <button onClick={() => onNavigate('toate-produsele')} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all">
                                 <FontAwesomeIcon icon={faStore} className="mr-2" />
-                                Toti furnizorii
+                                All producers
                             </button>
                         </div>
                     )}
@@ -340,7 +340,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                                 <div className="flex items-center justify-between mb-2.5">
                                     <span className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
                                         <FontAwesomeIcon icon={faSliders} className="text-emerald-600" />
-                                        Raza de cautare
+                                        Search radius
                                     </span>
                                     <span className="text-sm font-black text-emerald-600">{radiusKm} km</span>
                                 </div>
@@ -387,7 +387,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                                                 <p className="text-gray-400 text-xs truncate">{selectedFarmer.location}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium border border-emerald-100">
-                                                        {selectedFarmer._allFromLocation.length} produse
+                                                        {selectedFarmer._allFromLocation.length} products
                                                     </span>
                                                     <span className="text-[11px] text-gray-400">{selectedFarmer._distance} km</span>
                                                 </div>
@@ -395,7 +395,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-shrink-0">
                                             <button onClick={() => onNavigate('detalii', selectedFarmer.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition-all">
-                                                Vezi
+                                                View
                                             </button>
                                             <button onClick={() => setSelectedFarmer(null)} className="text-gray-400 hover:text-gray-600 p-1.5">
                                                 <FontAwesomeIcon icon={faXmark} className="text-xs" />
@@ -412,7 +412,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                         <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${nearbyCount > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`} />
                             <span className="text-sm font-semibold text-gray-800">
-                                {nearbyCount > 0 ? `${nearbyCount} furnizori apropiati` : 'Niciun furnizor in raza'}
+                                {nearbyCount > 0 ? `${nearbyCount} nearby producers` : 'No producers nearby'}
                             </span>
                         </div>
                     )}

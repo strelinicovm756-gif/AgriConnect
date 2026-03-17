@@ -95,7 +95,7 @@ function PriceRangeFilter({ initialMin, initialMax, onApply, onClear }) {
   const validate = (min, max) => {
     const nMin = min === '' ? 0 : parseInt(min, 10);
     const nMax = max === '' ? PRICE_MAX : parseInt(max, 10);
-    if (nMin > nMax) { setError('Minimul nu poate depăși maximul.'); return false; }
+    if (nMin > nMax) { setError('Minimum cannot exceed maximum.'); return false; }
     setError(''); return true;
   };
 
@@ -137,12 +137,12 @@ function PriceRangeFilter({ initialMin, initialMax, onApply, onClear }) {
         <button onClick={() => validate(localMin, localMax) && onApply(localMin, localMax)}
           disabled={!!error || !isDirty}
           className="flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-          Aplică
+          Apply
         </button>
         {hasValue && (
           <button onClick={() => { setLocalMin(''); setLocalMax(''); setError(''); onClear(); }}
             className="px-3 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-red-500 hover:bg-red-50 border border-gray-200 transition-all">
-            Șterge
+            Clear
           </button>
         )}
       </div>
@@ -265,11 +265,11 @@ function FilterSidebar({
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
         <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
           <FontAwesomeIcon icon={faFilter} className="text-emerald-600 text-sm" />
-          Filtre
+          Filters
         </h3>
         {activeFiltersCount > 0 && (
           <button onClick={onClearAll} className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold">
-            Resetează tot
+            Reset all
           </button>
         )}
       </div>
@@ -277,7 +277,7 @@ function FilterSidebar({
       {/* CATEGORII cu accordion */}
       <div className="px-4 py-4 border-b border-gray-50">
         {/* Produse Alimentare */}
-        <h4 className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-3 px-1">Produse Alimentare</h4>
+        <h4 className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-3 px-1">Food Products</h4>
         <div className="space-y-0.5">
           {b2cCats.map(cat => (
             <CategoryAccordionItem
@@ -293,7 +293,7 @@ function FilterSidebar({
         <div className="border-t border-gray-100 my-3" />
 
         {/* Servicii & Utilități */}
-        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 px-1">Servicii & Utilități</h4>
+        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 px-1">Services & Utilities</h4>
         <div className="space-y-0.5">
           {b2bCats.map(cat => (
             <CategoryAccordionItem
@@ -308,14 +308,14 @@ function FilterSidebar({
         {filters.categoryId && (
           <button onClick={() => onClearFilter('categoryId')}
             className="text-xs text-emerald-600 hover:text-emerald-700 mt-2 ml-1">
-            Șterge filtru categorie
+            Clear category filter
           </button>
         )}
       </div>
 
       {/* PREȚ */}
       <div className="px-5 py-4 border-b border-gray-50">
-        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Interval preț</h4>
+        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Price range</h4>
         <PriceRangeFilter
           initialMin={filters.minPrice}
           initialMax={filters.maxPrice}
@@ -326,10 +326,10 @@ function FilterSidebar({
 
       {/* LOCAȚIE */}
       <div className="px-5 py-4 border-b border-gray-50">
-        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Locație</h4>
+        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Location</h4>
         <input
           type="text"
-          placeholder="Ex: Chișinău"
+          placeholder="E.g.: Chisinau"
           value={filters.location}
           onChange={(e) => onLocationChange(e.target.value)}
           className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-400"
@@ -338,14 +338,14 @@ function FilterSidebar({
 
       {/* OPȚIUNI */}
       <div className="px-5 py-4">
-        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Opțiuni</h4>
+        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Options</h4>
         <label className={`flex items-center gap-3 cursor-pointer px-2 py-2.5 rounded-xl transition-all duration-150
           ${filters.negotiable ? 'bg-emerald-50 border-l-[3px] border-emerald-500 pl-[5px]' : 'hover:bg-gray-50 border-l-[3px] border-transparent'}`}>
           <input type="checkbox" checked={filters.negotiable}
             onChange={(e) => onNegotiableChange(e.target.checked)}
             className="w-3.5 h-3.5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 flex-shrink-0" />
           <span className={`text-sm ${filters.negotiable ? 'text-emerald-700 font-semibold' : 'text-gray-700'}`}>
-            Preț negociabil
+            Negotiable price
           </span>
         </label>
       </div>
@@ -382,9 +382,9 @@ export default function AllProductsPage({
   const ITEMS_PER_PAGE = 12;
 
   const sortOptions = [
-    { value: 'newest', label: 'Cele mai noi' },
-    { value: 'price_asc', label: 'Preț crescător' },
-    { value: 'price_desc', label: 'Preț descrescător' },
+    { value: 'newest', label: 'Newest' },
+    { value: 'price_asc', label: 'Price: Low to High' },
+    { value: 'price_desc', label: 'Price: High to Low' },
   ];
 
   // Derived: UUIDs of B2B categories (updates when dbCategories loads)
@@ -532,9 +532,9 @@ export default function AllProductsPage({
 
   const getPageTitle = () => {
     if (filters.categoryId) return getCategoryDisplayName(filters.categoryId);
-    if (filters.type === 'b2b') return 'Servicii & Utilități';
-    if (filters.type === 'b2c') return 'Produse Alimentare';
-    return 'Toate produsele';
+    if (filters.type === 'b2b') return 'Services & Utilities';
+    if (filters.type === 'b2c') return 'Food Products';
+    return 'All products';
   };
 
   return (
@@ -579,7 +579,7 @@ export default function AllProductsPage({
             className="hover:text-emerald-600 transition flex items-center gap-1"
           >
             <FontAwesomeIcon icon={faHome} />
-            <span>Acasă</span>
+            <span>Home</span>
           </button>
           <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
           <span className="text-gray-600 font-medium">{getPageTitle()}</span>
@@ -598,11 +598,11 @@ export default function AllProductsPage({
             {/* Results count pill */}
             <span className="text-sm text-gray-500 flex-shrink-0">
               {loading ? (
-                'Se încarcă...'
+                'Loading...'
               ) : (
                 <>
                   <span className="font-bold text-emerald-600">{totalProducts}</span>
-                  {' '}produse găsite
+                  {' '}products found
                 </>
               )}
             </span>
@@ -643,7 +643,7 @@ export default function AllProductsPage({
             )}
             {filters.negotiable && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
-                Negociabil
+                Negotiable
                 <button onClick={() => clearFilter('negotiable')}>
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
@@ -654,7 +654,7 @@ export default function AllProductsPage({
                   ? 'bg-emerald-600 text-white border-emerald-600'
                   : 'bg-emerald-700 text-white border-emerald-700'
                 }`}>
-                {filters.type === 'b2b' ? 'Servicii & Utilități' : 'Produse Alimentare'}
+                {filters.type === 'b2b' ? 'Services & Utilities' : 'Food Products'}
                 <button onClick={() => clearFilter('type')}>
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
@@ -665,7 +665,7 @@ export default function AllProductsPage({
                 onClick={clearAllFilters}
                 className="bg-gray-100/50 hover:bg-red-50 border border-gray-200 hover:border-red-100 px-3 py-1 rounded-full text-[11px] font-semibold text-gray-500 hover:text-red-600 transition-all flex-shrink-0"
               >
-                Resetează tot
+                Reset all
               </button>
             )}
           </div>
@@ -677,7 +677,7 @@ export default function AllProductsPage({
               className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition text-xs font-medium text-gray-600"
             >
               <FontAwesomeIcon icon={faFilter} className="text-xs" />
-              Filtre
+              Filters
               {activeFiltersCount > 0 && (
                 <span className="w-4 h-4 bg-emerald-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {activeFiltersCount}
@@ -741,7 +741,7 @@ export default function AllProductsPage({
           <div className="lg:hidden fixed inset-0 bg-black/50 z-50 p-4 flex items-end sm:items-center justify-center">
             <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto">
               <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-                <h3 className="text-lg font-bold">Filtre</h3>
+                <h3 className="text-lg font-bold">Filters</h3>
                 <button onClick={() => setShowMobileFilters(false)} className="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition">
                   <FontAwesomeIcon icon={faXmark} />
                 </button>
@@ -766,7 +766,7 @@ export default function AllProductsPage({
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <Metronome size="40" speed="1.6" color="#059669" />
-            <p className="text-gray-500 text-sm">Se încarcă produsele...</p>
+            <p className="text-gray-500 text-sm">Loading products...</p>
           </div>
         ) : products.length > 0 ? (
           <>
@@ -816,10 +816,10 @@ export default function AllProductsPage({
         ) : (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <FontAwesomeIcon icon={faBoxesStacked} className="text-gray-300 text-6xl mb-4" />
-            <p className="text-gray-500 text-base mb-4">Nu am găsit produse pentru criteriile selectate</p>
+            <p className="text-gray-500 text-base mb-4">No products found for the selected criteria</p>
             <button onClick={clearAllFilters}
               className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm transition-all">
-              Resetează filtrele
+              Reset filters
             </button>
           </div>
         )}

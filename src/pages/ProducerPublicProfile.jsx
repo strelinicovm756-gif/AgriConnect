@@ -58,7 +58,7 @@ function ProducerMap({ location }) {
             if (!coords) { setStatus('error'); return; }
             const m = new mapboxgl.Map({
                 container: ref.current,
-                style: 'mapbox://styles/mapbox/streets-v12',
+                style: 'mapbox://styles/mapbox/outdoors-v12',
                 center: [coords.lon, coords.lat],
                 zoom: 11,
                 interactive: false,

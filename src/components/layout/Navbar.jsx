@@ -190,11 +190,11 @@ export function Navbar({ session, onNavigate }) {
 
   const relativeTime = (dateStr) => {
     const m = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
-    if (m < 1) return 'acum';
-    if (m < 60) return `acum ${m} min`;
+    if (m < 1) return 'now';
+    if (m < 60) return `${m}min ago`;
     const h = Math.floor(m / 60);
-    if (h < 24) return `acum ${h}h`;
-    return `acum ${Math.floor(h / 24)}z`;
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
   };
 
   const formatDate = (dateStr) => {
@@ -223,7 +223,7 @@ export function Navbar({ session, onNavigate }) {
     if (!error) {
       setShowDropdown(false);
       setProfileName('');
-      toast.success('Te-ai deconectat!');
+      toast.success('You have been signed out!');
       onNavigate('home');
     }
   };
@@ -282,7 +282,7 @@ export function Navbar({ session, onNavigate }) {
             className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faCalendarDays} className="text-white" />
-            <span>Evenimente</span>
+            <span>Events</span>
           </button>
 
           {/* Buton Categorii */}
@@ -292,7 +292,7 @@ export function Navbar({ session, onNavigate }) {
             className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faLayerGroup} />
-            <span>Categorii</span>
+            <span>Categories</span>
             <FontAwesomeIcon
               icon={faChevronDownSolid}
               className={`transition-transform duration-200 text-xs ${showMegaMenu ? 'rotate-180' : ''}`}
@@ -306,7 +306,7 @@ export function Navbar({ session, onNavigate }) {
               className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-300 hover:bg-white transition-all group shadow-sm"
             >
               <SearchAnimated animateOnHover color="#c2c2c2" strokeWidth={2} size={20} />
-              <span className="flex-1">Caută produse, localitate... </span>
+              <span className="flex-1">Search products, location... </span>
             </button>
             <button
               onClick={() => setShowOverlay(true)}
@@ -326,7 +326,7 @@ export function Navbar({ session, onNavigate }) {
                   className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-full text-sm hover:bg-emerald-700 shadow-md"
                 >
                   <Plus size={14} />
-                  <span>Adaugă anunț</span>
+                  <span>Add listing</span>
                 </button>
 
                 {/* Buton mobil */}
@@ -342,7 +342,7 @@ export function Navbar({ session, onNavigate }) {
                   <button
                     onClick={() => onNavigate('chat')}
                     className="relative w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-xl transition"
-                    title="Mesaje"
+                    title="Messages"
                   >
                     <MessageSquare size={18} />
                     {chatUnreadCount > 0 && (
@@ -370,7 +370,7 @@ export function Navbar({ session, onNavigate }) {
                   {showNotifDropdown && (
                     <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-dropdown">
                       <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
-                        <p className="text-sm font-bold text-gray-900">Notificări</p>
+                        <p className="text-sm font-bold text-gray-900">Notifications</p>
                         {unreadCount > 0 && (
                           <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">{unreadCount} noi</span>
                         )}
@@ -379,7 +379,7 @@ export function Navbar({ session, onNavigate }) {
                       {notifs.length === 0 ? (
                         <div className="px-5 py-8 text-center text-gray-400">
                           <Bell size={28} className="mx-auto mb-2 opacity-30" />
-                          <p className="text-sm">Nicio notificare</p>
+                          <p className="text-sm">No notifications</p>
                         </div>
                       ) : (
                         <div>
@@ -403,7 +403,7 @@ export function Navbar({ session, onNavigate }) {
                             <div className="px-5 py-3 border-t border-gray-100">
                               <button onClick={markAllAsRead} className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition py-1">
                                 <Check size={14} />
-                                Marchează toate ca citite
+                                Mark all as read
                               </button>
                             </div>
                           )}
@@ -418,7 +418,7 @@ export function Navbar({ session, onNavigate }) {
                   <button onClick={() => setShowDropdown(!showDropdown)} className="flex items-center gap-1.5 hover:bg-gray-50 p-1.5 rounded-xl transition">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${isLoadingProfile ? 'animate-pulse bg-gray-200' : ''}`}
-                      style={{ background: isLoadingProfile ? '' : getColorForName(profileName || session.user.email) }}
+                      style={{ background: isLoadingProfile ? '' : getColorForName(session.user.id || session.user.email) }}
                     >
                       {!isLoadingProfile && (profileName ? profileName[0] : session.user.email[0]).toUpperCase()}
                     </div>
@@ -428,7 +428,7 @@ export function Navbar({ session, onNavigate }) {
                   {showDropdown && (
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-dropdown">
                       <div className="px-5 py-4 bg-gray-50/50 border-b border-gray-100">
-                        <p className="text-sm font-bold truncate">{profileName || 'Utilizator'}</p>
+                        <p className="text-sm font-bold truncate">{profileName || 'User'}</p>
                         <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
                       </div>
                       <div className="p-2">
@@ -436,7 +436,7 @@ export function Navbar({ session, onNavigate }) {
                           <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
                             <User size={16} />
                           </div>
-                          <span className="text-sm font-medium">Profilul meu</span>
+                          <span className="text-sm font-medium">My profile</span>
                         </button>
                         {(userRole === 'admin' || userRole === 'super_admin') && (
                           <button onClick={() => { onNavigate('admin'); setShowDropdown(false); }} className="w-full p-2.5 text-left hover:bg-purple-50 rounded-xl flex items-center gap-3 group mt-1">
@@ -444,7 +444,7 @@ export function Navbar({ session, onNavigate }) {
                               <Shield size={16} />
                             </div>
                             <div>
-                              <span className="text-sm font-medium">Administrare</span>
+                              <span className="text-sm font-medium">Administration</span>
                               <p className="text-xs text-gray-400">{userRole === 'super_admin' ? 'Super Admin' : 'Moderator'}</p>
                             </div>
                           </button>
@@ -453,7 +453,7 @@ export function Navbar({ session, onNavigate }) {
                           <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all">
                             <LogOut size={16} />
                           </div>
-                          <span className="text-sm font-medium text-red-600">Deconectare</span>
+                          <span className="text-sm font-medium text-red-600">Sign out</span>
                         </button>
                       </div>
                     </div>
@@ -462,7 +462,7 @@ export function Navbar({ session, onNavigate }) {
               </>
             ) : (
               <button onClick={() => onNavigate('login')} className="bg-emerald-600 text-white px-5 py-2 rounded-full font-bold text-sm shadow-md">
-                Autentificare
+                Sign in
               </button>
             )}
           </div>
@@ -491,7 +491,7 @@ export function Navbar({ session, onNavigate }) {
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2 mb-4">
                       <FontAwesomeIcon icon={faCartShopping} />
-                      Produse Alimentare
+                      Food Products
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-start">
                       {megaCategories.b2c.map(cat => {
@@ -566,7 +566,7 @@ export function Navbar({ session, onNavigate }) {
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2 mb-4">
                       <FontAwesomeIcon icon={faIndustry} />
-                      Servicii &amp; Utilități
+                      Services &amp; Utilities
                     </p>
                     <div className="grid grid-cols-2 gap-3 items-start">
                       {megaCategories.b2b.map(cat => {
@@ -645,7 +645,7 @@ export function Navbar({ session, onNavigate }) {
                     onClick={() => { setShowMegaMenu(false); setOpenCategoryId(null); onNavigate('toate-produsele'); }}
                     className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-emerald-600 hover:text-white text-gray-700 rounded-xl font-semibold text-sm transition-colors"
                   >
-                    Caută în toate categoriile
+                    Search all categories
                     <ArrowRight size={14} />
                   </button>
                 </div>
@@ -667,7 +667,7 @@ export function Navbar({ session, onNavigate }) {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Caută produse, localitate, categorii..."
+                placeholder="Search products, location, categories..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="outline-none text-lg w-full py-1 text-gray-900 placeholder-gray-400 bg-transparent"
@@ -682,7 +682,7 @@ export function Navbar({ session, onNavigate }) {
           {!searchQuery.trim() && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-gray-400">
               <Search size={36} className="mb-3 opacity-30" />
-              <p className="text-sm">Începe să scrii pentru a căuta produse</p>
+              <p className="text-sm">Start typing to search for products</p>
             </div>
           )}
 
@@ -701,7 +701,7 @@ export function Navbar({ session, onNavigate }) {
             <div className="flex h-[60vh]">
               <div className="w-1/4 border-r border-gray-100 overflow-y-auto flex-shrink-0">
                 <div className="p-5">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Categorii ({matchedCategories.length})</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Categories ({matchedCategories.length})</p>
                   <div className="space-y-1">
                     {matchedCategories.map(catId => {
                       const CatIcon = CATEGORY_ICONS[catId] || Package;
@@ -719,7 +719,7 @@ export function Navbar({ session, onNavigate }) {
 
                   {matchedLocations.length > 0 && (
                     <div className="mt-6">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Localități ({matchedLocations.length})</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Locations ({matchedLocations.length})</p>
                       <div className="space-y-1">
                         {matchedLocations.map(loc => (
                           <button key={loc} onClick={() => setActiveLocation(activeLocation === loc ? null : loc)}
@@ -781,8 +781,8 @@ export function Navbar({ session, onNavigate }) {
           {noResults && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-center">
               <SearchX size={48} className="text-gray-300 mb-4" />
-              <p className="text-gray-600 font-medium mt-4">Niciun produs găsit pentru „{searchQuery}"</p>
-              <p className="text-gray-400 text-sm mt-1">Încearcă un alt termen de căutare</p>
+              <p className="text-gray-600 font-medium mt-4">No products found for „{searchQuery}"</p>
+              <p className="text-gray-400 text-sm mt-1">Try a different search term</p>
             </div>
           )}
         </div>

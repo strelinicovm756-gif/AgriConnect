@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { getColorForName } from '../../lib/utils';
 import { supabase } from '../../services/supabaseClient';
 import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot,
@@ -67,7 +66,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
   return (
     <div className="flex flex-col h-full">
 
-      
+
       <div className="relative h-36 bg-gray-100 rounded-t-xl overflow-hidden">
         {product.image_url ? (
           <>
@@ -110,125 +109,115 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
           </span>
         </div>
 
+        {/* Negotiable badge */}
+        {product.is_negotiable && (
+          <span className="absolute top-2 right-2 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">NEGOTIABLE</span>
+        )}
+
         {/* Buton raportare — vizibil la hover */}
         {session && session.user?.id !== product.user_id && (
           <button
             onClick={handleQuickReport}
             disabled={isReported || isReporting}
-            title={isReported ? 'Ai raportat deja' : 'Raportează anunțul'}
-            className={`absolute bottom-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow transition-all duration-200 opacity-0 group-hover:opacity-100 ${
-              isReported ? 'bg-red-500 text-white cursor-default' : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-red-50'
-            }`}
+            title={isReported ? 'Already reported' : 'Report listing'}
+            className={`absolute bottom-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow transition-all duration-200 opacity-0 group-hover:opacity-100 ${isReported ? 'bg-red-500 text-white cursor-default' : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-red-50'
+              }`}
           >
             <FontAwesomeIcon icon={faFlag} className="text-[9px]" />
           </button>
         )}
       </div>
 
-      {/* Content - spacing optimizat */}
-      <div className="flex flex-col flex-grow p-4 bg-white rounded-b-xl">
-        {/* Titlu - min-height pentru aliniament */}
-        <h3
-          className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 hover:text-emerald-600 transition-colors"
-          style={{ minHeight: '3.5rem' }}
-        >
-          {product.name}
-        </h3>
+      {/* Content */}
+      <div className="flex flex-col flex-1 p-4 bg-white rounded-b-xl">
 
-        {/* Locație - spacing redus */}
-        <p className="text-gray-600 text-sm mb-3 flex items-center gap-1.5 font-medium">
-          <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600" />
-          {product.location}
-        </p>
+        {/* Top content — grows to fill space */}
+        <div className="flex-1">
+          <h3
+            className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 hover:text-emerald-600 transition-colors"
+            style={{ minHeight: '3.5rem' }}
+          >
+            {product.name}
+          </h3>
 
-        {/* Badge-uri - spacing redus */}
-        {(product.seller_verified || product.is_negotiable) && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {product.seller_verified && (
-              <Badge variant="success">VERIFICAT</Badge>
-            )}
-            {product.is_negotiable && (
-              <Badge variant="info">NEGOCIABIL</Badge>
-            )}
-          </div>
-        )}
-
-        {/* Descriere scurtă */}
-        {product.description && (
-          <p className="text-gray-500 text-sm mb-3 line-clamp-2">
-            {product.description}
+          <p className="text-gray-600 text-sm mb-3 flex items-center gap-1.5 font-medium">
+            <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600" />
+            {product.location}
           </p>
-        )}
 
-        {/* Preț - spacing optimizat */}
-        <div className="mb-3">
-          {session ? (
-            <div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-emerald-600 font-bold text-3xl">
-                  {formatPrice(product.price)}
-                </p>
-                <span className="text-gray-900 font-semibold text-lg">lei</span>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <p className="text-gray-600 text-sm flex items-center gap-2">
-                <FontAwesomeIcon icon={faLock} className="text-emerald-700" />
-                Autentifică-te pentru a vedea prețul
-              </p>
-            </div>
+          {product.description && (
+            <p className="text-gray-500 text-sm mb-3 line-clamp-2">
+              {product.description}
+            </p>
           )}
         </div>
 
-        {/* Informații vânzător - spacing redus */}
-        {session && product.seller_name && (
-          <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center gap-2.5">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center border-2 flex-shrink-0"
-                style={{
-                  background: getColorForName(product.seller_name),
-                  borderColor: getColorForName(product.seller_name) + '50'
-                }}
-              >
-                <span className="text-white text-sm font-black uppercase">
-                  {product.seller_name?.charAt(0) || '?'}
-                </span>
-              </div>
-
-              <div className="flex-grow min-w-0">
-                <p className="text-gray-900 text-sm font-semibold truncate">{product.seller_name}</p>
-                {product.seller_rating > 0 && (
-                  <p className="text-gray-500 text-xs">
-                    Rating: {product.seller_rating.toFixed(1)}/5.0
+        {/* Footer — always at bottom */}
+        <div className="mt-auto pt-3 border-t border-gray-50">
+          <div className="mb-3">
+            {session ? (
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-emerald-600 font-bold text-3xl">
+                    {formatPrice(product.price)}
                   </p>
-                )}
+                  <span className="text-gray-900 font-semibold text-lg">lei</span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <p className="text-gray-600 text-sm flex items-center gap-2">
+                  <FontAwesomeIcon icon={faLock} className="text-emerald-700" />
+                  Sign in to see the price
+                </p>
+              </div>
+            )}
+          </div>
+
+          {session && product.seller_name && (
+            <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center border-2 flex-shrink-0"
+                  style={{
+                    background: getColorForName(product.seller_name),
+                    borderColor: getColorForName(product.seller_name) + '50'
+                  }}
+                >
+                  <span className="text-white text-sm font-black uppercase">
+                    {product.seller_name?.charAt(0) || '?'}
+                  </span>
+                </div>
+
+                <div className="flex-grow min-w-0">
+                  <p className="text-gray-900 text-sm font-semibold truncate">{product.seller_name}</p>
+                  {product.seller_rating > 0 && (
+                    <p className="text-gray-500 text-xs">
+                      Rating: {product.seller_rating.toFixed(1)}/5.0
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Buton */}
-        <div className="mt-auto">
           <Button
             variant={session ? "primary" : "secondary"}
             onClick={() => onViewDetails(product.id)}
             className="w-full"
           >
-            {session ? "Vezi detalii" : "Autentifică-te"}
+            {session ? "View details" : "Sign in"}
           </Button>
-        </div>
 
-        {/* Footer cu data */}
-        <div className="mt-3 pt-3 border-t border-gray-200 flex justify-end text-xs text-gray-500">
-          <span className="flex items-center gap-1.5">
-            <FontAwesomeIcon icon={faCalendarDays} />
-            {new Date(product.created_at).toLocaleDateString('ro-RO', {
-              day: 'numeric',
-              month: 'short'
-            })}
-          </span>
+          <div className="mt-3 pt-3 border-t border-gray-200 flex justify-end text-xs text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <FontAwesomeIcon icon={faCalendarDays} />
+              {new Date(product.created_at).toLocaleDateString('ro-RO', {
+                day: 'numeric',
+                month: 'short'
+              })}
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -17,8 +17,8 @@ function formatDateLabel(dateStr) {
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return 'Astăzi';
-  if (d.toDateString() === yesterday.toDateString()) return 'Ieri';
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return d.toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
@@ -29,11 +29,11 @@ function isSameDay(a, b) {
 function timeAgo(dateStr) {
   if (!dateStr) return '';
   const m = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
-  if (m < 1) return 'acum';
-  if (m < 60) return `acum ${m} min`;
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}min ago`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `acum ${h}h`;
-  return `acum ${Math.floor(h / 24)}z`;
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 export default function ChatPage({ session, onNavigate }) {
@@ -216,8 +216,8 @@ export default function ChatPage({ session, onNavigate }) {
   // Determine the "other" participant name for a conversation
   const getOtherName = (conv) => {
     if (!conv) return '';
-    if (conv.participant_1 === session.user.id) return conv.participant_2_name || 'Utilizator';
-    return conv.participant_1_name || 'Utilizator';
+    if (conv.participant_1 === session.user.id) return conv.participant_2_name || 'User';
+    return conv.participant_1_name || 'User';
   };
 
   const getOtherInitial = (conv) => getOtherName(conv).charAt(0).toUpperCase() || '?';
@@ -249,7 +249,7 @@ export default function ChatPage({ session, onNavigate }) {
               <div className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
                 <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                   <MessageSquare size={20} className="text-emerald-600" />
-                  Mesajele mele
+                  My messages
                 </h1>
               </div>
 
@@ -261,8 +261,8 @@ export default function ChatPage({ session, onNavigate }) {
                 ) : conversations.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                     <MessageSquare size={40} className="text-gray-200 mb-3" />
-                    <p className="text-gray-500 font-medium text-sm">Nicio conversație</p>
-                    <p className="text-gray-400 text-xs mt-1">Mesajele tale vor apărea aici</p>
+                    <p className="text-gray-500 font-medium text-sm">No conversations</p>
+                    <p className="text-gray-400 text-xs mt-1">Your messages will appear here</p>
                   </div>
                 ) : (
                   <div className="py-2">
@@ -283,7 +283,7 @@ export default function ChatPage({ session, onNavigate }) {
                         >
                           <div
                             className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 uppercase"
-                            style={{ background: getColorForName(otherName) }}
+                            style={{ background: getColorForName(getOtherId(conv)) }}
                           >
                             {otherName.charAt(0)}
                           </div>
@@ -302,7 +302,7 @@ export default function ChatPage({ session, onNavigate }) {
                             </div>
                             <div className="flex items-center justify-between gap-1 mt-0.5 min-w-0">
                               <p className={`text-xs truncate flex-1 min-w-0 ${unread > 0 ? 'text-gray-700 font-medium' : 'text-gray-400'}`}>
-                                {conv.last_message || 'Conversație nouă'}
+                                {conv.last_message || 'New conversation'}
                               </p>
                               {unread > 0 && (
                                 <span className="flex-shrink-0 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
@@ -324,8 +324,8 @@ export default function ChatPage({ session, onNavigate }) {
               {!selectedConv ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
                   <MessageSquare size={48} className="text-gray-200 mb-4" />
-                  <p className="text-gray-500 font-medium">Selectează o conversație</p>
-                  <p className="text-gray-400 text-sm mt-1">Alege o conversație din lista din stânga</p>
+                  <p className="text-gray-500 font-medium">Select a conversation</p>
+                  <p className="text-gray-400 text-sm mt-1">Choose a conversation from the list on the left</p>
                 </div>
               ) : (
                 <>
@@ -341,7 +341,7 @@ export default function ChatPage({ session, onNavigate }) {
                       </button>
                       <div
                         className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 uppercase shadow-sm"
-                        style={{ background: getColorForName(getOtherName(selectedConv)) }}
+                        style={{ background: getColorForName(getOtherId(selectedConv)) }}
                       >
                         {getOtherInitial(selectedConv)}
                       </div>
@@ -357,7 +357,7 @@ export default function ChatPage({ session, onNavigate }) {
                             </>
                           ) : (
                             <span className="text-xs text-gray-400 truncate">
-                              {selectedConv.product_name || 'Conversație directă'}
+                              {selectedConv.product_name || 'Direct conversation'}
                             </span>
                           )}
                         </div>
@@ -374,8 +374,8 @@ export default function ChatPage({ session, onNavigate }) {
                     ) : messages.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-center">
                         <MessageSquare size={36} className="text-gray-200 mb-3" />
-                        <p className="text-gray-400 text-sm font-medium">Niciun mesaj încă</p>
-                        <p className="text-gray-300 text-xs mt-1">Trimite primul mesaj!</p>
+                        <p className="text-gray-400 text-sm font-medium">No messages yet</p>
+                        <p className="text-gray-300 text-xs mt-1">Send the first message!</p>
                       </div>
                     ) : (
                       messages.map((msg, idx) => {
@@ -422,7 +422,7 @@ export default function ChatPage({ session, onNavigate }) {
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Scrie un mesaj..."
+                        placeholder="Write a message..."
                         rows={1}
                         className="flex-1 resize-none bg-transparent text-sm text-gray-900 focus:outline-none placeholder-gray-400 max-h-28 overflow-y-auto py-1"
                         style={{ minHeight: '28px' }}

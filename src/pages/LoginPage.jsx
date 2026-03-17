@@ -93,7 +93,7 @@ export default function LoginPage({ onNavigate }) {
 
       if (error) throw error;
     } catch (error) {
-      toast.error("Eroare conectare Google: " + error.message);
+      toast.error("Google sign-in error: " + error.message);
     }
   };
 
@@ -104,13 +104,13 @@ export default function LoginPage({ onNavigate }) {
     try {
       // Validări
       if (!signUpData.name.trim()) {
-        toast.error("Te rugăm să introduci numele tău");
+        toast.error("Please enter your name");
         setLoading(false);
         return;
       }
 
       if (!signUpEmailValidation.isValid) {
-        toast.error("Email invalid");
+        toast.error("Invalid email");
         setLoading(false);
         return;
       }
@@ -118,8 +118,8 @@ export default function LoginPage({ onNavigate }) {
       if (!passwordValidation.isValid) {
         toast.error(
           <div>
-            <p className="font-bold">Parolă invalidă</p>
-            <p className="text-sm">Parola trebuie să aibă minim 8 caractere, o cifră și o literă mică</p>
+            <p className="font-bold">Invalid password</p>
+            <p className="text-sm">Password must have at least 8 characters, one digit and one lowercase letter</p>
           </div>,
           { duration: 5000 }
         );
@@ -142,7 +142,7 @@ export default function LoginPage({ onNavigate }) {
       if (error) throw error;
 
       if (data?.user?.identities?.length === 0) {
-        toast.error("Acest email este deja înregistrat!");
+        toast.error("This email is already registered!");
         setLoading(false);
         return;
       }
@@ -155,11 +155,11 @@ export default function LoginPage({ onNavigate }) {
       console.error('Sign up error:', error);
 
       if (error.message.includes('already registered')) {
-        toast.error("Acest email este deja înregistrat");
+        toast.error("This email is already registered");
       } else if (error.message.includes('Password')) {
-        toast.error("Parola nu respectă cerințele de securitate");
+        toast.error("Password does not meet security requirements");
       } else {
-        toast.error("Eroare la creare cont: " + error.message);
+        toast.error("Error creating account: " + error.message);
       }
     } finally {
       setLoading(false);
@@ -172,7 +172,7 @@ export default function LoginPage({ onNavigate }) {
 
     try {
       if (!loginEmailValidation.isValid) {
-        toast.error("Email invalid");
+        toast.error("Invalid email");
         setLoading(false);
         return;
       }
@@ -184,7 +184,7 @@ export default function LoginPage({ onNavigate }) {
 
       if (error) throw error;
 
-      toast.success("Bine ai revenit! 👋");
+      toast.success("Welcome back! 👋");
       setLoginData({ email: '', password: '' });
       onNavigate('home');
 
@@ -192,19 +192,19 @@ export default function LoginPage({ onNavigate }) {
       console.error('Login error:', error);
 
       if (error.message.includes('Invalid login credentials')) {
-        toast.error("Email sau parolă incorectă");
+        toast.error("Incorrect email or password");
       } else if (error.message.includes('Email not confirmed')) {
         toast.error(
           <div>
-            <p className="font-bold">Email neconfirmat</p>
-            <p className="text-sm">Verifică inbox-ul pentru link-ul de confirmare</p>
+            <p className="font-bold">Email not confirmed</p>
+            <p className="text-sm">Check your inbox for the confirmation link</p>
           </div>,
           { duration: 6000 }
         );
       } else if (error.message.includes('Invalid email')) {
-        toast.error("Format email invalid");
+        toast.error("Invalid email format");
       } else {
-        toast.error("Eroare la autentificare: " + error.message);
+        toast.error("Sign-in error: " + error.message);
       }
     } finally {
       setLoading(false);
@@ -213,7 +213,7 @@ export default function LoginPage({ onNavigate }) {
 
   const handleForgotPassword = async () => {
     if (!loginData.email) {
-      toast.error("Introdu email-ul tău mai întâi");
+      toast.error("Enter your email first");
       return;
     }
 
@@ -229,13 +229,13 @@ export default function LoginPage({ onNavigate }) {
 
       toast.success(
         <div>
-          <p className="font-bold">✉️ Email trimis!</p>
-          <p className="text-sm">Verifică inbox-ul pentru resetare parolă</p>
+          <p className="font-bold">✉️ Email sent!</p>
+          <p className="text-sm">Check your inbox to reset your password</p>
         </div>,
         { duration: 6000 }
       );
     } catch (error) {
-      toast.error("Eroare: " + error.message);
+      toast.error("Error: " + error.message);
     }
   };
 
@@ -268,10 +268,10 @@ export default function LoginPage({ onNavigate }) {
                   )}
                 </div>
                 <h1 className="text-3xl font-semibold mb-2 text-gray-900">
-                  Bine ai revenit
+                  Welcome back
                 </h1>
                 <p className="text-gray-600 text-sm mb-8">
-                  Autentifică-te pentru a continua.<br />
+                  Sign in to continue.<br />
                 </p>
               </div>
 
@@ -287,7 +287,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type="email"
-                      placeholder="exemplu@email.com"
+                      placeholder="example@email.com"
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       className={`w-full pl-12 pr-5 py-3 bg-gray-50 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
@@ -309,7 +309,7 @@ export default function LoginPage({ onNavigate }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Parolă
+                    Password
                   </label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -318,7 +318,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Minim 8 caractere"
+                      placeholder="At least 8 characters"
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                       className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
@@ -338,7 +338,7 @@ export default function LoginPage({ onNavigate }) {
                       onClick={handleForgotPassword}
                       className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
                     >
-                      Ai uitat parola?
+                      Forgot password?
                     </button>
                   </div>
                 </div>
@@ -351,12 +351,12 @@ export default function LoginPage({ onNavigate }) {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                      Se autentifică...
+                      Signing in...
                     </>
                   ) : (
                     <>
                       <FontAwesomeIcon icon={faRightToBracket} />
-                      Autentificare
+                      Sign in
                     </>
                   )}
                 </button>
@@ -367,7 +367,7 @@ export default function LoginPage({ onNavigate }) {
                   <div className="w-full border-t border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">sau continuă cu</span>
+                  <span className="px-4 bg-white text-gray-500">or continue with</span>
                 </div>
               </div>
 
@@ -384,13 +384,13 @@ export default function LoginPage({ onNavigate }) {
               </div>
 
               <p className="text-center text-sm text-gray-600 mt-6">
-                Nu ai un cont?{' '}
+                Don't have an account?{' '}
                 <button
                   type="button"
                   onClick={() => setIsSignUp(true)}
                   className="text-emerald-600 hover:text-emerald-700 font-semibold"
                 >
-                  Înregistrează-te
+                  Register
                 </button>
               </p>
             </div>
@@ -412,7 +412,7 @@ export default function LoginPage({ onNavigate }) {
                 </div>
 
                 <h1 className="text-center text-3xl font-semibold mb-2 text-gray-900">
-                  Creează cont
+                  Create account
                 </h1>
               </div>
 
@@ -420,7 +420,7 @@ export default function LoginPage({ onNavigate }) {
               <form onSubmit={handleSignUp} className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nume complet
+                    Full name
                   </label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -429,7 +429,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type="text"
-                      placeholder="Numele tău"
+                      placeholder="Your name"
                       value={signUpData.name}
                       onChange={(e) => setSignUpData({ ...signUpData, name: e.target.value })}
                       className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
@@ -449,7 +449,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type="email"
-                      placeholder="exemplu@email.com"
+                      placeholder="example@email.com"
                       value={signUpData.email}
                       onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                       className={`w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
@@ -471,7 +471,7 @@ export default function LoginPage({ onNavigate }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Parolă<span className="text-red-500">*</span>
+                    Password<span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -480,7 +480,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Minim 8 caractere"
+                      placeholder="At least 8 characters"
                       value={signUpData.password}
                       onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                       className={`
@@ -520,33 +520,33 @@ export default function LoginPage({ onNavigate }) {
                         <div className="flex items-start gap-2 text-red-600 text-sm">
                           <FontAwesomeIcon icon={faXmark} className="mt-0.5" />
                           <div>
-                            <p className="font-medium">Parola trebuie să conțină o cifră și o literă mică</p>
+                            <p className="font-medium">Password must contain a digit and a lowercase letter</p>
                           </div>
                         </div>
                       )}
 
                       {/* Requirements List */}
                       <p className="text-xs text-gray-600">
-                        Parola trebuie să aibă cel puțin 15 caractere SAU cel puțin 8 caractere incluzând o cifră și o literă mică.
+                        Password must have at least 15 characters OR at least 8 characters including a digit and a lowercase letter.
                       </p>
 
                       {/* Checklist */}
                       <div className="space-y-1">
                         <div className={`flex items-center gap-2 text-xs ${passwordValidation.checks.minLength ? 'text-green-600' : 'text-gray-400'}`}>
                           <FontAwesomeIcon icon={passwordValidation.checks.minLength ? faCheck : faXmark} />
-                          <span>Minim 8 caractere</span>
+                          <span>At least 8 characters</span>
                         </div>
                         <div className={`flex items-center gap-2 text-xs ${passwordValidation.checks.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
                           <FontAwesomeIcon icon={passwordValidation.checks.hasNumber ? faCheck : faXmark} />
-                          <span>Conține cel puțin o cifră</span>
+                          <span>Contains at least one digit</span>
                         </div>
                         <div className={`flex items-center gap-2 text-xs ${passwordValidation.checks.hasLowercase ? 'text-green-600' : 'text-gray-400'}`}>
                           <FontAwesomeIcon icon={passwordValidation.checks.hasLowercase ? faCheck : faXmark} />
-                          <span>Conține cel puțin o literă mică</span>
+                          <span>Contains at least one lowercase letter</span>
                         </div>
                         <div className={`flex items-center gap-2 text-xs ${passwordValidation.checks.hasUppercase ? 'text-green-600' : 'text-gray-400'}`}>
                           <FontAwesomeIcon icon={passwordValidation.checks.hasUppercase ? faCheck : faXmark} />
-                          <span>Conține literă mare (opțional, dar recomandat)</span>
+                          <span>Contains uppercase letter (optional, but recommended)</span>
                         </div>
                       </div>
 
@@ -568,10 +568,10 @@ export default function LoginPage({ onNavigate }) {
                           ))}
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Putere parolă: {
-                            passwordValidation.strength <= 2 ? 'Slabă' :
-                              passwordValidation.strength === 3 ? 'Medie' :
-                                'Puternică'
+                          Password strength: {
+                            passwordValidation.strength <= 2 ? 'Weak' :
+                              passwordValidation.strength === 3 ? 'Medium' :
+                                'Strong'
                           }
                         </p>
                       </div>
@@ -587,12 +587,12 @@ export default function LoginPage({ onNavigate }) {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                      Se creează contul...
+                      Creating account...
                     </>
                   ) : (
                     <>
                       <FontAwesomeIcon icon={faUserPlus} />
-                      Creează cont
+                      Create account
                     </>
                   )}
                 </button>
@@ -603,7 +603,7 @@ export default function LoginPage({ onNavigate }) {
                   <div className="w-full border-t border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">sau continuă cu</span>
+                  <span className="px-4 bg-white text-gray-500">or continue with</span>
                 </div>
               </div>
 
@@ -619,13 +619,13 @@ export default function LoginPage({ onNavigate }) {
               </div>
 
               <p className="text-center text-sm text-gray-600 mt-6">
-                Ai deja un cont?{' '}
+                Already have an account?{' '}
                 <button
                   type="button"
                   onClick={() => setIsSignUp(false)}
                   className="text-emerald-600 hover:text-emerald-700 font-semibold"
                 >
-                  Autentifică-te
+                  Sign in
                 </button>
               </p>
             </div>

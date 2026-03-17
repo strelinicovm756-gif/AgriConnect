@@ -89,7 +89,7 @@ export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
 
       {/* ── BACK: întunecat cu butoane ── */}
       <motion.div
-        className="absolute inset-0 backface-hidden rounded-2xl bg-gray-900 flex flex-col p-5 gap-4"
+        className="absolute inset-0 backface-hidden rounded-2xl bg-emerald-600 flex flex-col p-5 gap-4"
         animate={isFlipped ? 'front' : 'back'}
         variants={cardVariants}
         style={{ transformStyle: 'preserve-3d', rotateY: 180 }}

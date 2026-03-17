@@ -94,14 +94,14 @@ export function B2CFlipCard({ provider, onNavigate }) {
 
       {/* ── BACK: întunecat cu categorii + buton ── */}
       <motion.div
-        className="absolute inset-0 backface-hidden rounded-2xl bg-gray-900 flex flex-col p-5 gap-4"
+        className="absolute inset-0 backface-hidden rounded-2xl bg-emerald-700 flex flex-col p-5 gap-4"
         animate={isFlipped ? 'front' : 'back'}
         variants={cardVariants}
         style={{ transformStyle: 'preserve-3d', rotateY: 180 }}
       >
         {/* Categories */}
         <div className="flex-1">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+          <p className="text-xs font-bold text-white uppercase tracking-wider mb-3">
             Produse Oferite
           </p>
           <ul className="space-y-2">
@@ -112,7 +112,7 @@ export function B2CFlipCard({ provider, onNavigate }) {
               </li>
             ))}
             {(!provider.categories || provider.categories.length === 0) && (
-              <li className="text-sm text-gray-500 italic">Produse generale</li>
+              <li className="text-sm text-gray-400 italic">Produse generale</li>
             )}
           </ul>
         </div>
@@ -120,7 +120,7 @@ export function B2CFlipCard({ provider, onNavigate }) {
         {/* Products count + button */}
         <div className="flex flex-col gap-2">
           {provider.productsCount > 0 && (
-            <p className="text-center text-xs text-gray-400">
+            <p className="text-center text-xs text-white font-medium">
               <span className="text-white font-bold">{provider.productsCount}</span> produse active
             </p>
           )}

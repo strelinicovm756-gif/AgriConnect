@@ -637,12 +637,12 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             b2cExpanded={b2cExpanded}
           />
 
-          {/* ── CATEGORII B2B GRID ────────────────────────────── */}
+          {/* CATEGORII B2B GRID  */}
           {b2bGridCategories.length > 0 && (
           <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
             <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
               <h3 className="text-lg font-bold text-gray-500 uppercase tracking-wider mb-6 border-b border-gray-100 pb-3">
-                Categorii Servicii & Utilități
+                Servicii & Utilități
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden">
                 {b2bGridCategories.map(cat => (

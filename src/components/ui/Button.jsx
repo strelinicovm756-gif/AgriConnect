@@ -11,7 +11,7 @@ export function Button({
   
   const variants = {
     primary: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20',
-    secondary: 'bg-slate-700 hover:bg-slate-600 border border-slate-600 text-white',
+    secondary: 'bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 text-white',
     danger: 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white',
     ghost: 'text-slate-400 hover:text-emerald-400 bg-transparent'
   };

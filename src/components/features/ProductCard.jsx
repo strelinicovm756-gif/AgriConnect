@@ -155,7 +155,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
 
         {/* Descriere scurtă */}
         {product.description && (
-          <p className="text-gray-500 text-sm mb-3 line-clamp-1">
+          <p className="text-gray-500 text-sm mb-3 line-clamp-2">
             {product.description}
           </p>
         )}
@@ -174,7 +174,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
           ) : (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <p className="text-gray-600 text-sm flex items-center gap-2">
-                <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+                <FontAwesomeIcon icon={faLock} className="text-emerald-700" />
                 Autentifică-te pentru a vedea prețul
               </p>
             </div>

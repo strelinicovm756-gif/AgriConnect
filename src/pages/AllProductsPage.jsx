@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { ProductCard } from '../components/features/ProductCard';
 import toast from 'react-hot-toast';
@@ -13,6 +13,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const globalCSS = `
+  @keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
   .sidebar-scroll::-webkit-scrollbar { width: 4px; }
   .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
   .sidebar-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 99px; }
@@ -114,11 +119,11 @@ function PriceRangeFilter({ initialMin, initialMax, onApply, onClear }) {
         <input type="text" inputMode="numeric" placeholder="Min" value={localMin}
           onChange={(e) => { setLocalMin(e.target.value.replace(/\D/g, '')); validate(e.target.value, localMax); }}
           onKeyDown={(e) => e.key === 'Enter' && validate(localMin, localMax) && onApply(localMin, localMax)}
-          className={`w-full px-3 py-2 bg-gray-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-400 transition-colors ${error ? 'border-red-300' : 'border-gray-200'}`} />
+          className={`w-full px-3 py-2 bg-gray-100 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white placeholder:text-gray-400 transition-colors ${error ? 'border-red-300' : 'border-gray-200'}`} />
         <input type="text" inputMode="numeric" placeholder="Max" value={localMax}
           onChange={(e) => { setLocalMax(e.target.value.replace(/\D/g, '')); validate(localMin, e.target.value); }}
           onKeyDown={(e) => e.key === 'Enter' && validate(localMin, localMax) && onApply(localMin, localMax)}
-          className={`w-full px-3 py-2 bg-gray-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-400 transition-colors ${error ? 'border-red-300' : 'border-gray-200'}`} />
+          className={`w-full px-3 py-2 bg-gray-100 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white placeholder:text-gray-400 transition-colors ${error ? 'border-red-300' : 'border-gray-200'}`} />
       </div>
       {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
       <div className="px-1 mb-4">
@@ -261,7 +266,7 @@ function FilterSidebar({
   return (
     <div className="py-2">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
         <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
           <FontAwesomeIcon icon={faFilter} className="text-emerald-600 text-sm" />
           Filtre
@@ -314,7 +319,7 @@ function FilterSidebar({
 
       {/* PREȚ */}
       <div className="px-5 py-4 border-b border-gray-50">
-        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Interval preț (lei)</h4>
+        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Interval preț</h4>
         <PriceRangeFilter
           initialMin={filters.minPrice}
           initialMax={filters.maxPrice}
@@ -325,7 +330,7 @@ function FilterSidebar({
 
       {/* LOCAȚIE */}
       <div className="px-5 py-4 border-b border-gray-50">
-        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Locație</h4>
+        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Locație</h4>
         <input
           type="text"
           placeholder="Ex: Chișinău"
@@ -337,7 +342,7 @@ function FilterSidebar({
 
       {/* OPȚIUNI */}
       <div className="px-5 py-4">
-        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Opțiuni</h4>
+        <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Opțiuni</h4>
         <label className={`flex items-center gap-3 cursor-pointer px-2 py-2.5 rounded-xl transition-all duration-150
           ${filters.negotiable ? 'bg-emerald-50 border-l-[3px] border-emerald-500 pl-[5px]' : 'hover:bg-gray-50 border-l-[3px] border-transparent'}`}>
           <input type="checkbox" checked={filters.negotiable}
@@ -363,6 +368,8 @@ export default function AllProductsPage({
   const [totalProducts, setTotalProducts] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [dbCategories, setDbCategories] = useState([]);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const sortDropdownRef = useRef(null);
 
   const [filters, setFilters] = useState({
     categoryId: initialCategory || null, // UUID (new) or name string (old compat)
@@ -386,6 +393,16 @@ export default function AllProductsPage({
 
   // Derived: UUIDs of B2B categories (updates when dbCategories loads)
   const b2bIds = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.id);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target)) {
+        setShowSortDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch categories (with subcategories joined) once on mount
   useEffect(() => {
@@ -480,8 +497,8 @@ export default function AllProductsPage({
     setFilters(prev => ({
       ...prev,
       [name]: name === 'verified' || name === 'negotiable' ? false
-            : (name === 'categoryId' || name === 'type') ? null
-            : ''
+        : (name === 'categoryId' || name === 'type') ? null
+          : ''
     }));
     setCurrentPage(1);
   }, []);
@@ -525,7 +542,7 @@ export default function AllProductsPage({
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex">
+    <div className="bg-gray-100 min-h-screen flex">
       <style>{globalCSS}</style>
 
       {/* ── Sidebar Desktop ── */}
@@ -535,9 +552,10 @@ export default function AllProductsPage({
           style={{
             position: 'sticky', top: '64px',
             height: 'calc(100vh - 64px)', overflowY: 'auto',
-            background: 'white', borderRadius: '0 20px 20px 0',
-            boxShadow: '6px 0 24px rgba(0,0,0,0.07)',
-            borderRight: '1px solid #ecfdf5',
+            background: 'white',
+            borderRadius: '0 20px 20px 0',
+            boxShadow: '6px 0 30px rgba(0,0,0,0.06)',
+            borderRight: '1px solid #e5e7eb',
           }}
         >
           <FilterSidebar
@@ -556,99 +574,171 @@ export default function AllProductsPage({
       </aside>
 
       {/* ── Main Content ── */}
-      <main className="flex-1 min-w-0 px-6 lg:px-10 py-6" style={{ overflowY: 'auto' }}>
+      <main className="flex-1 min-w-0 px-6 lg:px-10 py-6 bg-gray-100" style={{ overflowY: 'auto' }}>
 
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-          <button onClick={() => onNavigate('home')} className="hover:text-emerald-600 transition flex items-center gap-1">
-            <FontAwesomeIcon icon={faHome} /> Acasă
+        <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
+          <button
+            onClick={() => onNavigate('home')}
+            className="hover:text-emerald-600 transition flex items-center gap-1"
+          >
+            <FontAwesomeIcon icon={faHome} />
+            <span>Acasă</span>
           </button>
-          <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
-          <span className="text-gray-900 font-medium">
-            {getPageTitle()}
-          </span>
+          <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+          <span className="text-gray-600 font-medium">{getPageTitle()}</span>
         </div>
 
-        {/* Page Header */}
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 leading-tight">
-              {getPageTitle()}
-            </h1>
-            <p className="text-gray-500 text-sm mt-0.5">
-              {loading ? 'Se încarcă...' : (
-                <><span className="text-emerald-600 font-bold">{totalProducts}</span> produse găsite</>
+        {/* Page title */}
+        <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-4">
+          {getPageTitle()}
+        </h1>
+
+        {/* Action bar — filters left, sort right */}
+        <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-200">
+
+          {/* Left: active filter pills + results count */}
+          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+            {/* Results count pill */}
+            <span className="text-sm text-gray-500 flex-shrink-0">
+              {loading ? (
+                'Se încarcă...'
+              ) : (
+                <>
+                  <span className="font-bold text-emerald-600">{totalProducts}</span>
+                  {' '}produse găsite
+                </>
               )}
-            </p>
-          </div>
+            </span>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => setShowMobileFilters(true)}
-              className="lg:hidden flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition text-sm font-medium"
-            >
-              <FontAwesomeIcon icon={faFilter} />
-              Filtre {activeFiltersCount > 0 && `(${activeFiltersCount})`}
-            </button>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => { setFilters(p => ({ ...p, sortBy: e.target.value })); setCurrentPage(1); }}
-              className="text-sm px-3 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-            >
-              {sortOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-        </div>
-
-        {/* Active Filter Pills */}
-        {activeFiltersCount > 0 && (
-          <div className="flex flex-wrap gap-2 mb-5">
+            {/* Active filter pills */}
             {filters.categoryId && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
                 {getCategoryDisplayName(filters.categoryId)}
-                <button onClick={() => clearFilter('categoryId')}><FontAwesomeIcon icon={faXmark} className="text-[10px]" /></button>
+                <button onClick={() => clearFilter('categoryId')}>
+                  <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                </button>
               </span>
             )}
             {filters.search && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200">
-                Căutare: {filters.search}
-                <button onClick={() => clearFilter('search')}><FontAwesomeIcon icon={faXmark} className="text-[10px]" /></button>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
+                {filters.search}
+                <button onClick={() => clearFilter('search')}>
+                  <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                </button>
               </span>
             )}
             {(filters.minPrice || filters.maxPrice) && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200">
-                Preț: {filters.minPrice || '0'} – {filters.maxPrice || '∞'} lei
-                <button onClick={handlePriceClear}><FontAwesomeIcon icon={faXmark} className="text-[10px]" /></button>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
+                {filters.minPrice || '0'} – {filters.maxPrice || '∞'} lei
+                <button onClick={handlePriceClear}>
+                  <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                </button>
               </span>
             )}
             {filters.location && (
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#00a669] text-white rounded-full text-xs font-bold shadow-sm">
-                <FontAwesomeIcon icon={faMapMarkerAlt} className="text-[11px]" />
-                <span className="uppercase tracking-wider">{filters.location}</span>
-                <div className="w-[1px] h-3 bg-white/30" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-700 text-white rounded-full text-xs font-semibold flex-shrink-0">
+                <FontAwesomeIcon icon={faMapMarkerAlt} className="text-[10px]" />
+                {filters.location}
                 <button onClick={() => clearFilter('location')} className="hover:opacity-70 transition-opacity">
-                  <FontAwesomeIcon icon={faXmark} className="text-[11px]" />
+                  <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
               </span>
             )}
             {filters.negotiable && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
                 Negociabil
-                <button onClick={() => clearFilter('negotiable')}><FontAwesomeIcon icon={faXmark} className="text-[10px]" /></button>
+                <button onClick={() => clearFilter('negotiable')}>
+                  <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                </button>
               </span>
             )}
             {filters.type && (
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                filters.type === 'b2c'
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-gray-700 text-white border-gray-700'
-              }`}>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border flex-shrink-0 ${filters.type === 'b2c'
+                  ? 'bg-emerald-600 text-white border-emerald-600'
+                  : 'bg-emerald-700 text-white border-emerald-700'
+                }`}>
                 {filters.type === 'b2b' ? 'Servicii & Utilități' : 'Produse Alimentare'}
-                <button onClick={() => clearFilter('type')}><FontAwesomeIcon icon={faXmark} className="text-[10px]" /></button>
+                <button onClick={() => clearFilter('type')}>
+                  <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                </button>
               </span>
             )}
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="bg-gray-100/50 hover:bg-red-50 border border-gray-200 hover:border-red-100 px-3 py-1 rounded-full text-[11px] font-semibold text-gray-500 hover:text-red-600 transition-all flex-shrink-0"
+              >
+                Resetează tot
+              </button>
+            )}
           </div>
-        )}
+
+          {/* Right: mobile filters button + sort */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setShowMobileFilters(true)}
+              className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition text-xs font-medium text-gray-600"
+            >
+              <FontAwesomeIcon icon={faFilter} className="text-xs" />
+              Filtre
+              {activeFiltersCount > 0 && (
+                <span className="w-4 h-4 bg-emerald-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+
+            {/* Sort — custom animated dropdown */}
+            <div className="relative" ref={sortDropdownRef}>
+              <button
+                onClick={() => setShowSortDropdown(p => !p)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm font-semibold transition-all duration-200 ${showSortDropdown
+                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-emerald-300 hover:bg-emerald-50/50'
+                  }`}
+              >
+                <FontAwesomeIcon
+                  icon={faFilter}
+                  className={`text-xs transition-colors ${showSortDropdown ? 'text-white' : 'text-gray-400'}`}
+                  style={{ transform: 'rotate(90deg)' }}
+                />
+                <span>{sortOptions.find(o => o.value === filters.sortBy)?.label}</span>
+                <FontAwesomeIcon
+                  icon={faChevronDown}
+                  className={`text-[10px] transition-all duration-300 ${showSortDropdown ? 'rotate-180 text-white' : 'text-gray-400'}`}
+                />
+              </button>
+
+              {showSortDropdown && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden z-20"
+                  style={{ animation: 'dropdownIn 0.18s ease-out forwards' }}
+                >
+                  {sortOptions.map((option, idx) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setFilters(p => ({ ...p, sortBy: option.value }));
+                        setCurrentPage(1);
+                        setShowSortDropdown(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-colors text-left ${filters.sortBy === option.value
+                          ? 'bg-emerald-50 text-emerald-700 font-semibold'
+                          : 'text-gray-700 hover:bg-gray-50'
+                        } ${idx !== sortOptions.length - 1 ? 'border-b border-gray-50' : ''}`}
+                    >
+                      <span>{option.label}</span>
+                      {filters.sortBy === option.value && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Mobile Filters Modal */}
         {showMobileFilters && (
@@ -687,7 +777,7 @@ export default function AllProductsPage({
             <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
               {products.map((product) => (
                 <div key={product.id}
-                  className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-emerald-200 transition-all duration-300">
+                  className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.10)] hover:border-emerald-200 transition-all duration-300">
                   <ProductCard
                     product={product}
                     session={session}
@@ -728,7 +818,7 @@ export default function AllProductsPage({
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-100">
+          <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <FontAwesomeIcon icon={faBoxesStacked} className="text-gray-300 text-6xl mb-4" />
             <p className="text-gray-500 text-base mb-4">Nu am găsit produse pentru criteriile selectate</p>
             <button onClick={clearAllFilters}

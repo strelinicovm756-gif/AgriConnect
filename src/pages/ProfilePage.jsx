@@ -149,7 +149,7 @@ function MyReviewsSection({ session, onNavigate }) {
                 </div>
                 <div className="flex items-center gap-3">
                     {!loading && reviews.length > 0 && (
-                        <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2.5 py-1 rounded-full border border-yellow-200">
+                        <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full ">
                             {reviews.length}
                         </span>
                     )}
@@ -599,7 +599,7 @@ export default function ProfilePage({ session, onNavigate }) {
 
                             {/* Trust badge */}
                             {profile?.is_verified ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-semibold">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">
                                     <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
                                     Verified Profile
                                 </span>

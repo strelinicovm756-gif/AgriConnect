@@ -22,14 +22,14 @@ import AddProductModal from "../features/AddProductModal";
 import { useChat } from "../../hooks/useChat";
 
 const CATEGORY_ICONS = {
-  'Legume': Carrot,
-  'Fructe': Apple,
-  'Lactate': Milk,
-  'Carne': Beef,
-  'Ouă': Egg,
-  'Miere': Flower2,
-  'Cereale': Wheat,
-  'Servicii': Tractor,
+  'Vegetables': Carrot,
+  'Fruits': Apple,
+  'Dairy': Milk,
+  'Meat': Beef,
+  'Eggs': Egg,
+  'Honey': Flower2,
+  'Cereals': Wheat,
+  'Land Services': Tractor,
 };
 
 const ICON_MAP = {
@@ -482,7 +482,7 @@ export function Navbar({ session, onNavigate }) {
             className="fixed top-16 left-0 right-0 z-40 bg-white shadow-2xl rounded-b-[3rem] overflow-hidden border-t border-gray-100"
           >
             <div className="overflow-y-auto mega-scroll pr-2"
-              style={{ maxHeight: '70vh' }}
+              style={{ maxHeight: 'calc(70vh - 60px)' }}
             >
               <div className="max-w-6xl mx-auto px-4 py-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -496,10 +496,10 @@ export function Navbar({ session, onNavigate }) {
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-start">
                       {megaCategories.b2c.map(cat => {
                         return (
-                          <div key={cat.id} className="group bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-emerald-400 transition-all duration-200 flex flex-col">
+                          <div key={cat.id} className="group bg-white border border-gray-100 rounded-2xl p-2 hover:shadow-md hover:border-emerald-400 transition-all duration-200 flex flex-col">
                             <button
                               onClick={() => handleMegaNav({ category: cat.id })}
-                              className="flex items-center gap-2.5 mb-3 w-full text-left"
+                              className="flex items-center gap-2 mb-3 w-full text-left"
                             >
                               <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0">
                                 <FontAwesomeIcon icon={ICON_MAP[cat.icon] ?? faCarrot} className="text-white text-sm" />
@@ -553,7 +553,7 @@ export function Navbar({ session, onNavigate }) {
                                 onClick={() => handleMegaNav({ category: cat.id })}
                                 className="text-xs text-emerald-600 font-semibold"
                               >
-                                Vezi toate
+                                see all
                               </button>
                             </div>
                           </div>
@@ -571,7 +571,7 @@ export function Navbar({ session, onNavigate }) {
                     <div className="grid grid-cols-2 gap-3 items-start">
                       {megaCategories.b2b.map(cat => {
                         return (
-                          <div key={cat.id} className="group bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-emerald-400 transition-all duration-200 flex flex-col">
+                          <div key={cat.id} className="group bg-white border border-gray-100 rounded-2xl p-2 hover:shadow-md hover:border-emerald-400 transition-all duration-200 flex flex-col">
                             <button
                               onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
                               className="flex items-center gap-2.5 mb-3 w-full text-left"
@@ -628,7 +628,7 @@ export function Navbar({ session, onNavigate }) {
                                 onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
                                 className="text-xs text-emerald-600 font-semibold tracking-wide no-underline"
                               >
-                                Vezi toate
+                                see all
                               </button>
                             </div>
                           </div>
@@ -639,17 +639,18 @@ export function Navbar({ session, onNavigate }) {
 
                 </div>
 
-                {/* Footer mega menu */}
-                <div className="rounded-lg mt-6 pt-4 border-t border-gray-100 text-center">
-                  <button
-                    onClick={() => { setShowMegaMenu(false); setOpenCategoryId(null); onNavigate('toate-produsele'); }}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-emerald-600 hover:text-white text-gray-700 rounded-xl font-semibold text-sm transition-colors"
-                  >
-                    Search all categories
-                    <ArrowRight size={14} />
-                  </button>
-                </div>
               </div>
+            </div>
+
+            {/* Footer — OUTSIDE scroll, always visible */}
+            <div className="border-t border-gray-100 py-4 text-center bg-white flex-shrink-0">
+              <button
+                onClick={() => { setShowMegaMenu(false); setOpenCategoryId(null); onNavigate('toate-produsele'); }}
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-emerald-600 hover:text-white text-gray-700 rounded-xl font-semibold text-sm transition-colors"
+              >
+                Search all categories
+                <ArrowRight size={14} />
+              </button>
             </div>
           </motion.div>
         )}
@@ -736,7 +737,7 @@ export function Navbar({ session, onNavigate }) {
                   )}
 
                   <button onClick={handleSearchSubmit} className="mt-6 w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition">
-                    <span>Vezi toate ({searchResults.length})</span>
+                    <span>See all ({searchResults.length})</span>
                     <ArrowRight size={14} />
                   </button>
                 </div>

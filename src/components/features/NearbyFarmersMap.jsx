@@ -66,9 +66,9 @@ function radiusToZoom(radiusKm) {
     return 7;
 }
 
-const RADIUS_STEPS = [5, 10, 15, 25];
+const RADIUS_STEPS = [5, 10, 15, 25,30, 35];
 
-export default function NearbyFarmersMap({ products = [], onNavigate }) {
+export default function NearbyFarmersMap({ products = [], onNavigate, dbCategories = [] }) {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const markersRef = useRef([]);
@@ -83,6 +83,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
     const [radiusKm, setRadiusKm] = useState(20);
     const [radiusIndex, setRadiusIndex] = useState(2);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [mapFilter, setMapFilter] = useState('all'); // 'all' | 'b2c' | 'b2b'
 
     const requestLocation = () => {
         if (!navigator.geolocation) { setLocationStatus('denied'); return; }
@@ -149,8 +150,29 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
         if (!mapReady || !userLocation || products.length === 0) return;
 
         const geocodeAll = async () => {
+            const filteredProducts = products.filter(p => {
+                if (mapFilter === 'all') return true;
+                if (mapFilter === 'b2b') {
+                    const b2bIds = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.id);
+                    const b2bNames = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.name);
+                    if (p.category_id) return b2bIds.includes(p.category_id);
+                    return b2bNames.includes(p.category);
+                }
+                if (mapFilter === 'b2c') {
+                    const b2bIds = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.id);
+                    const b2bNames = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.name);
+                    if (p.category_id) return !b2bIds.includes(p.category_id);
+                    return !b2bNames.includes(p.category);
+                }
+                return true;
+            });
+
+            allLocationsRef.current = [];
+            markersRef.current.forEach(m => m.remove());
+            markersRef.current = [];
+
             const locationMap = {};
-            products.forEach(p => {
+            filteredProducts.forEach(p => {
                 if (!p.location) return;
                 if (!locationMap[p.location]) locationMap[p.location] = [];
                 locationMap[p.location].push(p);
@@ -172,7 +194,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
         };
 
         geocodeAll();
-    }, [mapReady, userLocation, products]);
+    }, [mapReady, userLocation, products, mapFilter]);
 
     const refreshMarkers = useCallback((locations, radius) => {
         if (!mapRef.current || !userLocation) return;
@@ -324,7 +346,40 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
                         style={{ display: locationStatus === 'granted' ? 'block' : 'none' }}
                     />
 
-                    {/* Slider raza + popup furnizor — overlay jos */}
+                    {/* Filter pills — TOP LEFT */}
+                    {locationStatus === 'granted' && (
+                        <div
+                            className="absolute top-4 left-4 z-20"
+                            style={{ pointerEvents: 'none' }}
+                        >
+                            <div
+                                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 px-3 py-2 flex gap-1.5"
+                                style={{ pointerEvents: 'auto' }}
+                                onMouseDown={e => e.stopPropagation()}
+                                onTouchStart={e => e.stopPropagation()}
+                            >
+                                {[
+                                    { key: 'all', label: 'All' },
+                                    { key: 'b2c', label: 'Food' },
+                                    { key: 'b2b', label: 'Services' },
+                                ].map(f => (
+                                    <button
+                                        key={f.key}
+                                        onClick={() => setMapFilter(f.key)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                            mapFilter === f.key
+                                                ? 'bg-emerald-600 text-white shadow-sm'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {f.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Slider raza + popup furnizor — BOTTOM LEFT */}
                     {locationStatus === 'granted' && (
                         <div
                             className="absolute bottom-4 left-4 z-20 flex flex-col sm:flex-row items-end sm:items-center gap-3"
@@ -409,7 +464,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate }) {
 
                     {/* Badge numar furnizori */}
                     {locationStatus === 'granted' && (
-                        <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center gap-2">
+                        <div className="absolute top-4 right-14 z-10 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${nearbyCount > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`} />
                             <span className="text-sm font-semibold text-gray-800">
                                 {nearbyCount > 0 ? `${nearbyCount} nearby producers` : 'No producers nearby'}

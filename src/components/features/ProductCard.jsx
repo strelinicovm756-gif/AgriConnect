@@ -180,8 +180,8 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center border-2 flex-shrink-0"
                   style={{
-                    background: getColorForName(product.seller_name),
-                    borderColor: getColorForName(product.seller_name) + '50'
+                    background: getColorForName(product.user_id || product.seller_name),
+                    borderColor: getColorForName(product.user_id || product.seller_name) + '50'
                   }}
                 >
                   <span className="text-white text-sm font-black uppercase">

@@ -569,7 +569,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
       {/* ── HARTA ─────────────────────────────────────────────── */}
       <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl pt-10 pb-10">
-        <NearbyFarmersMap products={products} onNavigate={onNavigate} />
+        <NearbyFarmersMap products={products} onNavigate={onNavigate} dbCategories={dbCategories} />
       </div>
 
       {/* ── LOADING ───────────────────────────────────────────── */}

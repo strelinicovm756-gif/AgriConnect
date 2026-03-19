@@ -8,9 +8,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const TYPE_CONFIG = {
-  iarmaroc:     { label: 'Iarmaroc',      color: 'bg-emerald-100 text-emerald-700' },
-  curs_agricol: { label: 'Curs Agricol',  color: 'bg-blue-100 text-blue-700' },
-  piata_locala: { label: 'Piață Locală',  color: 'bg-amber-100 text-amber-800' },
+  iarmaroc:     { label: 'Fair',               color: 'bg-emerald-100 text-emerald-700' },
+  curs_agricol: { label: 'Agricultural Course', color: 'bg-blue-100 text-blue-700' },
+  piata_locala: { label: 'Local Market',        color: 'bg-amber-100 text-amber-800' },
 };
 
 const formatDate = (dateStr) => {
@@ -76,7 +76,7 @@ export default function EventDetailsPage({ session, onNavigate }) {
         <button onClick={() => onNavigate('evenimente')}
           className="flex items-center gap-2 text-gray-500 hover:text-emerald-700 text-sm font-medium mb-6 transition">
           <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
-          Înapoi la Evenimente
+          Back to Events
         </button>
 
         {/* Hero Image */}
@@ -126,7 +126,7 @@ export default function EventDetailsPage({ session, onNavigate }) {
             <div className="mb-8 bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                 <FontAwesomeIcon icon={faClock} className="text-emerald-600" />
-                Program
+                Schedule
               </h2>
               <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">{event.schedule}</p>
             </div>
@@ -137,11 +137,11 @@ export default function EventDetailsPage({ session, onNavigate }) {
             <div className="mb-8">
               <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                 <FontAwesomeIcon icon={faMapMarkerAlt} className="text-emerald-600" />
-                Locație
+                Location
               </h2>
               <div className="rounded-2xl overflow-hidden h-64 border border-gray-200">
                 <iframe
-                  title="Locație eveniment"
+                  title="Event location"
                   width="100%" height="100%" style={{ border: 0 }}
                   loading="lazy"
                   src={`https://maps.google.com/maps?q=${event.latitude},${event.longitude}&z=15&output=embed`}
@@ -155,7 +155,7 @@ export default function EventDetailsPage({ session, onNavigate }) {
             <a href={gcalUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-md">
               <FontAwesomeIcon icon={faCalendarDays} />
-              Adaugă în Google Calendar
+              Add to Google Calendar
               <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-xs" />
             </a>
             {event.latitude && event.longitude && (
@@ -163,7 +163,7 @@ export default function EventDetailsPage({ session, onNavigate }) {
                 target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition">
                 <FontAwesomeIcon icon={faMapMarkerAlt} className="text-emerald-600" />
-                Deschide în Google Maps
+                Open in Google Maps
               </a>
             )}
           </div>

@@ -80,14 +80,14 @@ function ProducerMap({ location }) {
             )}
             {status === 'error' && (
                 <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
-                    <p className="text-gray-400 text-xs text-center px-4">Harta indisponibilă</p>
+                    <p className="text-gray-400 text-xs text-center px-4">Map unavailable</p>
                 </div>
             )}
             {status === 'ready' && (
                 <a href={`https://www.google.com/maps/search/${encodeURIComponent(location)}`}
                     target="_blank" rel="noopener noreferrer"
                     className="absolute bottom-2 right-2 bg-white text-xs font-semibold text-emerald-700 px-2.5 py-1 rounded-lg shadow-sm hover:bg-emerald-50 transition border border-gray-100 flex items-center gap-1">
-                    <MapPin size={10} /> Deschide
+                    <MapPin size={10} /> Open in Maps
                 </a>
             )}
         </div>
@@ -96,8 +96,8 @@ function ProducerMap({ location }) {
 
 function ReviewCard({ review }) {
     const name = review.profiles?.full_name || 'Utilizator';
-    const color = getColorForName(name);
-    const labels = ['', 'Slab', 'Acceptabil', 'Bun', 'Foarte bun', 'Excelent'];
+    const color = getColorForName(review.id_profiles || name);
+    const labels = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 
     return (
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
@@ -115,7 +115,7 @@ function ReviewCard({ review }) {
                         )}
                         <span className="text-gray-400 text-xs flex items-center gap-1">
                             <Calendar size={10} />
-                            {new Date(review.created_at).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {new Date(review.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </span>
                     </div>
                 </div>
@@ -195,7 +195,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
             }
         } catch (err) {
             console.error(err);
-            toast.error('Producătorul nu a fost găsit');
+            toast.error('Producer not found');
             onNavigate('home');
         } finally {
             setLoading(false);
@@ -239,7 +239,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
         <div className="min-h-screen flex items-center justify-center bg-white">
             <div className="text-center">
                 <Metronome size="40" speed="1.6" color="#059669" />
-                <p className="text-gray-500 mt-3 text-sm">Se încarcă profilul...</p>
+                <p className="text-gray-500 mt-3 text-sm">Loading profile...</p>
             </div>
         </div>
     );
@@ -295,13 +295,13 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                                 setShowChatModal(true);
                                             }}
                                             className="flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 hover:border-emerald-300 text-gray-700 hover:text-emerald-700 font-semibold px-5 py-2.5 rounded-xl transition-all text-sm">
-                                            <MessageSquare size={14} />Mesaj
+                                            <MessageSquare size={14} />Message
                                         </button>
                                     </>
                                 ) : (
                                     <button onClick={() => onNavigate('profil')}
                                         className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-all text-sm">
-                                        Editează Profilul
+                                        Edit Profile
                                     </button>
                                 )}
                             </div>
@@ -316,18 +316,18 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
 
                         {/* Rating Card */}
                         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Rating Global</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">Global Rating</p>
                             <div className="flex items-center gap-4 mb-4">
                                 <div>
                                     <p className="text-5xl font-black text-gray-900 leading-none">
                                         {reviewStats.avg > 0 ? reviewStats.avg.toFixed(1) : '—'}
                                     </p>
-                                    {reviewStats.avg > 0 && <p className="text-gray-400 text-xs mt-1">din 5.0</p>}
+                                    {reviewStats.avg > 0 && <p className="text-gray-400 text-xs mt-1">out of 5.0</p>}
                                 </div>
                                 <div className="flex-1">
                                     <Stars value={reviewStats.avg} size={16} />
                                     <p className="text-xs text-gray-400 mt-1.5">
-                                        {reviewStats.count > 0 ? `${reviewStats.count} recenzie${reviewStats.count !== 1 ? 'i' : ''}` : 'Nicio recenzie încă'}
+                                        {reviewStats.count > 0 ? `${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''}` : 'No reviews yet'}
                                     </p>
                                 </div>
                             </div>
@@ -352,16 +352,16 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                         </div>
 
                         {/* Map Card */}
-                        {/* {producer.location && (
+                        {producer.location && (
               <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-3">Locație</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-3">Location</p>
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin size={13} className="text-emerald-600 flex-shrink-0" />
                   <span className="text-sm font-medium text-gray-700">{producer.location}</span>
                 </div>
                 <ProducerMap location={producer.location} />
               </div>
-            )} */}
+            )}
                     </div>
 
                     {/*MAIN CONTENT*/}
@@ -380,7 +380,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                             ) : (
                                 <div className="text-center py-8 text-gray-400">
                                     <Leaf size={32} className="mx-auto mb-3 opacity-20" />
-                                    <p className="text-sm">Nicio descriere adăugată momentan.</p>
+                                    <p className="text-sm">No description added yet.</p>
                                 </div>
                             )}
                         </div>
@@ -392,11 +392,11 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                     <div className="w-9 h-9 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
                                         <Package size={16} className="text-emerald-600" />
                                     </div>
-                                    Produse Disponibile
+                                    Available Products
                                 </h2>
                                 {products && filteredProducts.length > 0 && (
                                     <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
-                                        {filteredProducts.length} {filteredProducts.length === 1 ? 'produs' : 'produse'}
+                                        {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
                                     </span>
                                 )}
                             </div>
@@ -410,7 +410,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                             onChange={e => setSearchQuery(e.target.value)}
                                             onFocus={() => setSearchFocused(true)}
                                             onBlur={() => setSearchFocused(false)}
-                                            placeholder="Caută produse..."
+                                            placeholder="Search products..."
                                             className="w-full pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 focus:bg-white focus:border-emerald-300 rounded-xl text-sm placeholder-gray-400 focus:outline-none transition-all"
                                         />
                                         {searchQuery && (
@@ -425,7 +425,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                             <SlidersHorizontal size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                                             <select value={category} onChange={e => { setCategory(e.target.value); setProductPage(1); }}
                                                 className="pl-8 pr-7 py-2.5 bg-gray-50 border border-gray-200 hover:border-emerald-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-300 appearance-none cursor-pointer transition-all">
-                                                <option value="">Toate</option>
+                                                <option value="">All</option>
                                                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                             </select>
                                         </div>
@@ -439,12 +439,12 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                 <div className="text-center py-12 text-gray-400">
                                     <Package size={36} className="mx-auto mb-3 opacity-20" />
                                     <p className="text-sm text-gray-500">
-                                        {searchQuery || category ? 'Niciun produs nu corespunde filtrelor.' : 'Niciun produs activ momentan.'}
+                                        {searchQuery || category ? 'No products match the filters.' : 'No active products at the moment.'}
                                     </p>
                                     {(searchQuery || category) && (
                                         <button onClick={() => { setSearchQuery(''); setCategory(''); }}
                                             className="mt-2 text-emerald-600 text-xs font-semibold hover:underline">
-                                            Resetează filtrele
+                                            Reset filters
                                         </button>
                                     )}
                                 </div>
@@ -491,11 +491,11 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                         <MessageCircle size={16} className="text-emerald-600" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-bold text-gray-900">Recenzii Primite</p>
+                                        <p className="font-bold text-gray-900">Reviews Received</p>
                                         <p className="text-gray-500 text-sm">
                                             {reviewStats.count > 0
-                                                ? `${reviewStats.count} recenzie${reviewStats.count !== 1 ? 'i' : ''} · ★ ${reviewStats.avg.toFixed(1)}`
-                                                : 'Nicio recenzie momentan'}
+                                                ? `${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''} · ★ ${reviewStats.avg.toFixed(1)}`
+                                                : 'No reviews yet'}
                                         </p>
                                     </div>
                                 </div>
@@ -514,7 +514,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                     {reviews.length === 0 ? (
                                         <div className="text-center py-8 text-gray-400">
                                             <MessageCircle size={32} className="mx-auto mb-3 opacity-20" />
-                                            <p className="text-sm">Nicio recenzie primită deocamdată.</p>
+                                            <p className="text-sm">No reviews received yet.</p>
                                         </div>
                                     ) : (
                                         <>

@@ -33,31 +33,39 @@ const CATEGORY_UNITS = {
     { value: 'kg', label: 'Kilogram (kg)' },
   ],
   'lactate': [
-    { value: 'litru', label: 'Litru (L)' },
+    { value: 'litru', label: 'Litre (L)' },
     { value: 'kg', label: 'Kilogram (kg)' },
   ],
   'carne': [
     { value: 'kg', label: 'Kilogram (kg)' },
   ],
   'oua': [
-    { value: 'bucată', label: '10 Bucăți' },
+    { value: 'bucată', label: '10 Pieces' },
+  ],
+  'miere': [
+    { value: 'kg', label: 'Kilogram (kg)' },
   ],
   'cereale': [
     { value: 'kg', label: 'Kilogram (kg)' },
   ],
-  'servicii-teren': [
-    { value: 'hectar', label: 'Hectar (ha)' },
-    { value: 'oră', label: 'Oră' },
-    { value: 'zi', label: 'Zi de lucru' },
+  'field-services': [
+    { value: 'hectar', label: 'Hectare (ha)' },
+    { value: 'oră', label: 'Hour' },
   ],
   'default': [
     { value: 'kg', label: 'Kilogram (kg)' },
-    { value: 'bucată', label: 'Bucată' },
-    { value: 'litru', label: 'Litru (L)' },
-    { value: 'borcan', label: 'Borcan' },
-    { value: 'cutie', label: 'Cutie' },
-    { value: 'pachet', label: 'Pachet' },
+    { value: 'litru', label: 'Litre (L)' },
+    { value: 'bucată', label: 'Piece' },
+    { value: 'borcan', label: 'Jar' },
+    { value: 'cutie', label: 'Box' },
+    { value: 'pachet', label: '10 Pieces' },
   ],
+};
+
+const getUnitsForSlug = (slug) => {
+  if (!slug) return CATEGORY_UNITS['default'];
+  const units = CATEGORY_UNITS[slug];
+  return units ?? CATEGORY_UNITS['default'];
 };
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -131,6 +139,21 @@ function FormInput({ label, required, error, helper, children, ...props }) {
   );
 }
 
+const cleanAddress = (placeName) => {
+  if (!placeName) return '';
+  const parts = placeName.split(',').map(p => p.trim());
+  return parts
+    .filter(p =>
+      !p.match(/^Moldova$/i) &&
+      !p.match(/^Romania$/i) &&
+      !p.match(/^România$/i) &&
+      !p.match(/^\d{4,6}$/) &&
+      p.length > 0
+    )
+    .slice(0, 2)
+    .join(', ');
+};
+
 // ── Main Component ─────────────────────────────────────────────
 export default function AddProductModal({ isOpen, onClose, session, onSuccess, product }) {
   const [loading, setLoading] = useState(false);
@@ -168,10 +191,20 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   // ── Derived values ──────────────────────────────────────────
   const isB2B = activeGroup === 'b2b';
   const availableUnits = useMemo(() => {
+    if (!formData.category_id || categories.length === 0) return CATEGORY_UNITS['default'];
     const selectedCat = categories.find(c => c.id === formData.category_id);
-    if (!selectedCat?.slug) return CATEGORY_UNITS['default'];
-    return CATEGORY_UNITS[selectedCat.slug] ?? CATEGORY_UNITS['default'];
+    if (!selectedCat) return CATEGORY_UNITS['default'];
+    return getUnitsForSlug(selectedCat.slug);
   }, [formData.category_id, categories]);
+
+  useEffect(() => {
+    if (availableUnits.length > 0 && formData.category_id) {
+      const currentUnitValid = availableUnits.some(u => u.value === formData.unit);
+      if (!currentUnitValid) {
+        setFormData(prev => ({ ...prev, unit: availableUnits[0].value }));
+      }
+    }
+  }, [availableUnits]);
 
   const currentGroupCategories = categories.filter(c =>
     c.market_type === activeGroup || c.market_type === 'both'
@@ -201,7 +234,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
           category_id: firstB2C.id,
           subcategory: '',
           subcategory_id: null,
-          unit: (CATEGORY_UNITS[firstB2C.slug] ?? CATEGORY_UNITS['default'])[0].value
+          unit: getUnitsForSlug(firstB2C.slug)[0].value
         }));
         fetchSubcategories(firstB2C.id);
       }
@@ -211,7 +244,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   // ── Când schimbi categoria, resetează subcategoria și unitatea
   const handleCategoryChange = (cat) => {
-    const newUnits = CATEGORY_UNITS[cat.slug] ?? CATEGORY_UNITS['default'];
+    const newUnits = getUnitsForSlug(cat.slug);
     setFormData(prev => ({
       ...prev,
       category: cat.name,
@@ -283,7 +316,8 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
             `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=en&limit=1`
           );
           const data = await res.json();
-          const address = data.features?.[0]?.place_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          const rawAddress = data.features?.[0]?.place_name || '';
+          const address = cleanAddress(rawAddress) || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
           setFormData(p => ({ ...p, location: address }));
         } catch {
           setFormData(p => ({ ...p, location: `${lat.toFixed(4)}, ${lng.toFixed(4)}` }));
@@ -303,7 +337,8 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                 `https://api.mapbox.com/geocoding/v5/mapbox.places/${ll.lng},${ll.lat}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}&language=en&limit=1`
               );
               const data = await res.json();
-              const address = data.features?.[0]?.place_name || `${ll.lat.toFixed(4)}, ${ll.lng.toFixed(4)}`;
+              const rawAddress = data.features?.[0]?.place_name || '';
+              const address = cleanAddress(rawAddress) || `${ll.lat.toFixed(4)}, ${ll.lng.toFixed(4)}`;
               setFormData(p => ({ ...p, location: address }));
             } catch {
               setFormData(p => ({ ...p, location: `${ll.lat.toFixed(4)}, ${ll.lng.toFixed(4)}` }));

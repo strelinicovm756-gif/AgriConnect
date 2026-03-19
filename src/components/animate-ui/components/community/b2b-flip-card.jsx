@@ -27,7 +27,7 @@ const cardVariants = {
 
 export function B2BFlipCard({ provider, onRequestOffer, onNavigate }) {
   const [isFlipped, setIsFlipped] = React.useState(false);
-  const color = getColorForName(provider.name);
+  const color = getColorForName(provider.id || provider.name);
 
   const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window;
 

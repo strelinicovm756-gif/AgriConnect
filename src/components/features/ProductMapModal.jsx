@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faXmark,
-  faLocationDot,
   faMapMarkerAlt,
   faExpand,
   faCompress,

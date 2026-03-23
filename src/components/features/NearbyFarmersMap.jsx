@@ -82,8 +82,8 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
     const [mapReady, setMapReady] = useState(false);
     const [radiusKm, setRadiusKm] = useState(20);
     const [radiusIndex, setRadiusIndex] = useState(2);
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [mapFilter, setMapFilter] = useState('all'); // 'all' | 'b2c' | 'b2b'
+    const [isExpanded, setIsExpanded] = useState(true);
+    const [mapFilter, setMapFilter] = useState('all'); 
 
     const requestLocation = () => {
         if (!navigator.geolocation) { setLocationStatus('denied'); return; }

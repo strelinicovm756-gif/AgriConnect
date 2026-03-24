@@ -4,12 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCalendarDays, faLocationDot, faMapMarkerAlt, faArrowRight, faSpinner
 } from '@fortawesome/free-solid-svg-icons';
-
-const TYPE_CONFIG = {
-  iarmaroc:     { label: 'Fair',               color: 'bg-emerald-100 text-emerald-700' },
-  curs_agricol: { label: 'Agricultural Course', color: 'bg-blue-100 text-blue-700' },
-  piata_locala: { label: 'Local Market',        color: 'bg-amber-100 text-amber-800' },
-};
+import { useLanguage } from '../i18n/LanguageContext';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -17,6 +12,12 @@ const formatDate = (dateStr) => {
 };
 
 export default function EventsPage({ session, onNavigate }) {
+  const { t } = useLanguage();
+  const TYPE_CONFIG = {
+    iarmaroc:     { label: t.events.typeFair,        color: 'bg-emerald-100 text-emerald-700' },
+    curs_agricol: { label: t.events.typeAgriCourse,  color: 'bg-blue-100 text-blue-700' },
+    piata_locala: { label: t.events.typeLocalMarket, color: 'bg-amber-100 text-amber-800' },
+  };
   const [activeTab, setActiveTab] = useState('events');
   const [events, setEvents] = useState([]);
   const [markets, setMarkets] = useState([]);
@@ -50,8 +51,8 @@ export default function EventsPage({ session, onNavigate }) {
       <div className="bg-white border-b border-gray-200 px-4 py-10">
         <div className="max-w-6xl mx-auto">
           <FontAwesomeIcon icon={faCalendarDays} className="text-5xl mb-3 text-emerald-6s00" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Events & Local Markets</h1>
-          <p className="text-gray-500">Fairs, agricultural courses and local markets from the community.</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t.events.pageTitle}</h1>
+          <p className="text-gray-500">{t.events.pageSubtitle}</p>
         </div>
       </div>
 
@@ -59,16 +60,16 @@ export default function EventsPage({ session, onNavigate }) {
         {/* Tabs */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {[
-            { key: 'events', label: 'Fairs & Events' },
-            { key: 'markets', label: 'Local Markets' },
-          ].map(t => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)}
+            { key: 'events', label: t.events.tabEvents },
+            { key: 'markets', label: t.events.tabMarkets },
+          ].map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition ${
-                activeTab === t.key
+                activeTab === tab.key
                   ? 'bg-emerald-600 text-white shadow'
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               }`}>
-              {t.label}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -81,8 +82,8 @@ export default function EventsPage({ session, onNavigate }) {
           events.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <FontAwesomeIcon icon={faCalendarDays} className="text-5xl mb-3 opacity-30" />
-              <p className="font-medium text-gray-500">No events available at the moment</p>
-              <p className="text-sm mt-1">Check back soon for new fairs and courses!</p>
+              <p className="font-medium text-gray-500">{t.events.noEvents}</p>
+              <p className="text-sm mt-1">{t.events.noEventsHint}</p>
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -124,17 +125,17 @@ export default function EventsPage({ session, onNavigate }) {
           markets.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
               <FontAwesomeIcon icon={faLocationDot} className="text-5xl mb-3 opacity-30" />
-              <p className="font-medium text-gray-500">No local markets available at the moment</p>
+              <p className="font-medium text-gray-500">{t.events.noMarkets}</p>
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
               <table className="w-full text-sm min-w-[400px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200 text-left">
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Market / Location</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Schedule</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Date</th>
-                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Map</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.events.marketLocation}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">{t.events.schedule}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t.events.date}</th>
+                    <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.events.map}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -153,7 +154,7 @@ export default function EventsPage({ session, onNavigate }) {
                             onClick={e => e.stopPropagation()}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-200 transition w-fit">
                             <FontAwesomeIcon icon={faMapMarkerAlt} className="text-[10px]" />
-                            View map
+                            {t.events.viewMap}
                           </a>
                         ) : <span className="text-gray-400 text-xs">—</span>}
                       </td>

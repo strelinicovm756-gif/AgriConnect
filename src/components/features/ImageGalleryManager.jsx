@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,12 +17,13 @@ import {
  * Suportă: adăugare, ștergere, înlocuire, reordonare
  * Folosit atât în AddProduct cât și în EditProduct
  */
-export default function ImageGalleryManager({ 
-  initialImages = [], 
-  onChange, 
+export default function ImageGalleryManager({
+  initialImages = [],
+  onChange,
   userId,
-  disabled = false 
+  disabled = false
 }) {
+  const { t } = useLanguage();
   const [images, setImages] = useState([]);
   const [uploadingIndex, setUploadingIndex] = useState(null);
 
@@ -69,11 +71,11 @@ export default function ImageGalleryManager({
   const validateFile = (file) => {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Format invalid! Folosește: JPG, PNG sau WebP');
+      toast.error(t.features.invalidFormat);
       return false;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Imaginea este prea mare! Maximum 5MB');
+      toast.error(t.features.imageTooLarge);
       return false;
     }
     return true;
@@ -102,7 +104,7 @@ export default function ImageGalleryManager({
     } else {
       // Adăugare normală la final
       if (images.length >= 4) {
-        toast.error('Poți avea maxim 4 imagini!');
+        toast.error(t.features.maxImagesError);
         return;
       }
 
@@ -126,10 +128,10 @@ export default function ImageGalleryManager({
           : img
       ));
       
-      toast.success('Imagine încărcată!');
+      toast.success(t.features.imageUploaded);
     } catch (error) {
       console.error('Eroare upload:', error);
-      toast.error('Eroare la încărcarea imaginii');
+      toast.error(t.features.imageUploadError);
       
       // Elimină imaginea dacă upload-ul a eșuat
       setImages(prev => prev.filter(img => img.id !== newImageId));
@@ -140,7 +142,7 @@ export default function ImageGalleryManager({
 
   const handleRemoveImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index));
-    toast.success('Imagine ștearsă!');
+    toast.success(t.features.imageDeleted);
   };
 
   const handleReplaceImage = (index, file) => {
@@ -185,7 +187,7 @@ export default function ImageGalleryManager({
       return updated;
     });
 
-    toast.success('Ordine schimbată!', { duration: 1500 });
+    toast.success(t.features.orderChanged, { duration: 1500 });
   };
 
   return (
@@ -230,7 +232,7 @@ export default function ImageGalleryManager({
                       />
                     </div>
                     <p className="text-slate-500 text-xs font-medium">
-                      {slotIndex === 0 ? 'Copertă' : `Slot ${slotIndex + 1}`}
+                      {slotIndex === 0 ? t.features.cover : `Slot ${slotIndex + 1}`}
                     </p>
                   </div>
                   <input
@@ -258,7 +260,7 @@ export default function ImageGalleryManager({
                   {slotIndex === 0 && (
                     <div className="absolute top-2 left-2 bg-emerald-500 text-white px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-lg z-10">
                       <FontAwesomeIcon icon={faStar} className="text-[10px]" />
-                      Copertă
+                      {t.features.cover}
                     </div>
                   )}
 
@@ -270,7 +272,7 @@ export default function ImageGalleryManager({
                           icon={faSpinner} 
                           className="text-3xl animate-spin mb-2" 
                         />
-                        <p className="text-xs font-medium">Se încarcă...</p>
+                        <p className="text-xs font-medium">{t.features.uploading}</p>
                       </div>
                     </div>
                   )}
@@ -303,7 +305,7 @@ export default function ImageGalleryManager({
                   {/* Badge Status */}
                   {!image.isExisting && !isUploading && (
                     <div className="absolute bottom-2 left-2 bg-blue-500 text-white px-2 py-0.5 rounded text-[10px] font-bold shadow-md">
-                      NOU
+                      {t.features.newBadge}
                     </div>
                   )}
                 </>
@@ -317,10 +319,10 @@ export default function ImageGalleryManager({
       <div className="flex items-center justify-between text-xs">
         <p className="text-slate-500">
           <FontAwesomeIcon icon={faCamera} className="mr-1" />
-          Trage imaginile pentru a le reordona
+          {t.features.dragToReorder}
         </p>
         <p className="text-slate-600 font-medium">
-          <span className="text-emerald-600 font-bold">{images.length}</span> / 4 imagini
+          <span className="text-emerald-600 font-bold">{images.length}</span> {t.features.imagesCount}
         </p>
       </div>
 

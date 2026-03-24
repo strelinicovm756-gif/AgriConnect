@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -12,7 +13,6 @@ import {
   faEgg, faJar, faWheatAwn, faTimes,
   faTriangleExclamation, faCircleCheck,
   faLocationDot, faLocationCrosshairs, faMapMarkerAlt,
-  faCheckCircle, faExclamationCircle,
   faTractor, faFlask, faWrench, faDroplet,
   faLeaf, faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
@@ -156,6 +156,7 @@ const cleanAddress = (placeName) => {
 
 // ── Main Component ─────────────────────────────────────────────
 export default function AddProductModal({ isOpen, onClose, session, onSuccess, product }) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(true);
   const [galleryImages, setGalleryImages] = useState([]);
@@ -376,7 +377,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   };
 
   const handleDetectLocation = async () => {
-    if (!navigator.geolocation) { toast.error('Your browser does not support geolocation'); return; }
+    if (!navigator.geolocation) { toast.error(t.features.browserNoGeolocation); return; }
     setDetectingLocation(true);
     navigator.geolocation.getCurrentPosition(
       async ({ coords: { latitude, longitude } }) => {
@@ -389,13 +390,13 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
           parts.push(a.city || a.town || a.village || a.municipality || a.county || '');
           const loc = parts.filter(Boolean).join(', ');
           if (loc) { setFormData(prev => ({ ...prev, location: loc })); toast.success(`Location: ${loc}`); }
-          else toast.error('Could not determine exact location');
-        } catch { toast.error('Error determining location'); }
+          else toast.error(t.features.locationUndetermined);
+        } catch { toast.error(t.features.locationError); }
         finally { setDetectingLocation(false); }
       },
       (err) => {
-        const msgs = { 1: 'Location permission was denied.', 2: 'Location is not available.', 3: 'Detection timed out.' };
-        toast.error(msgs[err.code] || 'Could not detect location', { duration: 5000 });
+        const msgs = { 1: t.features.locationPermissionDenied, 2: t.features.locationNotAvailable, 3: t.features.locationTimeout };
+        toast.error(msgs[err.code] || t.features.locationDetectGeneric, { duration: 5000 });
         setDetectingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -405,19 +406,19 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   const validateForm = () => {
     const e = {};
     if (!formData.name.trim()) {
-      e.name = 'Name is required';
+      e.name = t.features.nameRequired;
     } else if (formData.name.trim().length < 3) {
-      e.name = 'Name must be at least 3 characters';
+      e.name = t.features.nameMinLength;
     } else if (/^[\s\-']+$/.test(formData.name.trim())) {
-      e.name = 'Name must contain letters';
+      e.name = t.features.nameMustHaveLetters;
     }
-    if (!formData.description.trim() || formData.description.length < 20) e.description = 'Description must be at least 20 characters';
+    if (!formData.description.trim() || formData.description.length < 20) e.description = t.features.descriptionMinLength;
     if (!formData.price || formData.price === '') {
-      e.price = 'Price is required';
+      e.price = t.features.priceRequired;
     } else if (parseFloat(formData.price) <= 0) {
-      e.price = 'Price must be greater than 0';
+      e.price = t.features.pricePositive;
     } else if (parseFloat(formData.price) > 999999) {
-      e.price = 'Price cannot exceed 999,999 lei';
+      e.price = t.features.priceMaxExceeded;
     }
 
     setErrors(e);
@@ -426,8 +427,8 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
-    if (!validateForm()) { toast.error('Please fill in all fields correctly'); return; }
-    if (galleryImages.some(img => img.isUploading)) { toast.error('Please wait for image upload to finish!'); return; }
+    if (!validateForm()) { toast.error(t.features.fillFieldsCorrectly); return; }
+    if (galleryImages.some(img => img.isUploading)) { toast.error(t.features.waitForUpload); return; }
 
     try {
       setLoading(true);
@@ -458,7 +459,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
       }).select().single();
       if (error) throw error;
 
-      toast.success('Product added successfully!', { duration: 4000 });
+      toast.success(t.features.productAdded, { duration: 4000 });
       setFormData({ name: '', description: '', price: '', unit: '', category: '', category_id: null, subcategory: '', subcategory_id: null, location: '', is_negotiable: false });
       setGalleryImages([]); setErrors({}); setActiveGroup('b2c'); setExpiresAt('');
       setSubcategories([]);
@@ -488,7 +489,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5 flex justify-between items-center rounded-t-3xl flex-shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Add New Product</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t.features.addNewProduct}</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
             <FontAwesomeIcon icon={faTimes} size="lg" />
@@ -498,7 +499,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
         {checkingProfile ? (
           <div className="p-12 text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600 mb-4" />
-            <p className="text-gray-600">Checking profile...</p>
+            <p className="text-gray-600">{t.features.checkingProfile}</p>
           </div>
         ) : (
           <>
@@ -508,14 +509,14 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
               {/* SECȚIUNEA 1: Tip produs */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-                  Product type
+                  {t.features.productType}
                 </h3>
 
                 {/* Toggle B2C / B2B */}
                 <div className="flex gap-3 mb-5">
                   {[
-                    { type: 'b2c', label: 'Food Products' },
-                    { type: 'b2b', label: 'Agricultural Services & Utilities' }
+                    { type: 'b2c', label: t.features.foodProducts },
+                    { type: 'b2b', label: t.features.agriculturalServices }
                   ].map(group => (
                     <button key={group.type} type="button" onClick={() => handleGroupChange(group.type)}
                       className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 font-semibold text-sm transition-all
@@ -565,7 +566,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                 {subcategories.length > 0 && (
                   <div className="mt-4">
                     <label className="block text-gray-700 text-sm font-medium mb-2">
-                      Subcategory
+                      {t.features.subcategory}
                     </label>
                     <div className="relative">
                       <select
@@ -580,7 +581,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                         }}
                         className={`w-full px-4 py-3 pr-10 bg-gray-50 border rounded-xl text-gray-900 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 transition-all
                           ${activeGroup === 'b2b' ? ' focus:ring-gray-100' : 'focus:ring-gray-300'}`}>
-                        <option value="">Select subcategory</option>
+                        <option value="">{t.features.selectSubcategory}</option>
                         {subcategories.map(sub => (
                           <option key={sub.id} value={sub.id}>{sub.name}</option>
                         ))}
@@ -594,19 +595,19 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
               {/* ── SECȚIUNEA 2: Informații de bază ──────────── */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-                  Basic information
+                  {t.features.basicInfo}
                 </h3>
                 <div className="space-y-5">
                   {/* Imagini */}
                   <div>
-                    <label className="block text-gray-700 text-sm font-medium mb-3">Product Photos (Max 4)</label>
+                    <label className="block text-gray-700 text-sm font-medium mb-3">{t.features.productPhotos}</label>
                     <ImageGalleryManager initialImages={[]} onChange={setGalleryImages} userId={session.user.id} disabled={loading} />
-                    <p className="text-gray-500 text-xs mt-2">The first image will be shown on the main page.</p>
+                    <p className="text-gray-500 text-xs mt-2">{t.features.firstImageNote}</p>
                   </div>
 
                   {/* Nume */}
-                  <FormInput label="Product Name" required error={errors.name}
-                    helper="Letters and spaces only (no digits or symbols)"
+                  <FormInput label={t.features.productName} required error={errors.name}
+                    helper={t.features.nameHelper}
                     value={formData.name} onChange={e => {
                       const value = e.target.value;
                       const filtered = value.replace(/[^a-zA-ZăâîșțĂÂÎȘȚ\s\-']/g, '');
@@ -617,7 +618,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                   {/* Descriere */}
                   <div>
                     <label className="block text-gray-700 text-sm font-medium mb-2">
-                      Description <span className="text-red-500">*</span>
+                      {t.features.descriptionLabel} <span className="text-red-500">*</span>
                     </label>
                     <textarea value={formData.description}
                       onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
@@ -632,7 +633,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                         }`} />
                     <div className="flex justify-between mt-1">
                       <p className={`text-xs ${errors.description ? 'text-red-600' : 'text-gray-500'}`}>
-                        {errors.description || 'Minimum 20 characters'}
+                        {errors.description || t.features.descriptionHelper}
                       </p>
                       <p className={`text-xs ${formData.description.length >= 20 ? 'text-emerald-600' : 'text-gray-400'}`}>
                         {formData.description.length} / 500
@@ -645,14 +646,14 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
               {/*SECȚIUNEA 3: Preț */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-                  Price
+                  {t.features.priceSection}
                 </h3>
                 <div className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
                     {/* Preț */}
                     <div>
                       <label className="block text-gray-700 text-sm font-medium mb-2">
-                        Price <span className="text-red-500">*</span>
+                        {t.features.priceSection} <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <input
@@ -687,7 +688,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                   {/* Unitate de măsură — dinamic */}
                   <div>
                     <label className="block text-gray-700 text-sm font-medium mb-3">
-                      Unit of measure <span className="text-red-500">*</span>
+                      {t.features.unitOfMeasure} <span className="text-red-500">*</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {availableUnits.map(unit => (
@@ -709,9 +710,9 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                       onChange={e => setFormData(prev => ({ ...prev, is_negotiable: e.target.checked }))}
                       className="w-5 h-5 mt-0.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
                     <div>
-                      <span className="text-gray-900 font-medium text-sm">Negotiable price</span>
+                      <span className="text-gray-900 font-medium text-sm">{t.features.negotiablePrice}</span>
                       <p className="text-gray-500 text-xs mt-0.5">
-                        {isB2B ? 'Allow clients to negotiate the rate' : 'Allow buyers to negotiate the price'}
+                        {isB2B ? t.features.negotiableB2B : t.features.negotiableB2C}
                       </p>
                     </div>
                   </label>
@@ -721,7 +722,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
               {/*Sectiunea 4: Locație  */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-                  Location
+                  {t.features.locationSection}
                 </h3>
                 <div className="space-y-3">
                   <div className="relative">
@@ -730,7 +731,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                       type="text"
                       value={formData.location}
                       onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                      placeholder="Profile location will be used if left empty"
+                      placeholder={t.features.locationPlaceholder}
                       className="w-full pl-12 pr-4 py-3 bg-white border border-l-[3px] border-gray-200 border-l-gray-300 rounded-xl text-gray-900 placeholder-gray-400 hover:border-l-emerald-400 focus:border-l-emerald-500 focus:bg-emerald-50/20 focus:border-gray-200 focus:outline-none transition-all"
                     />
                   </div>
@@ -745,12 +746,12 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                       {detectingLocation ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />
-                          <span>Detecting...</span>
+                          <span>{t.features.detecting}</span>
                         </>
                       ) : (
                         <>
                           <FontAwesomeIcon icon={faLocationCrosshairs} />
-                          <span>Use my location</span>
+                          <span>{t.features.useMyLocation}</span>
                         </>
                       )}
                     </button>
@@ -761,7 +762,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                       className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all border-2 ${showLocationMap ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-emerald-600 text-emerald-600 hover:bg-emerald-50'}`}
                     >
                       <FontAwesomeIcon icon={faMapMarkerAlt} />
-                      <span>Pick on map</span>
+                      <span>{t.features.pickOnMap}</span>
                     </button>
                   </div>
 
@@ -773,23 +774,23 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                       >
                         <div ref={locationMapContainerRef} className="w-full h-full" />
                         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full pointer-events-none z-10">
-                          Click on map to set pin
+                          {t.features.clickMapToSetPin}
                         </div>
                       </div>
                       <p className="text-xs text-gray-400 mt-2">
-                        Click on the map to set location, or drag the pin.
+                        {t.features.clickMapInstruction}
                       </p>
                     </div>
                   )}
 
-                  <p className="text-gray-500 text-xs">Location helps buyers find products in their area.</p>
+                  <p className="text-gray-500 text-xs">{t.features.locationNote}</p>
                 </div>
               </div>
 
               {/* ── Perioadă de valabilitate ── */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
-                  Validity period
+                  {t.features.validityPeriod}
                 </h3>
 
                 {/* Quick-pick chips */}
@@ -823,7 +824,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                       className="px-3 py-1.5 rounded-full text-xs font-semibold text-gray-400 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition flex items-center gap-1"
                     >
                       <FontAwesomeIcon icon={faTimes} className="text-[10px]" />
-                      No limit
+                      {t.features.noLimit}
                     </button>
                   )}
                 </div>
@@ -847,8 +848,8 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
                 <p className={`text-xs mt-2 ${expiresAt ? 'text-gray-500' : 'text-gray-400'}`}>
                   {expiresAt
-                    ? <>Listing will be active until: <span className="font-semibold text-gray-700">{expiresAt.split('-').reverse().join('.')}</span></>
-                    : 'Listing remains active with no time limit.'
+                    ? <>{t.features.listingActiveUntil} <span className="font-semibold text-gray-700">{expiresAt.split('-').reverse().join('.')}</span></>
+                    : t.features.listingNoLimit
                   }
                 </p>
               </div>
@@ -865,13 +866,13 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white" />
-                  Adding...
+                  {t.features.adding}
                 </span>
-              ) : hasUploadingImages ? 'Uploading images...' : 'Add Product'}
+              ) : hasUploadingImages ? t.features.uploadingImages : t.features.addProduct}
             </button>
             <button type="button" onClick={onClose} disabled={loading}
               className="px-8 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3.5 rounded-xl transition disabled:opacity-50">
-              Cancel
+              {t.features.cancel}
             </button>
           </div>
           </>

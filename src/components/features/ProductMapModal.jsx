@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import toast from 'react-hot-toast';
@@ -80,6 +81,7 @@ async function copyToClipboard(text) {
 }
 
 export default function ProductMapModal({ isOpen, onClose, product, userLocation = null }) {
+  const { t } = useLanguage();
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -100,7 +102,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
 
       if (!coords) {
         setLoading(false);
-        toast.error('Could not determine location coordinates');
+        toast.error(t.features.locationCoordsError);
         return;
       }
 
@@ -178,7 +180,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
 
   const handleCopyAddress = async () => {
     if (!exactCoords && !productCoords) {
-      toast.error('No coordinates available');
+      toast.error(t.features.locationCoordsError);
       return;
     }
 
@@ -190,16 +192,16 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
 
     if (success) {
       setCopied(true);
-      toast.success('Address copied!', { duration: 3000 });
+      toast.success(t.features.addressCopied, { duration: 3000 });
       setTimeout(() => setCopied(false), 2000);
     } else {
-      toast.error('Could not copy address');
+      toast.error(t.features.copyAddressError);
     }
   };
 
   const handleOpenInGoogleMaps = () => {
     if (!exactCoords && !productCoords) {
-      toast.error('Nu există coordonate disponibile');
+      toast.error(t.features.locationCoordsError);
       return;
     }
 
@@ -213,7 +215,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
     }
 
     window.open(mapsUrl, '_blank');
-    toast.success(userLocation ? 'Navigare deschisă!' : 'Locație deschisă!');
+    toast.success(userLocation ? t.features.navigating : t.features.locationOpened);
   };
 
   if (!isOpen) return null;
@@ -232,7 +234,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
                 <FontAwesomeIcon icon={faMapMarkerAlt} className="text-emerald-600 text-xl" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Locație Aproximativă</h2>
+                <h2 className="text-lg font-bold text-gray-900">{t.features.approximateLocation}</h2>
                 <p className="text-gray-500 text-sm">{product?.name}</p>
               </div>
             </div>
@@ -241,7 +243,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
               <button
                 onClick={toggleFullscreen}
                 className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-100 rounded-lg"
-                title={isFullscreen ? "Ieși din fullscreen" : "Fullscreen"}
+                title={isFullscreen ? t.features.exitFullscreen : t.features.fullscreen}
               >
                 <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
               </button>
@@ -260,7 +262,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
               <div className="absolute inset-0 flex items-center justify-center bg-white/90 z-10">
                 <div className="text-center">
                   <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600 mb-4"></div>
-                  <p className="text-gray-600">Se încarcă harta...</p>
+                  <p className="text-gray-600">{t.features.loadingMap}</p>
                 </div>
               </div>
             )}
@@ -296,7 +298,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
                       {distance && (
                         <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-200 flex items-center gap-1.5 whitespace-nowrap">
                           <FontAwesomeIcon icon={faRoute} className="text-xs" />
-                          {distance} km de tine
+                          {t.features.distanceFromYou.replace('{d}', distance)}
                         </span>
                       )}
                     </div>
@@ -317,7 +319,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
                       `}
                     >
                       <FontAwesomeIcon icon={copied ? faCheck : faCopy} />
-                      {copied ? 'Copiat!' : 'Copiază adresa'}
+                      {copied ? t.features.copied : t.features.copyAddress}
                     </button>
 
                     <button
@@ -325,7 +327,7 @@ export default function ProductMapModal({ isOpen, onClose, product, userLocation
                       className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all bg-emerald-600 text-white hover:bg-emerald-700 shadow-md border-2 border-emerald-600"
                     >
                       <FontAwesomeIcon icon={faMapLocationDot} />
-                      {userLocation ? 'Navigare' : 'Deschide Maps'}
+                      {userLocation ? t.features.navigate : t.features.openMaps}
                     </button>
                   </div>
                 </div>

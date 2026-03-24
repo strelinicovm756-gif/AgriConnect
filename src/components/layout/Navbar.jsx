@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import AddProductModal from "../features/AddProductModal";
 import { useChat } from "../../hooks/useChat";
+import { useLanguage } from "../../i18n/LanguageContext"; // ← NOU
 
 const CATEGORY_ICONS = {
   'Vegetables': Carrot,
@@ -37,7 +38,34 @@ const ICON_MAP = {
   faTractor, faSeedling, faWrench, faDroplet,
 };
 
+// ── Language Switcher Component ───────────────────────────────
+function LanguageSwitcher() {
+  const { lang, setLang } = useLanguage();
+  const langs = ['ro', 'en', 'fr'];
+
+  return (
+    <div className="flex items-center bg-gray-100 rounded-xl p-0.5 gap-0.5 flex-shrink-0">
+      {langs.map((l) => (
+        <button
+          key={l}
+          onClick={() => setLang(l)}
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200
+            ${lang === l
+              ? 'bg-white text-emerald-700 shadow-sm'
+              : 'text-gray-400 hover:text-gray-600'
+            }`}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Navbar({ session, onNavigate }) {
+  // ── Language ──────────────────────────────────────────────
+  const { t } = useLanguage(); // ← NOU
+
   const [profileName, setProfileName] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(!!session);
@@ -223,7 +251,7 @@ export function Navbar({ session, onNavigate }) {
     if (!error) {
       setShowDropdown(false);
       setProfileName('');
-      toast.success('You have been signed out!');
+      toast.success(t.login.toastWelcomeBack); // ← tradus
       onNavigate('home');
     }
   };
@@ -272,7 +300,6 @@ export function Navbar({ session, onNavigate }) {
           {/* Logo */}
           <div onClick={() => onNavigate('home')} className="flex items-center gap-2 cursor-pointer group flex-shrink-0">
             <img src="/src/assets/IconApp_em_600.svg" alt="Logo" className="h-7 w-7" />
-
             <h1 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition hidden sm:block">AgriConnect</h1>
           </div>
 
@@ -282,7 +309,7 @@ export function Navbar({ session, onNavigate }) {
             className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faCalendarDays} className="text-white" />
-            <span>Events</span>
+            <span>{t.nav.events}</span>
           </button>
 
           {/* Buton Categorii */}
@@ -292,7 +319,7 @@ export function Navbar({ session, onNavigate }) {
             className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faLayerGroup} />
-            <span>Categories</span>
+            <span>{t.nav.products}</span>
             <FontAwesomeIcon
               icon={faChevronDownSolid}
               className={`transition-transform duration-200 text-xs ${showMegaMenu ? 'rotate-180' : ''}`}
@@ -306,7 +333,7 @@ export function Navbar({ session, onNavigate }) {
               className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-300 hover:bg-white transition-all group shadow-sm"
             >
               <SearchAnimated animateOnHover color="#c2c2c2" strokeWidth={2} size={20} />
-              <span className="flex-1">Search products, location... </span>
+              <span className="flex-1">{t.nav.search}</span>
             </button>
             <button
               onClick={() => setShowOverlay(true)}
@@ -316,8 +343,12 @@ export function Navbar({ session, onNavigate }) {
             </button>
           </>
 
-          {/* Dreapta: buton + avatar */}
+          {/* Dreapta: Language Switcher + butoane + avatar */}
           <div className="flex items-center gap-3 flex-shrink-0">
+
+            {/* ── LANGUAGE SWITCHER ── */}
+            <LanguageSwitcher />
+
             {session ? (
               <>
                 {/* Buton Adaugă anunț */}
@@ -326,7 +357,7 @@ export function Navbar({ session, onNavigate }) {
                   className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-full text-sm hover:bg-emerald-700 shadow-md"
                 >
                   <Plus size={14} />
-                  <span>Add listing</span>
+                  <span>{t.nav.home === 'Acasă' ? 'Adaugă anunț' : t.nav.home === 'Home' ? 'Add listing' : 'Ajouter'}</span>
                 </button>
 
                 {/* Buton mobil */}
@@ -342,7 +373,7 @@ export function Navbar({ session, onNavigate }) {
                   <button
                     onClick={() => onNavigate('chat')}
                     className="relative w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-xl transition"
-                    title="Messages"
+                    title={t.nav.chat}
                   >
                     <MessageSquare size={18} />
                     {chatUnreadCount > 0 && (
@@ -436,7 +467,7 @@ export function Navbar({ session, onNavigate }) {
                           <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
                             <User size={16} />
                           </div>
-                          <span className="text-sm font-medium">My profile</span>
+                          <span className="text-sm font-medium">{t.nav.profile}</span>
                         </button>
                         {(userRole === 'admin' || userRole === 'super_admin') && (
                           <button onClick={() => { onNavigate('admin'); setShowDropdown(false); }} className="w-full p-2.5 text-left hover:bg-purple-50 rounded-xl flex items-center gap-3 group mt-1">
@@ -444,7 +475,7 @@ export function Navbar({ session, onNavigate }) {
                               <Shield size={16} />
                             </div>
                             <div>
-                              <span className="text-sm font-medium">Administration</span>
+                              <span className="text-sm font-medium">{t.nav.admin}</span>
                               <p className="text-xs text-gray-400">{userRole === 'super_admin' ? 'Super Admin' : 'Moderator'}</p>
                             </div>
                           </button>
@@ -453,7 +484,7 @@ export function Navbar({ session, onNavigate }) {
                           <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all">
                             <LogOut size={16} />
                           </div>
-                          <span className="text-sm font-medium text-red-600">Sign out</span>
+                          <span className="text-sm font-medium text-red-600">{t.nav.logout}</span>
                         </button>
                       </div>
                     </div>
@@ -462,7 +493,7 @@ export function Navbar({ session, onNavigate }) {
               </>
             ) : (
               <button onClick={() => onNavigate('login')} className="bg-emerald-600 text-white px-5 py-2 rounded-full font-bold text-sm shadow-md">
-                Sign in
+                {t.nav.login}
               </button>
             )}
           </div>
@@ -491,7 +522,7 @@ export function Navbar({ session, onNavigate }) {
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2 mb-4">
                       <FontAwesomeIcon icon={faCartShopping} />
-                      Food Products
+                      {t.home.foodProducts}
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-start">
                       {megaCategories.b2c.map(cat => {
@@ -553,7 +584,7 @@ export function Navbar({ session, onNavigate }) {
                                 onClick={() => handleMegaNav({ category: cat.id })}
                                 className="text-xs text-emerald-600 font-semibold"
                               >
-                                see all
+                                {t.home.seeAll}
                               </button>
                             </div>
                           </div>
@@ -566,7 +597,7 @@ export function Navbar({ session, onNavigate }) {
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-2 mb-4">
                       <FontAwesomeIcon icon={faIndustry} />
-                      Services &amp; Utilities
+                      {t.home.servicesUtilities}
                     </p>
                     <div className="grid grid-cols-2 gap-3 items-start">
                       {megaCategories.b2b.map(cat => {
@@ -628,7 +659,7 @@ export function Navbar({ session, onNavigate }) {
                                 onClick={() => handleMegaNav({ category: cat.id, type: 'b2b' })}
                                 className="text-xs text-emerald-600 font-semibold tracking-wide no-underline"
                               >
-                                see all
+                                {t.home.seeAll}
                               </button>
                             </div>
                           </div>
@@ -638,17 +669,16 @@ export function Navbar({ session, onNavigate }) {
                   </div>
 
                 </div>
-
               </div>
             </div>
 
-            {/* Footer — OUTSIDE scroll, always visible */}
+            {/* Footer MegaMenu */}
             <div className="border-t border-gray-100 py-4 text-center bg-white flex-shrink-0">
               <button
                 onClick={() => { setShowMegaMenu(false); setOpenCategoryId(null); onNavigate('toate-produsele'); }}
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-emerald-600 hover:text-white text-gray-700 rounded-xl font-semibold text-sm transition-colors"
               >
-                Search all categories
+                {t.allProducts.title}
                 <ArrowRight size={14} />
               </button>
             </div>
@@ -668,7 +698,7 @@ export function Navbar({ session, onNavigate }) {
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search products, location, categories..."
+                placeholder={t.nav.search}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="outline-none text-lg w-full py-1 text-gray-900 placeholder-gray-400 bg-transparent"
@@ -683,7 +713,7 @@ export function Navbar({ session, onNavigate }) {
           {!searchQuery.trim() && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-gray-400">
               <Search size={36} className="mb-3 opacity-30" />
-              <p className="text-sm">Start typing to search for products</p>
+              <p className="text-sm">{t.nav.search}</p>
             </div>
           )}
 
@@ -702,7 +732,9 @@ export function Navbar({ session, onNavigate }) {
             <div className="flex h-[60vh]">
               <div className="w-1/4 border-r border-gray-100 overflow-y-auto flex-shrink-0">
                 <div className="p-5">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Categories ({matchedCategories.length})</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                    {t.nav.products} ({matchedCategories.length})
+                  </p>
                   <div className="space-y-1">
                     {matchedCategories.map(catId => {
                       const CatIcon = CATEGORY_ICONS[catId] || Package;
@@ -720,7 +752,9 @@ export function Navbar({ session, onNavigate }) {
 
                   {matchedLocations.length > 0 && (
                     <div className="mt-6">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Locations ({matchedLocations.length})</p>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                        {t.allProducts.location} ({matchedLocations.length})
+                      </p>
                       <div className="space-y-1">
                         {matchedLocations.map(loc => (
                           <button key={loc} onClick={() => setActiveLocation(activeLocation === loc ? null : loc)}
@@ -737,7 +771,7 @@ export function Navbar({ session, onNavigate }) {
                   )}
 
                   <button onClick={handleSearchSubmit} className="mt-6 w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition">
-                    <span>See all ({searchResults.length})</span>
+                    <span>{t.home.seeAll} ({searchResults.length})</span>
                     <ArrowRight size={14} />
                   </button>
                 </div>
@@ -769,7 +803,7 @@ export function Navbar({ session, onNavigate }) {
                             {product.location}
                           </p>
                           <p className="text-sm font-bold text-emerald-600 mt-1.5">
-                            {product.price} <span className="text-xs font-normal text-gray-400">lei/{product.unit}</span>
+                            {product.price} <span className="text-xs font-normal text-gray-400">{t.common.lei}/{product.unit}</span>
                           </p>
                         </div>
                       </button>
@@ -779,11 +813,12 @@ export function Navbar({ session, onNavigate }) {
               </div>
             </div>
           )}
+
           {noResults && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-center">
               <SearchX size={48} className="text-gray-300 mb-4" />
-              <p className="text-gray-600 font-medium mt-4">No products found for „{searchQuery}"</p>
-              <p className="text-gray-400 text-sm mt-1">Try a different search term</p>
+              <p className="text-gray-600 font-medium mt-4">{t.allProducts.noProductsFound} „{searchQuery}"</p>
+              <p className="text-gray-400 text-sm mt-1">{t.common.retry}</p>
             </div>
           )}
         </div>
@@ -804,35 +839,12 @@ export function Navbar({ session, onNavigate }) {
         .animate-fadeIn { animation: fadeIn 0.15s ease-out; }
         @keyframes megamenu { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-megamenu { animation: megamenu 0.2s ease-out; }
-        /* Lățimea barei */
-.mega-scroll::-webkit-scrollbar { 
-  width: 5px; 
-}
-
-/* Track-ul (fundalul barei) îl lăsăm transparent */
-.mega-scroll::-webkit-scrollbar-track { 
-  background: transparent; 
-}
-
-/* CULOAREA BAREI (Thumb) - Când NU e hover */
-.mega-scroll::-webkit-scrollbar-thumb { 
-  background: #e5e7eb; /* Un gri discret (gray-200) */
-  border-radius: 99px; 
-}
-
-/* CULOAREA BAREI - Când pui mouse-ul peste ea (Hover) */
-.mega-scroll:hover::-webkit-scrollbar-thumb { 
-  background: #10b981; /* Verdele tău Emerald-500 */
-}
-
-/* Pentru Firefox */
-.mega-scroll { 
-  scrollbar-width: thin; 
-  scrollbar-color: #e5e7eb transparent; 
-}
-.mega-scroll:hover { 
-  scrollbar-color: #10b981 transparent; 
-}
+        .mega-scroll::-webkit-scrollbar { width: 5px; }
+        .mega-scroll::-webkit-scrollbar-track { background: transparent; }
+        .mega-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+        .mega-scroll:hover::-webkit-scrollbar-thumb { background: #10b981; }
+        .mega-scroll { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
+        .mega-scroll:hover { scrollbar-color: #10b981 transparent; }
       `}</style>
     </>
   );

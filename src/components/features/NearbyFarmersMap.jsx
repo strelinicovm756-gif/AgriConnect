@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -7,7 +8,6 @@ import {
     faSpinner,
     faLocationCrosshairs,
     faStore,
-    faArrowRight,
     faXmark,
     faSliders,
     faChevronDown
@@ -69,6 +69,7 @@ function radiusToZoom(radiusKm) {
 const RADIUS_STEPS = [5, 10, 15, 25,30, 35];
 
 export default function NearbyFarmersMap({ products = [], onNavigate, dbCategories = [] }) {
+    const { t } = useLanguage();
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const markersRef = useRef([]);
@@ -272,14 +273,14 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                     <div className="text-left">
                         <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                             <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600" />
-                            Nearby Producers
+                            {t.features.nearbyProducers}
                             <span className={`ml-5 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                                 <FontAwesomeIcon icon={faChevronDown} />
                             </span>
                         </h3>
                         <p className="text-gray-500 text-sm mt-1">
                             {locationStatus === 'granted' && nearbyCount > 0
-                                ? `${nearbyCount} producers within ${radiusKm} km`
+                                ? t.features.producersWithin.replace('{n}', nearbyCount).replace('{km}', radiusKm)
                                 : null }
                         </p>
                     </div>
@@ -306,12 +307,12 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                                 <FontAwesomeIcon icon={faLocationCrosshairs} className="text-emerald-600 text-3xl" />
                             </div>
                             <div className="text-center px-6">
-                                <p className="text-gray-900 font-bold text-lg mb-1">Where are you?</p>
-                                <p className="text-gray-500 text-sm">Allow location access to see producers near you</p>
+                                <p className="text-gray-900 font-bold text-lg mb-1">{t.features.whereAreYou}</p>
+                                <p className="text-gray-500 text-sm">{t.features.allowLocationHint}</p>
                             </div>
                             <button onClick={requestLocation} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-semibold shadow-lg transition-all hover:scale-105">
                                 <FontAwesomeIcon icon={faLocationDot} className="mr-2" />
-                                Allow location
+                                {t.features.allowLocation}
                             </button>
                         </div>
                     )}
@@ -320,7 +321,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                     {locationStatus === 'loading' && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white z-10">
                             <FontAwesomeIcon icon={faSpinner} className="text-emerald-600 text-4xl animate-spin" />
-                            <p className="text-gray-600 font-medium">Locating...</p>
+                            <p className="text-gray-600 font-medium">{t.features.locating}</p>
                         </div>
                     )}
 
@@ -330,11 +331,11 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                                 <FontAwesomeIcon icon={faLocationCrosshairs} className="text-gray-400 text-2xl" />
                             </div>
-                            <p className="text-gray-700 font-semibold">Location unavailable</p>
-                            <p className="text-gray-500 text-sm max-w-xs">You denied location access. You can view all producers on the products page.</p>
+                            <p className="text-gray-700 font-semibold">{t.features.locationUnavailable}</p>
+                            <p className="text-gray-500 text-sm max-w-xs">{t.features.locationDeniedHint}</p>
                             <button onClick={() => onNavigate('toate-produsele')} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all">
                                 <FontAwesomeIcon icon={faStore} className="mr-2" />
-                                All producers
+                                {t.features.allProducers}
                             </button>
                         </div>
                     )}
@@ -359,9 +360,9 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                                 onTouchStart={e => e.stopPropagation()}
                             >
                                 {[
-                                    { key: 'all', label: 'All' },
-                                    { key: 'b2c', label: 'Food' },
-                                    { key: 'b2b', label: 'Services' },
+                                    { key: 'all', label: t.features.filterAll },
+                                    { key: 'b2c', label: t.features.filterFood },
+                                    { key: 'b2b', label: t.features.filterServices },
                                 ].map(f => (
                                     <button
                                         key={f.key}
@@ -395,7 +396,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                                 <div className="flex items-center justify-between mb-2.5">
                                     <span className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
                                         <FontAwesomeIcon icon={faSliders} className="text-emerald-600" />
-                                        Search radius
+                                        {t.features.searchRadius}
                                     </span>
                                     <span className="text-sm font-black text-emerald-600">{radiusKm} km</span>
                                 </div>
@@ -442,7 +443,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                                                 <p className="text-gray-400 text-xs truncate">{selectedFarmer.location}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium border border-emerald-100">
-                                                        {selectedFarmer._allFromLocation.length} products
+                                                        {selectedFarmer._allFromLocation.length} {t.features.products}
                                                     </span>
                                                     <span className="text-[11px] text-gray-400">{selectedFarmer._distance} km</span>
                                                 </div>
@@ -450,7 +451,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-shrink-0">
                                             <button onClick={() => onNavigate('detalii', selectedFarmer.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition-all">
-                                                View
+                                                {t.features.view}
                                             </button>
                                             <button onClick={() => setSelectedFarmer(null)} className="text-gray-400 hover:text-gray-600 p-1.5">
                                                 <FontAwesomeIcon icon={faXmark} className="text-xs" />
@@ -467,7 +468,7 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                         <div className="absolute top-4 right-14 z-10 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center gap-2">
                             <div className={`w-2 h-2 rounded-full ${nearbyCount > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`} />
                             <span className="text-sm font-semibold text-gray-800">
-                                {nearbyCount > 0 ? `${nearbyCount} nearby producers` : 'No producers nearby'}
+                                {nearbyCount > 0 ? t.features.nearbyProducersCount.replace('{n}', nearbyCount) : t.features.noProducersNearby}
                             </span>
                         </div>
                     )}

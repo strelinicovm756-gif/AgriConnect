@@ -2,11 +2,11 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from "../services/supabaseClient";
 import NearbyFarmersMap from "../components/features/NearbyFarmersMap";
 import { ProductCard } from "../components/features/ProductCard";
-import { Button } from "../components/ui/Button";
 import AddProductModal from "../components/features/AddProductModal";
 import B2BProviderCarousel from "../components/features/B2BProviderCarousel";
 import B2CProviderCarousel from "../components/features/B2CProviderCarousel";
 import toast from 'react-hot-toast';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
 import { getColorForName } from '../lib/utils';
@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus, faLeaf, faCircleCheck, faHandshake,
   faArrowRight, faTruck, faSeedling, faChevronLeft, faChevronRight,
-  faTractor, faFlask, faStar, faMapMarkerAlt, faShieldHalved,
+  faTractor, faFlask, faStar, faMapMarkerAlt,
   faWrench, faDroplet, faChevronDown, faCalendarDays, faLocationDot,
   faCarrot, faAppleWhole, faCow, faDrumstickBite, faEgg, faJar, faWheatAwn
 } from '@fortawesome/free-solid-svg-icons';
@@ -86,6 +86,7 @@ const CARD_B2B = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white ro
 
 // ── B2C Collapsible Block ──────────────────────────────────────
 function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleViewDetails, handleContactClick, scroll, onExpandChange }) {
+  const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(true);
   const carouselRef = useRef(null);
 
@@ -107,7 +108,7 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
           <div className="text-left">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FontAwesomeIcon icon={faSeedling} className="text-emerald-600" />
-              Food Products
+              {t.home.foodProducts}
               <span className={`ml-15 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                 <FontAwesomeIcon icon={faChevronDown} />
               </span>
@@ -130,7 +131,7 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
           <div className="flex justify-end mb-5">
             <button onClick={viewAll}
               className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-              <span>See all</span>
+              <span>{t.home.seeAll}</span>
               <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
             </button>
           </div>
@@ -153,7 +154,7 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
                   </div>
                 )) : (
                   <div className="flex-1 py-14 flex items-center justify-center text-gray-400 min-w-[200px]">
-                    <p className="text-sm">No products at the moment.</p>
+                    <p className="text-sm">{t.home.noProducts}</p>
                   </div>
                 )}
               </div>
@@ -168,6 +169,7 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
 
 // ── B2B Collapsible Block ──────────────────────────────────────
 function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleContactClick, scroll, b2bRef, b2cExpanded }) {
+  const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (b2bProducts.length === 0) return null;
@@ -184,7 +186,7 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
           <div className="text-left">
             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FontAwesomeIcon icon={faTractor} className="text-emerald-600" />
-              Services & Utilities
+              {t.home.servicesUtilities}
               <span className={`ml-[10.5px] text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                 <FontAwesomeIcon icon={faChevronDown} />
               </span>
@@ -207,7 +209,7 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
           <div className="flex justify-end mb-5">
             <button onClick={() => onNavigate('toate-produsele', null, { type: 'b2b' })}
               className="flex-shrink-0 px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-              <span>See all</span>
+              <span>{t.home.seeAll}</span>
               <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
             </button>
           </div>
@@ -250,6 +252,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   const [heroEvents, setHeroEvents] = useState([]);
   const [heroLoading, setHeroLoading] = useState(true);
   const [dbCategories, setDbCategories] = useState([]);
+  const { t } = useLanguage();
 
   const farmersRef = useRef(null);
   const b2bRef = useRef(null);
@@ -576,7 +579,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
       {loading && (
         <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl py-20 flex flex-col items-center gap-4">
           <Metronome size="40" speed="1.6" color="#059669" />
-          <p className="text-gray-500 text-sm">Loading products...</p>
+          <p className="text-gray-500 text-sm">{t.home.loadingProducts}</p>
         </div>
       )}
 
@@ -616,7 +619,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <FontAwesomeIcon icon={faHandshake} className="text-emerald-600" />
-                    Service Providers
+                    {t.home.serviceProviders}
                   </h3>
                 </div>
                 <div className="relative">
@@ -636,7 +639,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
                 <div className="flex items-center gap-2 mb-6">
                   <FontAwesomeIcon icon={faSeedling} className="text-emerald-600 text-xl" />
-                  <h3 className="text-2xl font-bold text-gray-900">Food Producers</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">{t.home.foodProducers}</h3>
                 </div>
                 <div className="relative">
                   <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
@@ -655,9 +658,9 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
               <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl p-8 md:p-12 shadow-xl">
                 <div className="grid md:grid-cols-3 gap-8 text-white">
                   {[
-                    { icon: faTruck, title: 'Direct from Source', desc: 'No middlemen, fresh products directly from the producer' },
-                    { icon: faCircleCheck, title: 'Verified Producers', desc: 'All sellers are verified for quality and authenticity' },
-                    { icon: faHandshake, title: 'No Commissions', desc: 'Free platform for all local producers' },
+                    { icon: faTruck, title: t.home.directFromSource, desc: t.home.directFromSourceDesc },
+                    { icon: faCircleCheck, title: t.home.verifiedProducers, desc: t.home.verifiedProducersDesc },
+                    { icon: faHandshake, title: t.home.noCommissions, desc: t.home.noCommissionsDesc },
                   ].map(({ icon, title, desc }) => (
                     <div key={title} className="text-center">
                       <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -674,15 +677,15 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             {session && (
               <section className="mb-12">
                 <div className="bg-white rounded-3xl p-8 md:p-12 text-center border border-gray-200 shadow-sm">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-3">Are you a producer?</h3>
+                  <h3 className="text-3xl font-bold text-gray-900 mb-3">{t.home.areYouProducer}</h3>
                   <p className="text-gray-500 mb-6 max-w-xl mx-auto">
-                    Add your products for free and reach thousands of buyers in your area.
+                    {t.home.areYouProducerDesc}
                   </p>
-                  <Button onClick={() => setShowAddProductModal(true)}
+                  <button onClick={() => setShowAddProductModal(true)}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all hover:scale-105">
                     <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    Add a product now
-                  </Button>
+                    {t.home.addProductNow}
+                  </button>
                 </div>
               </section>
             )}
@@ -697,7 +700,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
             <FontAwesomeIcon icon={faLeaf} className="text-emerald-600 text-xl" />
             <span className="text-lg font-bold text-gray-900">AgriConnect</span>
           </div>
-          <p className="text-gray-500 text-sm">Support the local economy. Buy directly from the producer.</p>
+          <p className="text-gray-500 text-sm">{t.home.footerTagline}</p>
         </div>
       </footer>
 

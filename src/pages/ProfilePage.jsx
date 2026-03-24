@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { Button } from '../components/ui/Button';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { ProductCard } from '../components/features/ProductCard';
@@ -12,8 +12,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faChevronDown, faBoxesStacked, faTriangleExclamation,
     faCircleCheck, faHourglassHalf, faXmark, faUser, faPhone,
-    faLocationDot, faIdCard, faPenToSquare, faFloppyDisk, faBan,
-    faRightFromBracket, faImages, faScroll, faRotateRight,
+    faLocationDot, faPenToSquare, faFloppyDisk, faBan,
+    faRightFromBracket, faImages, faRotateRight,
     faCheck, faPen, faStar, faFileLines
 } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -77,6 +77,7 @@ function StarDisplay({ value = 0, size = 14 }) {
 }
 
 function MyReviewsSection({ session, onNavigate }) {
+    const { t } = useLanguage();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
@@ -108,29 +109,29 @@ function MyReviewsSection({ session, onNavigate }) {
     useEffect(() => { if (session) fetchReviews(); }, [session]);
 
     const handleDelete = async (id) => {
-        if (!confirm('Are you sure you want to delete this review?')) return;
+        if (!confirm(t.profile.confirmDeleteReview)) return;
         try {
             const { error } = await supabase.from('comments').delete().eq('id', id);
             if (error) throw error;
-            toast.success('Review deleted!');
+            toast.success(t.profile.toastReviewDeleted);
             setReviews(reviews.filter(r => r.id !== id));
-        } catch { toast.error('Error deleting review'); }
+        } catch { toast.error(t.profile.toastReviewDeleteError); }
     };
 
     const handleEdit = async (id) => {
-        if (!editContent.trim()) return toast.error('Review cannot be empty');
-        if (!editRating) return toast.error('Select a rating');
+        if (!editContent.trim()) return toast.error(t.profile.toastReviewEmpty);
+        if (!editRating) return toast.error(t.profile.toastSelectRating);
         try {
             const { error } = await supabase.from('comments')
                 .update({ content: editContent.trim(), rating: editRating }).eq('id', id);
             if (error) throw error;
-            toast.success('Review updated!');
+            toast.success(t.profile.toastReviewUpdated);
             setEditingId(null);
             fetchReviews();
-        } catch { toast.error('Error updating review'); }
+        } catch { toast.error(t.profile.toastReviewUpdateError); }
     };
 
-    const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+    const ratingLabels = ['', t.profile.ratingPoor, t.profile.ratingFair, t.profile.ratingGood, t.profile.ratingVeryGood, t.profile.ratingExcellent];
 
     return (
         <div className="bg-white rounded-3xl border border-gray-200 shadow-lg overflow-hidden mt-8">
@@ -141,9 +142,9 @@ function MyReviewsSection({ session, onNavigate }) {
                         <MessageSquare size={18} className="text-emerald-600" />
                     </div>
                     <div className="text-left">
-                        <p className="font-bold text-gray-900">My reviews</p>
+                        <p className="font-bold text-gray-900">{t.profile.myReviews}</p>
                         <p className="text-gray-500 text-sm">
-                            {loading ? 'Loading...' : `${reviews.length} review${reviews.length !== 1 ? 's' : ''} left`}
+                            {loading ? t.common.loading : `${reviews.length} review${reviews.length !== 1 ? 's' : ''} left`}
                         </p>
                     </div>
                 </div>
@@ -180,8 +181,8 @@ function MyReviewsSection({ session, onNavigate }) {
                     ) : reviews.length === 0 ? (
                         <div className="text-center py-10 text-gray-400">
                             <MessageSquare size={40} className="mx-auto mb-3 opacity-30" />
-                            <p className="font-medium text-gray-500">You haven't left any reviews yet</p>
-                            <p className="text-sm mt-1">Buy products and leave feedback for producers!</p>
+                            <p className="font-medium text-gray-500">{t.profile.noReviews}</p>
+                            <p className="text-sm mt-1">{t.profile.noReviewsHint}</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -253,11 +254,11 @@ function MyReviewsSection({ session, onNavigate }) {
                                                     <div className="flex gap-2">
                                                         <button onClick={() => handleEdit(review.id)}
                                                             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
-                                                            <FontAwesomeIcon icon={faCircleCheck} /> Save
+                                                            <FontAwesomeIcon icon={faCircleCheck} /> {t.profile.save}
                                                         </button>
                                                         <button onClick={() => setEditingId(null)}
                                                             className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-4 py-2 rounded-lg transition">
-                                                            Cancel
+                                                            {t.profile.cancel}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -287,7 +288,7 @@ function MyReviewsSection({ session, onNavigate }) {
                                                     <p className="text-gray-400 text-xs mt-2 flex items-center gap-1">
                                                         <Calendar size={11} />
                                                         {new Date(review.created_at).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                        {review.updated_at !== review.created_at && <span className="ml-1 text-gray-300">(edited)</span>}
+                                                        {review.updated_at !== review.created_at && <span className="ml-1 text-gray-300">{t.profile.edited}</span>}
                                                     </p>
                                                 </div>
                                             )}
@@ -318,20 +319,21 @@ const getProfileCompletion = (profile) => {
     return Math.round((completed / fields.length) * 100);
 };
 
-const getMissingFields = (profile) => {
+const getMissingFields = (profile, t) => {
     if (!profile) return [];
     const missing = [];
     const isNameValid = profile.full_name &&
         /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) &&
         profile.full_name.trim().length >= 2;
-    if (!isNameValid) missing.push({ key: 'full_name', label: 'Valid name', desc: 'Letters only, minimum 2 characters', icon: faUser });
-    if (!profile.phone || profile.phone.length < 10) missing.push({ key: 'phone', label: 'Phone number', desc: 'Format: +373 + 8 digits', icon: faPhone });
-    if (!profile.location) missing.push({ key: 'location', label: 'Location', desc: 'Your city or village', icon: faLocationDot });
+    if (!isNameValid) missing.push({ key: 'full_name', label: t.profile.validName, desc: t.profile.validNameDesc, icon: faUser });
+    if (!profile.phone || profile.phone.length < 10) missing.push({ key: 'phone', label: t.profile.phoneNumber, desc: t.profile.phoneNumberDesc, icon: faPhone });
+    if (!profile.location) missing.push({ key: 'location', label: t.profile.locationField, desc: t.profile.locationFieldDesc, icon: faLocationDot });
     return missing;
 };
 
 // ─── ProfilePage principal ────────────────────────────────────
 export default function ProfilePage({ session, onNavigate }) {
+    const { t } = useLanguage();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
@@ -531,7 +533,7 @@ export default function ProfilePage({ session, onNavigate }) {
                 location: formData.location.trim(), bio: formData.bio.trim()
             }).eq('id', session.user.id);
             if (error) throw error;
-            toast.success('Profile updated successfully!');
+            toast.success(t.profile.toastProfileSaved);
             setEditing(false);
             loadProfile();
         } catch (error) {
@@ -560,7 +562,7 @@ export default function ProfilePage({ session, onNavigate }) {
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <div className="text-center">
                     <Metronome size="40" speed="1.6" color="#059669" />
-                    <p className="text-gray-500 mt-3 text-sm">Loading profile...</p>
+                    <p className="text-gray-500 mt-3 text-sm">{t.profile.loading}</p>
                 </div>
             </div>
         );
@@ -603,7 +605,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                     <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
                                     Verified Profile
                                 </span>
-                            ) : getMissingFields(profile).length === 0 ? (
+                            ) : getMissingFields(profile, t).length === 0 ? (
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-semibold">
                                     <FontAwesomeIcon icon={faUser} className="text-xs" />
                                     New seller
@@ -615,28 +617,6 @@ export default function ProfilePage({ session, onNavigate }) {
                                 </span>
                             )}
 
-                            {/* Completion progress bar */}
-                            {/* {(() => {
-                                const pct = getProfileCompletion(profile);
-                                return (
-                                    <div className="w-full">
-                                        <div className="flex justify-between text-xs text-gray-400 mb-1.5">
-                                            <span>Completare profil</span>
-                                            <span className="font-semibold text-gray-600">{pct}%</span>
-                                        </div>
-                                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full rounded-full transition-all duration-500 ${
-                                                    pct === 100 ? 'bg-emerald-500' :
-                                                    pct >= 60 ? 'bg-blue-500' :
-                                                    'bg-amber-500'
-                                                }`}
-                                                style={{ width: `${pct}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })()} */}
 
                             {/* Stats */}
                             <div className="w-full grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
@@ -679,12 +659,12 @@ export default function ProfilePage({ session, onNavigate }) {
                     <div className="md:col-span-2">
                         <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-lg">
                             <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
+                                <h2 className="text-2xl font-bold text-gray-900">{t.profile.myProfile}</h2>
                                 {!editing && (
-                                    <Button onClick={() => setEditing(true)} size="sm" className="flex items-center gap-2">
+                                    <button onClick={() => setEditing(true)} size="sm" className="flex items-center gap-2">
                                         <FontAwesomeIcon icon={faPenToSquare} />
-                                        Edit Profile
-                                    </Button>
+                                        {t.profile.editProfile}
+                                    </button>
                                 )}
                             </div>
 
@@ -784,18 +764,18 @@ export default function ProfilePage({ session, onNavigate }) {
                                     )}
 
                                     <div className="flex gap-3 pt-2">
-                                        <Button type="submit"
+                                        <button type="submit"
                                             disabled={loading || !formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name) || !formData.phone || !/^\+373\d{8}$/.test(formData.phone) || !formData.location}
                                             className="flex items-center gap-2 shadow-lg shadow-emerald-600/15">
                                             <FontAwesomeIcon icon={faFloppyDisk} />
-                                            {loading ? 'Saving...' : 'Save'}
-                                        </Button>
-                                        <Button variant="secondary"
+                                            {loading ? t.common.loading : t.profile.save}
+                                        </button>
+                                        <button
                                             onClick={() => { setEditing(false); setFormData({ full_name: profile?.full_name || '', phone: profile?.phone || '', location: profile?.location || '', bio: profile?.bio || '' }); }}
                                             type="button" className="flex items-center gap-2">
                                             <FontAwesomeIcon icon={faBan} />
-                                            Cancel
-                                        </Button>
+                                            {t.profile.cancel}
+                                        </button>
                                     </div>
                                 </form>
                             ) : (
@@ -816,7 +796,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                                             <FontAwesomeIcon icon={faUser} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Name</p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t.profile.fullName}</p>
                                                             <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
                                                                 {profile?.full_name || 'Not set'}
                                                             </p>
@@ -839,7 +819,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                                             <FontAwesomeIcon icon={faPhone} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t.profile.phone}</p>
                                                             <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
                                                                 {profile?.phone || 'Not set'}
                                                             </p>
@@ -862,7 +842,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                                             <FontAwesomeIcon icon={faLocationDot} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Location</p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t.profile.location}</p>
                                                             <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
                                                                 {profile?.location || 'Not set'}
                                                             </p>
@@ -885,7 +865,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                                             <FontAwesomeIcon icon={faFileLines} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-gray-300'}`} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">About me</p>
+                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t.profile.bio}</p>
                                                             <p className={`text-sm leading-relaxed ${isValid ? 'text-gray-700' : 'text-gray-300 italic'}`}>
                                                                 {profile?.bio || "You haven't added a description yet."}
                                                             </p>
@@ -897,7 +877,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                     </div>
 
                                     {/* Incomplete profile alert */}
-                                    {getMissingFields(profile).length > 0 && (
+                                    {getMissingFields(profile, t).length > 0 && (
                                         <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
                                             <div className="flex items-start gap-3 mb-4">
                                                 <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -960,7 +940,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                         <FontAwesomeIcon icon={faBoxesStacked} className="text-emerald-600 text-sm" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-bold text-gray-900 text-sm">My Listings</p>
+                                        <p className="font-bold text-gray-900 text-sm">{t.profile.myProducts}</p>
                                         <p className="text-xs text-gray-400">
                                             {productsCount} active listing{productsCount !== 1 ? 's' : ''}
                                         </p>

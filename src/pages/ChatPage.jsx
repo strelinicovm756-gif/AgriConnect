@@ -7,6 +7,7 @@ import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { MessageSquare, ChevronLeft } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 function formatTime(dateStr) {
   return new Date(dateStr).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
@@ -37,6 +38,7 @@ function timeAgo(dateStr) {
 }
 
 export default function ChatPage({ session, onNavigate }) {
+  const { t } = useLanguage();
   const [conversations, setConversations] = useState([]);
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [selectedConv, setSelectedConv] = useState(null);
@@ -249,7 +251,7 @@ export default function ChatPage({ session, onNavigate }) {
               <div className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
                 <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                   <MessageSquare size={20} className="text-emerald-600" />
-                  My messages
+                  {t.chat.title}
                 </h1>
               </div>
 
@@ -261,7 +263,7 @@ export default function ChatPage({ session, onNavigate }) {
                 ) : conversations.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                     <MessageSquare size={40} className="text-gray-200 mb-3" />
-                    <p className="text-gray-500 font-medium text-sm">No conversations</p>
+                    <p className="text-gray-500 font-medium text-sm">{t.chat.noConversations}</p>
                     <p className="text-gray-400 text-xs mt-1">Your messages will appear here</p>
                   </div>
                 ) : (
@@ -422,7 +424,7 @@ export default function ChatPage({ session, onNavigate }) {
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Write a message..."
+                        placeholder={t.chat.typeMessage}
                         rows={1}
                         className="flex-1 resize-none bg-transparent text-sm text-gray-900 focus:outline-none placeholder-gray-400 max-h-28 overflow-y-auto py-1"
                         style={{ minHeight: '28px' }}

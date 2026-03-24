@@ -1,7 +1,7 @@
 import { useState } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import { getColorForName } from '../../lib/utils';
 import { supabase } from '../../services/supabaseClient';
-import { Button } from '../ui/Button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot,
@@ -20,6 +20,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 export function ProductCard({ product, session, onViewDetails, onContactClick }) {
+  const { t } = useLanguage();
   const [isReported, setIsReported] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
 
@@ -119,7 +120,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
           <button
             onClick={handleQuickReport}
             disabled={isReported || isReporting}
-            title={isReported ? 'Already reported' : 'Report listing'}
+            title={isReported ? t.features.alreadyReported : t.features.reportListing}
             className={`absolute bottom-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow transition-all duration-200 opacity-0 group-hover:opacity-100 ${isReported ? 'bg-red-500 text-white cursor-default' : 'bg-white/80 text-gray-400 hover:text-red-500 hover:bg-red-50'
               }`}
           >
@@ -168,7 +169,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                 <p className="text-gray-600 text-sm flex items-center gap-2">
                   <FontAwesomeIcon icon={faLock} className="text-emerald-700" />
-                  Sign in to see the price
+                  {t.features.signInToSeePrice}
                 </p>
               </div>
             )}
@@ -201,13 +202,13 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
             </div>
           )}
 
-          <Button
+          <button
             variant={session ? "primary" : "secondary"}
             onClick={() => onViewDetails(product.id)}
             className="w-full"
           >
-            {session ? "View details" : "Sign in"}
-          </Button>
+            {session ? t.features.viewDetails : t.features.signIn}
+          </button>
 
           <div className="mt-3 pt-3 border-t border-gray-200 flex justify-end text-xs text-gray-500">
             <span className="flex items-center gap-1.5">

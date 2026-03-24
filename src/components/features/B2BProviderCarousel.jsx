@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import { Dialog } from '@headlessui/react';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -9,6 +10,7 @@ import { B2BFlipCard } from '../animate-ui/components/community/b2b-flip-card';
 
 // ── Request Offer Modal ────────────────────────────────────────
 function RequestModal({ provider, isOpen, onClose }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     serviceType: provider.services?.[0] || '',
     message: '',
@@ -21,7 +23,7 @@ function RequestModal({ provider, isOpen, onClose }) {
       const phone = provider.phone.replace(/\s/g, '');
       toast.success(
         <div>
-          <p className="font-bold text-sm mb-1">Request sent! Contact:</p>
+          <p className="font-bold text-sm mb-1">{t.features.requestSentContact}</p>
           <p className="font-semibold">{provider.name}</p>
           <a href={`tel:${phone}`} className="text-emerald-500 underline text-base font-bold">
             {provider.phone}
@@ -30,7 +32,7 @@ function RequestModal({ provider, isOpen, onClose }) {
         { duration: 10000 }
       );
     } else {
-      toast.error('Phone number unavailable for this provider.');
+      toast.error(t.features.phoneUnavailable);
     }
     onClose();
   };
@@ -44,7 +46,7 @@ function RequestModal({ provider, isOpen, onClose }) {
           <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
             <div>
               <Dialog.Title className="text-lg font-bold text-gray-900">
-                Request Quote
+                {t.features.requestQuote}
               </Dialog.Title>
               <p className="text-sm text-gray-500 mt-0.5">{provider.name}</p>
             </div>
@@ -57,7 +59,7 @@ function RequestModal({ provider, isOpen, onClose }) {
           <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Service type
+                {t.features.serviceType}
               </label>
               <select
                 value={form.serviceType}
@@ -66,7 +68,7 @@ function RequestModal({ provider, isOpen, onClose }) {
               >
                 {provider.services?.length > 0
                   ? provider.services.map(s => <option key={s} value={s}>{s}</option>)
-                  : <option value="">General</option>
+                  : <option value="">{t.features.general}</option>
                 }
               </select>
             </div>
@@ -74,7 +76,7 @@ function RequestModal({ provider, isOpen, onClose }) {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 <FontAwesomeIcon icon={faCalendarDays} className="mr-1.5 text-emerald-500" />
-                Desired period
+                {t.features.desiredPeriod}
               </label>
               <input
                 type="date"
@@ -88,12 +90,12 @@ function RequestModal({ provider, isOpen, onClose }) {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 <FontAwesomeIcon icon={faComment} className="mr-1.5 text-emerald-500" />
-                Work details
+                {t.features.workDetails}
               </label>
               <textarea
                 value={form.message}
                 onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                placeholder="Describe the work, area, special requirements..."
+                placeholder={t.features.workDetailsPlaceholder}
                 rows={3}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
               />
@@ -102,11 +104,11 @@ function RequestModal({ provider, isOpen, onClose }) {
             <div className="flex gap-3 pt-1">
               <button type="button" onClick={onClose}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
-                Cancel
+                {t.features.cancel}
               </button>
               <button type="submit"
                 className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
-                Send request
+                {t.features.sendRequest}
               </button>
             </div>
           </form>

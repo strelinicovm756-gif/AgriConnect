@@ -6,12 +6,7 @@ import {
   faCalendarDays, faLocationDot, faChevronLeft, faArrowUpRightFromSquare,
   faClock, faSpinner, faMapMarkerAlt
 } from '@fortawesome/free-solid-svg-icons';
-
-const TYPE_CONFIG = {
-  iarmaroc:     { label: 'Fair',               color: 'bg-emerald-100 text-emerald-700' },
-  curs_agricol: { label: 'Agricultural Course', color: 'bg-blue-100 text-blue-700' },
-  piata_locala: { label: 'Local Market',        color: 'bg-amber-100 text-amber-800' },
-};
+import { useLanguage } from '../i18n/LanguageContext';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null;
@@ -24,6 +19,12 @@ const toGCalDate = (dateStr) => {
 };
 
 export default function EventDetailsPage({ session, onNavigate }) {
+  const { t } = useLanguage();
+  const TYPE_CONFIG = {
+    iarmaroc:     { label: t.events.typeFair,        color: 'bg-emerald-100 text-emerald-700' },
+    curs_agricol: { label: t.events.typeAgriCourse,  color: 'bg-blue-100 text-blue-700' },
+    piata_locala: { label: t.events.typeLocalMarket, color: 'bg-amber-100 text-amber-800' },
+  };
   const { id: eventId } = useParams();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +77,7 @@ export default function EventDetailsPage({ session, onNavigate }) {
         <button onClick={() => onNavigate('evenimente')}
           className="flex items-center gap-2 text-gray-500 hover:text-emerald-700 text-sm font-medium mb-6 transition">
           <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
-          Back to Events
+          {t.eventDetails.back}
         </button>
 
         {/* Hero Image */}
@@ -126,7 +127,7 @@ export default function EventDetailsPage({ session, onNavigate }) {
             <div className="mb-8 bg-gray-50 rounded-xl p-5 border border-gray-200">
               <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                 <FontAwesomeIcon icon={faClock} className="text-emerald-600" />
-                Schedule
+                {t.events.schedule}
               </h2>
               <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">{event.schedule}</p>
             </div>
@@ -137,7 +138,7 @@ export default function EventDetailsPage({ session, onNavigate }) {
             <div className="mb-8">
               <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                 <FontAwesomeIcon icon={faMapMarkerAlt} className="text-emerald-600" />
-                Location
+                {t.eventDetails.location}
               </h2>
               <div className="rounded-2xl overflow-hidden h-64 border border-gray-200">
                 <iframe

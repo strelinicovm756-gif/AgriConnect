@@ -9,13 +9,12 @@ import 'ldrs/react/Metronome.css';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import toast from 'react-hot-toast';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPhone } from '@fortawesome/free-solid-svg-icons';
+import { useLanguage } from '../i18n/LanguageContext';
 import {
-    Star, Phone, MessageSquare, MapPin, Leaf, Package,
-    TrendingUp, ChevronDown, ChevronUp, BadgeCheck,
+    Star, MessageSquare, MapPin, Leaf, Package,
+    ChevronDown, ChevronUp,
     Search, X, SlidersHorizontal, MessageCircle, Calendar,
-    ChevronLeft, ChevronRight, User
+    ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -95,9 +94,10 @@ function ProducerMap({ location }) {
 }
 
 function ReviewCard({ review }) {
+    const { t } = useLanguage();
     const name = review.profiles?.full_name || 'Utilizator';
     const color = getColorForName(review.id_profiles || name);
-    const labels = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+    const labels = t.producerProfile.ratingLabels;
 
     return (
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
@@ -134,6 +134,7 @@ const PRODUCTS_PER_PAGE = 6;
 const REVIEWS_PER_PAGE = 4;
 
 export default function ProducerPublicProfile({ session, onNavigate }) {
+    const { t } = useLanguage();
     const { id: producerId } = useParams();
 
     const [producer, setProducer] = useState(null);
@@ -195,7 +196,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
             }
         } catch (err) {
             console.error(err);
-            toast.error('Producer not found');
+            toast.error(t.producerProfile.notFound);
             onNavigate('home');
         } finally {
             setLoading(false);
@@ -239,7 +240,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
         <div className="min-h-screen flex items-center justify-center bg-white">
             <div className="text-center">
                 <Metronome size="40" speed="1.6" color="#059669" />
-                <p className="text-gray-500 mt-3 text-sm">Loading profile...</p>
+                <p className="text-gray-500 mt-3 text-sm">{t.producerProfile.loading}</p>
             </div>
         </div>
     );
@@ -295,7 +296,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                                 setShowChatModal(true);
                                             }}
                                             className="flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-200 hover:border-emerald-300 text-gray-700 hover:text-emerald-700 font-semibold px-5 py-2.5 rounded-xl transition-all text-sm">
-                                            <MessageSquare size={14} />Message
+                                            <MessageSquare size={14} />{t.producerProfile.sendMessage}
                                         </button>
                                     </>
                                 ) : (
@@ -327,7 +328,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                 <div className="flex-1">
                                     <Stars value={reviewStats.avg} size={16} />
                                     <p className="text-xs text-gray-400 mt-1.5">
-                                        {reviewStats.count > 0 ? `${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''}` : 'No reviews yet'}
+                                        {reviewStats.count > 0 ? `${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''}` : t.producerProfile.noReviews}
                                     </p>
                                 </div>
                             </div>
@@ -353,15 +354,15 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
 
                         {/* Map Card */}
                         {producer.location && (
-              <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-3">Location</p>
-                <div className="flex items-center gap-2 mb-3">
-                  <MapPin size={13} className="text-emerald-600 flex-shrink-0" />
-                  <span className="text-sm font-medium text-gray-700">{producer.location}</span>
-                </div>
-                <ProducerMap location={producer.location} />
-              </div>
-            )}
+                            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-3">{t.producerProfile.location}</p>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <MapPin size={13} className="text-emerald-600 flex-shrink-0" />
+                                    <span className="text-sm font-medium text-gray-700">{producer.location}</span>
+                                </div>
+                                <ProducerMap location={producer.location} />
+                            </div>
+                        )}
                     </div>
 
                     {/*MAIN CONTENT*/}
@@ -373,7 +374,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                 <div className="w-9 h-9 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
                                     <Leaf size={16} className="text-emerald-600" />
                                 </div>
-                                Despre {producer.official_name || producer.full_name || 'Producător'}
+                                {t.producerProfile.about} {producer.official_name || producer.full_name || 'Producător'}
                             </h2>
                             {producer.bio ? (
                                 <p className="text-gray-600 leading-relaxed whitespace-pre-line">{producer.bio}</p>
@@ -392,7 +393,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                     <div className="w-9 h-9 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center">
                                         <Package size={16} className="text-emerald-600" />
                                     </div>
-                                    Available Products
+                                    {t.producerProfile.products}
                                 </h2>
                                 {products && filteredProducts.length > 0 && (
                                     <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
@@ -491,11 +492,11 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                         <MessageCircle size={16} className="text-emerald-600" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-bold text-gray-900">Reviews Received</p>
+                                        <p className="font-bold text-gray-900">{t.producerProfile.reviewsSection}</p>
                                         <p className="text-gray-500 text-sm">
                                             {reviewStats.count > 0
                                                 ? `${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''} · ★ ${reviewStats.avg.toFixed(1)}`
-                                                : 'No reviews yet'}
+                                                : t.producerProfile.noReviews}
                                         </p>
                                     </div>
                                 </div>

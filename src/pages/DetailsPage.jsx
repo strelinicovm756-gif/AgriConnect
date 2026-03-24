@@ -5,15 +5,16 @@ import { supabase } from "../services/supabaseClient";
 import ProductMapModal from "../components/features/ProductMapModal";
 import ChatModal from "../components/features/ChatModal";
 import toast from 'react-hot-toast';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCarrot, faAppleWhole, faCow, faDrumstickBite,
   faEgg, faJar, faWheatAwn, faBox,
-  faLocationDot, faCalendarDays, faPhone,
+  faLocationDot, faCalendarDays,
   faCircleCheck, faMapMarkedAlt,
-  faHandshake, faLeaf, faMessage,
+  faLeaf, faMessage,
   faStar,
   faChevronLeft, faChevronRight,
   faComments, faPaperPlane, faTrash, faPen, faFlag
@@ -58,6 +59,7 @@ function StarRating({ value = 0, onChange = null }) {
 }
 
 function ReviewsSection({ productId, session, productOwnerId }) {
+  const { t } = useLanguage();
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -98,7 +100,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
   }, [comments]);
 
   const handleSubmit = async () => {
-    if (!session) return toast.error('You must be signed in');
+    if (!session) return toast.error(t.productDetails.loginToReview);
     if (!newRating) return toast.error('Select a rating (1-5 stars)');
     if (!newContent.trim()) return toast.error('Write a review');
     setSubmitting(true);
@@ -142,7 +144,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <FontAwesomeIcon icon={faComments} className="text-emerald-600" />
-          Reviews
+          {t.productDetails.reviews}
           {stats.count > 0 && <span className="text-base font-normal text-gray-500 ml-1">({stats.count})</span>}
         </h2>
       </div>
@@ -183,24 +185,24 @@ function ReviewsSection({ productId, session, productOwnerId }) {
         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8">
           <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
             <FontAwesomeIcon icon={faPen} className="text-emerald-600" />
-            Leave a review
+            {t.productDetails.leaveReview}
           </h3>
           <div className="mb-4">
             <p className="text-sm text-gray-600 mb-2 font-medium">Rating</p>
             <StarRating value={newRating} onChange={setNewRating} size="text-3xl" />
-            {newRating > 0 && <p className="text-xs text-emerald-600 mt-1 font-medium">{['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'][newRating]}</p>}
+            {newRating > 0 && <p className="text-xs text-emerald-600 mt-1 font-medium">{t.producerProfile.ratingLabels[newRating]}</p>}
           </div>
           <div className="mb-4">
             <p className="text-sm text-gray-600 mb-2 font-medium">Review</p>
             <textarea value={newContent} onChange={(e) => setNewContent(e.target.value)}
-              placeholder="Tell us about your experience with this product..." rows={4} maxLength={1000}
+              placeholder={t.productDetails.yourReview} rows={4} maxLength={1000}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white" />
             <p className="text-xs text-gray-400 text-right mt-1">{newContent.length}/1000</p>
           </div>
           <button onClick={handleSubmit} disabled={submitting || !newRating || !newContent.trim()}
             className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl transition flex items-center gap-2 text-sm">
             {submitting ? <Metronome size="16" speed="1.6" color="white" /> : <FontAwesomeIcon icon={faPaperPlane} />}
-            Submit review
+            {t.productDetails.submitReview}
           </button>
         </div>
       )}
@@ -216,8 +218,8 @@ function ReviewsSection({ productId, session, productOwnerId }) {
       ) : comments.length === 0 ? (
         <div className="text-center py-12 text-gray-400" >
           <FontAwesomeIcon icon={faComments} className="text-5xl mb-3 opacity-30" />
-          <p className="font-medium">No reviews yet</p>
-          <p className="text-sm">Be the first to leave a review!</p>
+          <p className="font-medium">{t.productDetails.noReviews}</p>
+          <p className="text-sm">{t.productDetails.leaveReview}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -289,6 +291,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
 }
 
 export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
+  const { t } = useLanguage();
   const { id: productId } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -440,7 +443,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
       <div className="min-h-screen bg-gradient-to-b from-white flex items-center justify-center">
         <div className="text-center">
           <Metronome size="40" speed="1.6" color="#059669" />
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">{t.productDetails.loading}</p>
         </div>
       </div>
     );
@@ -486,7 +489,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
                       {product.is_negotiable && (
                         <div className="bg-blue-500/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md self-end">
-                          <span className="text-white font-semibold text-xs">NEGOTIABLE</span>
+                          <span className="text-white font-semibold text-xs">{t.productDetails.negotiable}</span>
                         </div>
                       )}
                       {session && session.user.id !== product.user_id && (
@@ -578,7 +581,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     )}
                   </div>
                   <div className="flex items-center gap-1 text-emerald-600 flex-shrink-0">
-                    <span className="text-xs font-semibold">View profile</span>
+                    <span className="text-xs font-semibold">{t.productDetails.viewProfile}</span>
                     <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
                   </div>
                 </button>
@@ -588,7 +591,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                     onClick={() => { if (!session) { onNavigate('login'); return; } setShowChatModal(true); }}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2"
                   >
-                    <FontAwesomeIcon icon={faMessage} /><span>Message</span>
+                    <FontAwesomeIcon icon={faMessage} /><span>{t.productDetails.contact}</span>
                   </button>
                   <button
                     onClick={handleViewOnMap}
@@ -637,7 +640,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
           <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <FontAwesomeIcon icon={faLeaf} className="text-emerald-600" />
-              About this product
+              {t.productDetails.description}
             </h2>
             <p className="text-gray-700 leading-relaxed whitespace-pre-line text-lg">{product.description}</p>
           </div>

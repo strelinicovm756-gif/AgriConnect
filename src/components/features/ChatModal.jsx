@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import { useChat } from '../../hooks/useChat';
 import { getColorForName } from '../../lib/utils';
 import { Metronome } from 'ldrs/react';
@@ -11,14 +12,14 @@ function formatTime(dateStr) {
   return new Date(dateStr).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatDateLabel(dateStr) {
+function formatDateLabel(dateStr, t) {
   const d = new Date(dateStr);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
-  if (d.toDateString() === today.toDateString()) return 'Astăzi';
-  if (d.toDateString() === yesterday.toDateString()) return 'Ieri';
+  if (d.toDateString() === today.toDateString()) return t.features.today;
+  if (d.toDateString() === yesterday.toDateString()) return t.features.yesterday;
   return d.toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
@@ -29,6 +30,7 @@ function isSameDay(a, b) {
 }
 
 export default function ChatModal({ isOpen, onClose, session, product }) {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [conversationId, setConversationId] = useState(null);
@@ -156,7 +158,7 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
               {(product?.seller_name || '?').charAt(0)}
             </div>
             <div className="min-w-0">
-              <p className="font-bold text-gray-900 text-sm truncate">{product?.seller_name || 'Vânzător'}</p>
+              <p className="font-bold text-gray-900 text-sm truncate">{product?.seller_name || t.features.seller}</p>
               <p className="text-xs text-gray-400 truncate">{product?.name}</p>
             </div>
           </div>
@@ -172,7 +174,7 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
         {isSelf ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
             <MessageSquare size={40} className="text-gray-200 mb-3" />
-            <p className="text-gray-500 font-medium">Nu poți trimite mesaje la propriul tău anunț.</p>
+            <p className="text-gray-500 font-medium">{t.features.cannotMessageOwnListing}</p>
           </div>
         ) : loading ? (
           <div className="flex-1 flex items-center justify-center">
@@ -185,8 +187,8 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <MessageSquare size={36} className="text-gray-200 mb-3" />
-                  <p className="text-gray-400 text-sm font-medium">Niciun mesaj încă</p>
-                  <p className="text-gray-300 text-xs mt-1">Trimite primul mesaj!</p>
+                  <p className="text-gray-400 text-sm font-medium">{t.features.noMessages}</p>
+                  <p className="text-gray-300 text-xs mt-1">{t.features.sendFirstMessage}</p>
                 </div>
               )}
 
@@ -200,7 +202,7 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
                     {showDateSep && (
                       <div className="flex items-center gap-3 my-3">
                         <div className="flex-1 h-px bg-gray-100" />
-                        <span className="text-[11px] text-gray-400 font-medium px-2">{formatDateLabel(msg.created_at)}</span>
+                        <span className="text-[11px] text-gray-400 font-medium px-2">{formatDateLabel(msg.created_at, t)}</span>
                         <div className="flex-1 h-px bg-gray-100" />
                       </div>
                     )}
@@ -231,7 +233,7 @@ export default function ChatModal({ isOpen, onClose, session, product }) {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Scrie un mesaj..."
+                placeholder={t.features.messagePlaceholder}
                 rows={1}
                 className="flex-1 resize-none border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-gray-50 max-h-28 overflow-y-auto"
                 style={{ minHeight: '42px' }}

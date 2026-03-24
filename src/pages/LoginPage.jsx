@@ -19,6 +19,7 @@ import {
 import {
   faGoogle,
 } from '@fortawesome/free-brands-svg-icons';
+import { useLanguage } from '../i18n/LanguageContext';
 
 // Funcție validare parolă
 function validatePassword(password) {
@@ -48,11 +49,12 @@ function validateEmail(email) {
 
   return {
     isValid,
-    error: isValid ? '' : 'Email is invalid or already taken'
+    error: ''
   };
 }
 
 export default function LoginPage({ onNavigate }) {
+  const { t } = useLanguage();
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -93,7 +95,7 @@ export default function LoginPage({ onNavigate }) {
 
       if (error) throw error;
     } catch (error) {
-      toast.error("Google sign-in error: " + error.message);
+      toast.error(t.login.toastGoogleError + error.message);
     }
   };
 
@@ -104,13 +106,13 @@ export default function LoginPage({ onNavigate }) {
     try {
       // Validări
       if (!signUpData.name.trim()) {
-        toast.error("Please enter your name");
+        toast.error(t.login.toastEnterName);
         setLoading(false);
         return;
       }
 
       if (!signUpEmailValidation.isValid) {
-        toast.error("Invalid email");
+        toast.error(t.login.toastInvalidEmailForm);
         setLoading(false);
         return;
       }
@@ -118,8 +120,8 @@ export default function LoginPage({ onNavigate }) {
       if (!passwordValidation.isValid) {
         toast.error(
           <div>
-            <p className="font-bold">Invalid password</p>
-            <p className="text-sm">Password must have at least 8 characters, one digit and one lowercase letter</p>
+            <p className="font-bold">{t.login.toastInvalidPassword}</p>
+            <p className="text-sm">{t.login.toastInvalidPasswordDesc}</p>
           </div>,
           { duration: 5000 }
         );
@@ -142,7 +144,7 @@ export default function LoginPage({ onNavigate }) {
       if (error) throw error;
 
       if (data?.user?.identities?.length === 0) {
-        toast.error("This email is already registered!");
+        toast.error(t.login.toastEmailAlreadyRegistered);
         setLoading(false);
         return;
       }
@@ -155,11 +157,11 @@ export default function LoginPage({ onNavigate }) {
       console.error('Sign up error:', error);
 
       if (error.message.includes('already registered')) {
-        toast.error("This email is already registered");
+        toast.error(t.login.toastAlreadyRegistered);
       } else if (error.message.includes('Password')) {
-        toast.error("Password does not meet security requirements");
+        toast.error(t.login.toastPasswordSecurity);
       } else {
-        toast.error("Error creating account: " + error.message);
+        toast.error(t.login.toastCreateAccountError + error.message);
       }
     } finally {
       setLoading(false);
@@ -172,7 +174,7 @@ export default function LoginPage({ onNavigate }) {
 
     try {
       if (!loginEmailValidation.isValid) {
-        toast.error("Invalid email");
+        toast.error(t.login.toastInvalidEmailForm);
         setLoading(false);
         return;
       }
@@ -184,7 +186,7 @@ export default function LoginPage({ onNavigate }) {
 
       if (error) throw error;
 
-      toast.success("Welcome back! 👋");
+      toast.success(t.login.toastWelcomeBack);
       setLoginData({ email: '', password: '' });
       onNavigate('home');
 
@@ -192,19 +194,19 @@ export default function LoginPage({ onNavigate }) {
       console.error('Login error:', error);
 
       if (error.message.includes('Invalid login credentials')) {
-        toast.error("Incorrect email or password");
+        toast.error(t.login.toastIncorrectCredentials);
       } else if (error.message.includes('Email not confirmed')) {
         toast.error(
           <div>
-            <p className="font-bold">Email not confirmed</p>
-            <p className="text-sm">Check your inbox for the confirmation link</p>
+            <p className="font-bold">{t.login.toastEmailNotConfirmed}</p>
+            <p className="text-sm">{t.login.toastEmailNotConfirmedDesc}</p>
           </div>,
           { duration: 6000 }
         );
       } else if (error.message.includes('Invalid email')) {
-        toast.error("Invalid email format");
+        toast.error(t.login.toastInvalidEmail);
       } else {
-        toast.error("Sign-in error: " + error.message);
+        toast.error(t.login.toastSignInError + error.message);
       }
     } finally {
       setLoading(false);
@@ -213,7 +215,7 @@ export default function LoginPage({ onNavigate }) {
 
   const handleForgotPassword = async () => {
     if (!loginData.email) {
-      toast.error("Enter your email first");
+      toast.error(t.login.toastEnterEmailFirst);
       return;
     }
 
@@ -229,8 +231,8 @@ export default function LoginPage({ onNavigate }) {
 
       toast.success(
         <div>
-          <p className="font-bold">✉️ Email sent!</p>
-          <p className="text-sm">Check your inbox to reset your password</p>
+          <p className="font-bold">{t.login.toastEmailSent}</p>
+          <p className="text-sm">{t.login.toastEmailSentDesc}</p>
         </div>,
         { duration: 6000 }
       );
@@ -268,17 +270,17 @@ export default function LoginPage({ onNavigate }) {
                   )}
                 </div>
                 <h1 className="text-3xl font-semibold mb-2 text-gray-900">
-                  Welcome back
+                  {t.login.welcomeBack}
                 </h1>
                 <p className="text-gray-600 text-sm mb-8">
-                  Sign in to continue.<br />
+                  {t.login.signInToContinue}<br />
                 </p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
+                    {t.login.email}
                   </label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -287,7 +289,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type="email"
-                      placeholder="example@email.com"
+                      placeholder={t.login.emailPlaceholder}
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       className={`w-full pl-12 pr-5 py-3 bg-gray-50 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
@@ -302,14 +304,14 @@ export default function LoginPage({ onNavigate }) {
                   {loginData.email && !loginEmailValidation.isValid && (
                     <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
                       <FontAwesomeIcon icon={faTriangleExclamation} className="text-xs" />
-                      <span>{loginEmailValidation.error}</span>
+                      <span>{t.login.emailInvalidOrTaken}</span>
                     </div>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password
+                    {t.login.password}
                   </label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -318,7 +320,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="At least 8 characters"
+                      placeholder={t.login.passwordPlaceholder}
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                       className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
@@ -338,7 +340,7 @@ export default function LoginPage({ onNavigate }) {
                       onClick={handleForgotPassword}
                       className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
                     >
-                      Forgot password?
+                      {t.login.forgotPassword}
                     </button>
                   </div>
                 </div>
@@ -351,12 +353,12 @@ export default function LoginPage({ onNavigate }) {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                      Signing in...
+                      {t.login.signingIn}
                     </>
                   ) : (
                     <>
                       <FontAwesomeIcon icon={faRightToBracket} />
-                      Sign in
+                      {t.login.signIn}
                     </>
                   )}
                 </button>
@@ -367,7 +369,7 @@ export default function LoginPage({ onNavigate }) {
                   <div className="w-full border-t border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">or continue with</span>
+                  <span className="px-4 bg-white text-gray-500">{t.login.orContinueWith}</span>
                 </div>
               </div>
 
@@ -384,13 +386,13 @@ export default function LoginPage({ onNavigate }) {
               </div>
 
               <p className="text-center text-sm text-gray-600 mt-6">
-                Don't have an account?{' '}
+                {t.login.noAccount}{' '}
                 <button
                   type="button"
                   onClick={() => setIsSignUp(true)}
                   className="text-emerald-600 hover:text-emerald-700 font-semibold"
                 >
-                  Register
+                  {t.login.register}
                 </button>
               </p>
             </div>
@@ -412,7 +414,7 @@ export default function LoginPage({ onNavigate }) {
                 </div>
 
                 <h1 className="text-center text-3xl font-semibold mb-2 text-gray-900">
-                  Create account
+                  {t.login.createAccount}
                 </h1>
               </div>
 
@@ -420,7 +422,7 @@ export default function LoginPage({ onNavigate }) {
               <form onSubmit={handleSignUp} className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full name
+                    {t.login.fullName}
                   </label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -429,7 +431,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type="text"
-                      placeholder="Your name"
+                      placeholder={t.login.fullNamePlaceholder}
                       value={signUpData.name}
                       onChange={(e) => setSignUpData({ ...signUpData, name: e.target.value })}
                       className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
@@ -440,7 +442,7 @@ export default function LoginPage({ onNavigate }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
+                    {t.login.email}
                   </label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -449,7 +451,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type="email"
-                      placeholder="example@email.com"
+                      placeholder={t.login.emailPlaceholder}
                       value={signUpData.email}
                       onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                       className={`w-full pl-12 pr-4 py-3 bg-gray-50 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all
@@ -464,14 +466,14 @@ export default function LoginPage({ onNavigate }) {
                   {signUpData.email && !signUpEmailValidation.isValid && (
                     <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
                       <FontAwesomeIcon icon={faTriangleExclamation} className="text-xs" />
-                      <span>{signUpEmailValidation.error}</span>
+                      <span>{t.login.emailInvalidOrTaken}</span>
                     </div>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password<span className="text-red-500">*</span>
+                    {t.login.password}<span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <FontAwesomeIcon
@@ -480,7 +482,7 @@ export default function LoginPage({ onNavigate }) {
                     />
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="At least 8 characters"
+                      placeholder={t.login.passwordPlaceholder}
                       value={signUpData.password}
                       onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                       className={`
@@ -520,33 +522,33 @@ export default function LoginPage({ onNavigate }) {
                         <div className="flex items-start gap-2 text-red-600 text-sm">
                           <FontAwesomeIcon icon={faXmark} className="mt-0.5" />
                           <div>
-                            <p className="font-medium">Password must contain a digit and a lowercase letter</p>
+                            <p className="font-medium">{t.login.passwordMustContain}</p>
                           </div>
                         </div>
                       )}
 
                       {/* Requirements List */}
                       <p className="text-xs text-gray-600">
-                        Password must have at least 15 characters OR at least 8 characters including a digit and a lowercase letter.
+                        {t.login.passwordRequirements}
                       </p>
 
                       {/* Checklist */}
                       <div className="space-y-1">
                         <div className={`flex items-center gap-2 text-xs ${passwordValidation.checks.minLength ? 'text-green-600' : 'text-gray-400'}`}>
                           <FontAwesomeIcon icon={passwordValidation.checks.minLength ? faCheck : faXmark} />
-                          <span>At least 8 characters</span>
+                          <span>{t.login.atLeast8Chars}</span>
                         </div>
                         <div className={`flex items-center gap-2 text-xs ${passwordValidation.checks.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
                           <FontAwesomeIcon icon={passwordValidation.checks.hasNumber ? faCheck : faXmark} />
-                          <span>Contains at least one digit</span>
+                          <span>{t.login.containsDigit}</span>
                         </div>
                         <div className={`flex items-center gap-2 text-xs ${passwordValidation.checks.hasLowercase ? 'text-green-600' : 'text-gray-400'}`}>
                           <FontAwesomeIcon icon={passwordValidation.checks.hasLowercase ? faCheck : faXmark} />
-                          <span>Contains at least one lowercase letter</span>
+                          <span>{t.login.containsLowercase}</span>
                         </div>
                         <div className={`flex items-center gap-2 text-xs ${passwordValidation.checks.hasUppercase ? 'text-green-600' : 'text-gray-400'}`}>
                           <FontAwesomeIcon icon={passwordValidation.checks.hasUppercase ? faCheck : faXmark} />
-                          <span>Contains uppercase letter (optional, but recommended)</span>
+                          <span>{t.login.containsUppercase}</span>
                         </div>
                       </div>
 
@@ -568,10 +570,10 @@ export default function LoginPage({ onNavigate }) {
                           ))}
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Password strength: {
-                            passwordValidation.strength <= 2 ? 'Weak' :
-                              passwordValidation.strength === 3 ? 'Medium' :
-                                'Strong'
+                          {t.login.passwordStrength}: {
+                            passwordValidation.strength <= 2 ? t.login.weak :
+                              passwordValidation.strength === 3 ? t.login.medium :
+                                t.login.strong
                           }
                         </p>
                       </div>
@@ -587,12 +589,12 @@ export default function LoginPage({ onNavigate }) {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                      Creating account...
+                      {t.login.creatingAccount}
                     </>
                   ) : (
                     <>
                       <FontAwesomeIcon icon={faUserPlus} />
-                      Create account
+                      {t.login.createAccount}
                     </>
                   )}
                 </button>
@@ -603,7 +605,7 @@ export default function LoginPage({ onNavigate }) {
                   <div className="w-full border-t border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">or continue with</span>
+                  <span className="px-4 bg-white text-gray-500">{t.login.orContinueWith}</span>
                 </div>
               </div>
 
@@ -619,13 +621,13 @@ export default function LoginPage({ onNavigate }) {
               </div>
 
               <p className="text-center text-sm text-gray-600 mt-6">
-                Already have an account?{' '}
+                {t.login.alreadyHaveAccount}{' '}
                 <button
                   type="button"
                   onClick={() => setIsSignUp(false)}
                   className="text-emerald-600 hover:text-emerald-700 font-semibold"
                 >
-                  Sign in
+                  {t.login.signIn}
                 </button>
               </p>
             </div>

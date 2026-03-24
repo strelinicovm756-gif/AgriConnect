@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
-import { Button } from '../ui/Button';
 import ImageGalleryManager from './ImageGalleryManager';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,6 +12,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 export default function EditProductModal({ isOpen, onClose, product, onSuccess }) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [galleryImages, setGalleryImages] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
@@ -62,7 +63,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
       // Verifică dacă sunt imagini în curs de upload
       const hasUploadingImages = galleryImages.some(img => img.isUploading);
       if (hasUploadingImages) {
-        toast.error('Așteaptă finalizarea încărcării imaginilor!');
+        toast.error(t.features.waitForUploadImages);
         setLoading(false);
         return;
       }
@@ -83,7 +84,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
 
       if (error) throw error;
 
-      toast.success('Galerie actualizată cu succes!');
+      toast.success(t.features.galleryUpdated);
       setHasChanges(false);
       
       if (onSuccess) onSuccess();
@@ -99,7 +100,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
 
   const handleClose = () => {
     if (hasChanges) {
-      if (confirm('Ai modificări nesalvate! Sigur vrei să închizi?')) {
+      if (confirm(t.features.unsavedChangesConfirm)) {
         onClose();
       }
     } else {
@@ -119,7 +120,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <FontAwesomeIcon icon={faImages} className="text-emerald-600" />
-              Editează Galeria Foto
+              {t.features.editGallery}
             </h2>
             <p className="text-gray-500 text-sm mt-1">{product?.name}</p>
           </div>
@@ -138,13 +139,13 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
             <div className="flex gap-3">
               <FontAwesomeIcon icon={faImages} className="text-blue-600 mt-0.5" />
               <div className="flex-1 text-sm text-blue-800">
-                <p className="font-medium mb-1">Cum funcționează:</p>
+                <p className="font-medium mb-1">{t.features.howItWorks}</p>
                 <ul className="space-y-1 text-blue-700">
-                  <li>• Prima imagine = coperta produsului (afișată pe Home)</li>
-                  <li>• Trage imaginile pentru a le reordona</li>
-                  <li>• Click pe creion pentru a înlocui o imagine</li>
-                  <li>• Click pe X pentru a șterge o imagine</li>
-                  <li>• Maxim 4 imagini per produs</li>
+                  <li>• {t.features.infoCover}</li>
+                  <li>• {t.features.dragToReorder}</li>
+                  <li>• {t.features.infoReplace}</li>
+                  <li>• {t.features.infoDelete}</li>
+                  <li>• {t.features.infoMaxImages}</li>
                 </ul>
               </div>
             </div>
@@ -153,7 +154,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
           {/* Galerie Manager */}
           <div>
             <label className="block text-gray-700 text-sm font-medium mb-3">
-              Galeria Produsului
+              {t.features.galleryLabel}
             </label>
             
             <ImageGalleryManager
@@ -170,9 +171,9 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
               <div className="flex gap-3">
                 <FontAwesomeIcon icon={faExclamationTriangle} className="text-amber-600 mt-0.5" />
                 <div className="flex-1 text-sm">
-                  <p className="font-semibold text-amber-900 mb-1">Modificări nesalvate!</p>
+                  <p className="font-semibold text-amber-900 mb-1">{t.features.unsavedChangesTitle}</p>
                   <p className="text-amber-800">
-                    Apasă "Salvează Modificările" pentru a păstra schimbările sau "Anulează" pentru a renunța.
+                    {t.features.unsavedChangesBody}
                   </p>
                 </div>
               </div>
@@ -191,17 +192,17 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                Se salvează...
+                {t.features.saving}
               </>
             ) : hasUploadingImages ? (
               <>
                 <FontAwesomeIcon icon={faImages} />
-                Se încarcă imaginile...
+                {t.features.uploadingImages}
               </>
             ) : (
               <>
                 <FontAwesomeIcon icon={faSave} />
-                Salvează Modificările
+                {t.features.saveChanges}
               </>
             )}
           </button>
@@ -211,7 +212,7 @@ export default function EditProductModal({ isOpen, onClose, product, onSuccess }
             disabled={loading}
             className="px-8 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-lg transition disabled:opacity-50"
           >
-            Anulează
+            {t.features.cancel}
           </button>
         </div>
       </div>

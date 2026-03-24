@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useLanguage } from '../../i18n/LanguageContext';
 import {
   faClockRotateLeft, faFlag, faLayerGroup, faUsers,
   faCheck, faXmark, faChevronRight, faSpinner, faSearch,
@@ -78,6 +79,7 @@ function EmptyState({ icon, message }) {
 
 // Queue de Aprobare
 function ApprovalQueue({ userRole }) {
+  const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
@@ -240,7 +242,7 @@ function ApprovalQueue({ userRole }) {
                           className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
                         >
                           {actionLoading === p.id + '_approve' ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faCheck} />}
-                          Approve
+                          {t.admin.approve}
                         </button>
                         <button
                           onClick={() => { setRejectModal(p.id); setRejectReason(''); }}
@@ -248,7 +250,7 @@ function ApprovalQueue({ userRole }) {
                           className="flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-200 transition disabled:opacity-60"
                         >
                           <FontAwesomeIcon icon={faXmark} />
-                          Reject
+                          {t.admin.reject}
                         </button>
                       </div>
                     )}
@@ -259,7 +261,7 @@ function ApprovalQueue({ userRole }) {
                         className="flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-200 transition disabled:opacity-60"
                       >
                         {actionLoading === p.id + '_delete' ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faTrash} />}
-                        Delete
+                        {t.admin.delete}
                       </button>
                     )}
                     {filter === 'rejected' && p.reject_reason && (
@@ -310,7 +312,7 @@ function ApprovalQueue({ userRole }) {
                 className="px-5 py-2 rounded-xl text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-60"
               >
                 {actionLoading?.includes('_reject') ? <FontAwesomeIcon icon={faSpinner} className="animate-spin mr-1" /> : null}
-                Reject
+                {t.admin.reject}
               </button>
             </div>
           </div>
@@ -322,6 +324,7 @@ function ApprovalQueue({ userRole }) {
 
 // Sistem de Flag-uri 
 function FlagSystem() {
+  const { t } = useLanguage();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
@@ -484,6 +487,7 @@ function FlagSystem() {
 
 // Management Categorii 
 function CategoryManagement() {
+  const { t } = useLanguage();
   const [b2cCategories, setB2cCategories] = useState([]);
   const [b2bCategories, setB2bCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -739,6 +743,7 @@ function CategoryManagement() {
 
 // ── Gestionare Utilizatori ─────────────────────────────────────
 function UserManagement({ userRole }) {
+  const { t } = useLanguage();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -816,7 +821,7 @@ function UserManagement({ userRole }) {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search users by name or location..."
+          placeholder={t.admin.search}
           className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 text-sm"
         />
       </div>
@@ -887,7 +892,7 @@ function UserManagement({ userRole }) {
                           }`}
                         >
                           <FontAwesomeIcon icon={isBanned ? faUnlock : faBan} />
-                          {isBanned ? 'Reactivate' : 'Ban'}
+                          {isBanned ? t.admin.unban : t.admin.ban}
                         </button>
                       </div>
                     </td>
@@ -936,6 +941,7 @@ async function reverseGeocode(lat, lon) {
 }
 
 function EventManagement() {
+  const { t } = useLanguage();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -1744,6 +1750,7 @@ function EventManagement() {
 
 // ── Main AdminDashboard ────────────────────────────────────────
 export default function AdminDashboard({ session, onNavigate }) {
+  const { t } = useLanguage();
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('approvals');
@@ -1794,11 +1801,11 @@ export default function AdminDashboard({ session, onNavigate }) {
   if (!userRole) return null;
 
   const tabs = [
-    { key: 'approvals', label: 'Approval Queue', icon: faClockRotateLeft, badge: stats.pending },
+    { key: 'approvals', label: t.admin.products, icon: faClockRotateLeft, badge: stats.pending },
     { key: 'flags', label: 'Reports', icon: faFlag, badge: stats.reports },
     { key: 'categories', label: 'Categories', icon: faLayerGroup, badge: 0 },
-    { key: 'events', label: 'Events', icon: faCalendarDays, badge: 0 },
-    { key: 'users', label: 'Users', icon: faUsers, badge: 0 },
+    { key: 'events', label: t.admin.events, icon: faCalendarDays, badge: 0 },
+    { key: 'users', label: t.admin.users, icon: faUsers, badge: 0 },
   ];
 
   return (

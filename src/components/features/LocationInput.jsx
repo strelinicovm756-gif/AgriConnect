@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 import mapboxgl from 'mapbox-gl';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
 import '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css';
@@ -10,6 +11,7 @@ import { faLocationCrosshairs, faMapMarkerAlt } from '@fortawesome/free-solid-sv
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function LocationInput({ value, onChange, label, placeholder, required }) {
+  const { t } = useLanguage();
   const [isDetecting, setIsDetecting] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [coordinates, setCoordinates] = useState(null);
@@ -25,7 +27,7 @@ export default function LocationInput({ value, onChange, label, placeholder, req
       accessToken: mapboxgl.accessToken,
       types: 'place,address,locality,neighborhood',
       countries: 'md,ro',
-      placeholder: placeholder || 'Caută locație...',
+      placeholder: placeholder || t.features.searchLocationPlaceholder,
       language: 'ro',
       bbox: [26.5, 45.5, 30.0, 48.5],
     });
@@ -109,7 +111,7 @@ export default function LocationInput({ value, onChange, label, placeholder, req
 
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
-      alert('Browserul tău nu suportă geolocalizare');
+      alert(t.features.browserNoGeolocation);
       return;
     }
 
@@ -131,7 +133,7 @@ export default function LocationInput({ value, onChange, label, placeholder, req
       },
       (error) => {
         console.error('Eroare geolocalizare:', error);
-        alert('Nu am putut detecta locația ta. Verifică permisiunile browserului.');
+        alert(t.features.locationDetectFailed);
         setIsDetecting(false);
       }
     );
@@ -140,7 +142,7 @@ export default function LocationInput({ value, onChange, label, placeholder, req
   return (
     <div>
       <label className="block text-slate-300 text-sm font-medium mb-2">
-        {label || 'Locație'} {required && <span className="text-red-400">*</span>}
+        {label || t.features.locationLabel} {required && <span className="text-red-400">*</span>}
       </label>
 
       {/* Geocoder Autocomplete */}
@@ -151,7 +153,7 @@ export default function LocationInput({ value, onChange, label, placeholder, req
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || 'sau introdu manual (ex: Chișinău, Moldova)'}
+        placeholder={placeholder || t.features.locationManualPlaceholder}
         className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-500"
         required={required}
       />
@@ -166,7 +168,7 @@ export default function LocationInput({ value, onChange, label, placeholder, req
           className="flex items-center gap-2"
         >
           <FontAwesomeIcon icon={faLocationCrosshairs} />
-          {isDetecting ? 'Se detectează...' : 'Locația mea'}
+          {isDetecting ? t.features.detecting : t.features.myLocation}
         </Button>
 
         <Button
@@ -176,7 +178,7 @@ export default function LocationInput({ value, onChange, label, placeholder, req
           className="flex items-center gap-2"
         >
           <FontAwesomeIcon icon={faMapMarkerAlt} />
-          {showMap ? 'Ascunde harta' : 'Alege pe hartă'}
+          {showMap ? t.features.hideMap : t.features.chooseOnMap}
         </Button>
       </div>
 
@@ -185,13 +187,13 @@ export default function LocationInput({ value, onChange, label, placeholder, req
         <div className="mt-4 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
           <div ref={mapContainerRef} className="h-80 w-full"></div>
           <div className="bg-slate-800 p-3 text-sm text-slate-400 text-center">
-            Click pe hartă pentru a selecta o locație
+            {t.features.clickMapToSelect}
           </div>
         </div>
       )}
 
       <p className="text-slate-500 text-xs mt-2">
-        Caută adresa, folosește GPS sau alege pe hartă
+        {t.features.locationInputHint}
       </p>
     </div>
   );

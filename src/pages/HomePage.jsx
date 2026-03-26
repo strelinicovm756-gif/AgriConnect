@@ -80,8 +80,8 @@ function FarmerCard({ farmer, onNavigate }) {
   );
 }
 
-const CARD_B2C = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-300";
-const CARD_B2B = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-00 transition-all duration-300";
+const CARD_B2C = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border-1 border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-300";
+const CARD_B2B = "w-[331.7px] min-w-[320px] flex-shrink-0 snap-start bg-white rounded-2xl border-1 border-gray-200 overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-300";
 
 
 // ── B2C Collapsible Block ──────────────────────────────────────
@@ -176,7 +176,7 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
 
   return (
     <div
-      className="relative z-10 bg-white rounded-t-[40px] shadow-[0_-20px_40px_-10px_rgba(0,0,0,0.15)]"
+      className="relative z-10 bg-emerald-700 rounded-t-[40px] shadow-[0_-20px_40px_-10px_rgba(0,0,0,0.15)]"
       style={{ marginTop: b2cExpanded ? '-25px' : '-25px', transition: 'margin-top 0.5s ease-in-out' }}
     >
 
@@ -184,10 +184,10 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
       <div className="px-6 sm:px-8 lg:px-12 pt-8 pb-12">
         <button onClick={() => setIsExpanded(p => !p)} className="w-full flex items-center justify-between group text-left">
           <div className="text-left">
-            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <FontAwesomeIcon icon={faTractor} className="text-emerald-600" />
+            <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+              <FontAwesomeIcon icon={faTractor} className="text-white" />
               {t.home.servicesUtilities}
-              <span className={`ml-[10.5px] text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
+              <span className={`ml-[10.5px] text-base text-white transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                 <FontAwesomeIcon icon={faChevronDown} />
               </span>
             </h3>
@@ -316,7 +316,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
     if (!ref?.current) return;
     const c = ref.current;
     const card = c.querySelector(':first-child');
-    const cardWidth = card ? card.offsetWidth + 16 : 0; 
+    const cardWidth = card ? card.offsetWidth + 16 : 0;
     const max = c.scrollWidth - c.clientWidth;
     if (direction === 'right') {
       c.scrollLeft >= max - 10
@@ -425,7 +425,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50/50 via-white to-wight">
+    <div className="min-h-screen bg-emerald-700">
 
       {/* ── HERO — Dynamic Events Slider ─────────────────────── */}
       <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
@@ -475,9 +475,9 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
           <>
             {heroEvents.map((ev, i) => {
               const TYPE_CONFIG = {
-                iarmaroc:     { label: 'Fair',                color: 'bg-emerald-500/90' },
+                iarmaroc: { label: 'Fair', color: 'bg-emerald-500/90' },
                 curs_agricol: { label: 'Agricultural Course', color: 'bg-blue-500/90' },
-                piata_locala: { label: 'Local Market',        color: 'bg-amber-500/90' },
+                piata_locala: { label: 'Local Market', color: 'bg-amber-500/90' },
               };
               const typeInfo = TYPE_CONFIG[ev.type] || TYPE_CONFIG.iarmaroc;
               const isActive = i === currentSlide;
@@ -521,10 +521,9 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                         </div>
                         <button
                           onClick={() => onNavigate('eveniment', ev.id)}
-                          className="inline-flex items-center gap-2 bg-white text-emerald-700 font-bold px-8 py-4 rounded-2xl hover:bg-emerald-50 transition-all shadow-xl hover:scale-105 active:scale-95"
+                          className="inline-flex items-center gap-2 bg-emerald-700 text-white font-bold px-8 py-4 rounded-2xl hover:bg-emerald-800 transition-all shadow-xl hover:scale-105 active:scale-95"
                         >
                           Learn more
-                          <FontAwesomeIcon icon={faArrowRight} />
                         </button>
                       </div>
                     </div>
@@ -555,9 +554,8 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                 <button
                   key={i}
                   onClick={() => setCurrentSlide(i)}
-                  className={`transition-all duration-300 rounded-full ${
-                    i === currentSlide ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
-                  }`}
+                  className={`transition-all duration-300 rounded-full ${i === currentSlide ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/50 hover:bg-white/70'
+                    }`}
                   aria-label={`Slide ${i + 1}`}
                 />
               ))}
@@ -571,7 +569,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
       </div>
 
       {/* ── HARTA ─────────────────────────────────────────────── */}
-      <div className="relative z-10 -mt-16 bg-white rounded-t-[40px] shadow-xl pt-10 pb-10">
+      <div className="relative z-10 -mt-16 bg-emerald-700 rounded-t-[40px] shadow-xl pt-10 pb-10">
         <NearbyFarmersMap products={products} onNavigate={onNavigate} dbCategories={dbCategories} />
       </div>
 
@@ -586,7 +584,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
       {!loading && (
         <>
           {/* FERMIERI VERIFICAȚI */}
-          
+
 
           {/* ── B2C ─────────────────────────────────────────── */}
           <B2CBlock
@@ -614,7 +612,8 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
           {/* ── PRESTATORI B2B ────────────────────────────────── */}
           {b2bProviders.length > 0 && (
-            <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
+
+            <div className="pl-4 relative z-10 rounded-t-[40px] bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
               <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -635,66 +634,66 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
           {/* ── PRESTATORI B2C ────────────────────────────────── */}
           {b2cProviders.length > 0 && (
-            <div className="relative z-10 bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
-              <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
-                <div className="flex items-center gap-2 mb-6">
-                  <FontAwesomeIcon icon={faSeedling} className="text-emerald-600 text-xl" />
-                  <h3 className="text-2xl font-bold text-gray-900">{t.home.foodProducers}</h3>
-                </div>
-                <div className="relative">
-                  <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
-                    <PillNavButton direction="left" onClick={() => scroll('left', b2cProvidersRef)} ariaLabel="Stânga" />
-                    <PillNavButton direction="right" onClick={() => scroll('right', b2cProvidersRef)} ariaLabel="Dreapta" />
-                    <B2CProviderCarousel providers={b2cProviders} onNavigate={onNavigate} scrollRef={b2cProvidersRef} />
+            
+              <div className="pl-4 relative z-10 rounded-t-[40px] bg-emerald-700 shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
+                <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
+                  <div className="flex items-center gap-2 mb-6">
+                    <FontAwesomeIcon icon={faSeedling} className="text-white text-xl" />
+                    <h3 className="text-2xl font-bold text-white">{t.home.foodProducers}</h3>
+                  </div>
+                  <div className="relative">
+                    <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
+                      <PillNavButton direction="left" onClick={() => scroll('left', b2cProvidersRef)} ariaLabel="Stânga" />
+                      <PillNavButton direction="right" onClick={() => scroll('right', b2cProvidersRef)} ariaLabel="Dreapta" />
+                      <B2CProviderCarousel providers={b2cProviders} onNavigate={onNavigate} scrollRef={b2cProvidersRef} />
+                    </div>
                   </div>
                 </div>
+              </div>
+            
+          )}
+
+          {/* ── INFO BANNER ───────────────────────────────────── */}
+          <div className="bg-emerald-700 px-6 sm:px-8 lg:px-12 py-16">
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { icon: faTruck, title: t.home.directFromSource, desc: t.home.directFromSourceDesc },
+                { icon: faCircleCheck, title: t.home.verifiedProducers, desc: t.home.verifiedProducersDesc },
+                { icon: faHandshake, title: t.home.noCommissions, desc: t.home.noCommissionsDesc },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} className="bg-white/10 border border-white/20 rounded-2xl p-6 text-center">
+                  <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <FontAwesomeIcon icon={icon} className="text-3xl text-white" />
+                  </div>
+                  <h4 className="text-white font-semibold text-lg mb-2">{title}</h4>
+                  <p className="text-emerald-100 text-sm">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── CTA ──────────────────────────────────────────── */}
+          {session && (
+            <div className="relative z-10 bg-white rounded-t-[40px] shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.08)] px-6 sm:px-8 lg:px-12 py-12">
+              <div className="text-center">
+                <h3 className="text-3xl font-bold text-gray-900 mb-3">{t.home.areYouProducer}</h3>
+                <p className="text-gray-500 mb-6 max-w-xl mx-auto">
+                  {t.home.areYouProducerDesc}
+                </p>
+                <button onClick={() => setShowAddProductModal(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all hover:scale-105">
+                  <FontAwesomeIcon icon={faPlus} className="mr-2" />
+                  {t.home.addProductNow}
+                </button>
               </div>
             </div>
           )}
 
-          {/* ── INFO BANNER ───────────────────────────────────── */}
-          <div className="px-4 sm:px-6 lg:px-8">
-            <section className="my-12">
-              <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-3xl p-8 md:p-12 shadow-xl">
-                <div className="grid md:grid-cols-3 gap-8 text-white">
-                  {[
-                    { icon: faTruck, title: t.home.directFromSource, desc: t.home.directFromSourceDesc },
-                    { icon: faCircleCheck, title: t.home.verifiedProducers, desc: t.home.verifiedProducersDesc },
-                    { icon: faHandshake, title: t.home.noCommissions, desc: t.home.noCommissionsDesc },
-                  ].map(({ icon, title, desc }) => (
-                    <div key={title} className="text-center">
-                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <FontAwesomeIcon icon={icon} className="text-3xl" />
-                      </div>
-                      <h4 className="text-lg font-semibold mb-2">{title}</h4>
-                      <p className="text-emerald-100 text-sm">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {session && (
-              <section className="mb-12">
-                <div className="bg-white rounded-3xl p-8 md:p-12 text-center border border-gray-200 shadow-sm">
-                  <h3 className="text-3xl font-bold text-gray-900 mb-3">{t.home.areYouProducer}</h3>
-                  <p className="text-gray-500 mb-6 max-w-xl mx-auto">
-                    {t.home.areYouProducerDesc}
-                  </p>
-                  <button onClick={() => setShowAddProductModal(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all hover:scale-105">
-                    <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                    {t.home.addProductNow}
-                  </button>
-                </div>
-              </section>
-            )}
-          </div>
         </>
-      )}
+      )
+      }
 
-      {/* ── FOOTER ───────────────────────────────────────────── */}
-      <footer className="bg-gray-50 border-t border-gray-200">
+      <footer className="bg-white border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
             <FontAwesomeIcon icon={faLeaf} className="text-emerald-600 text-xl" />
@@ -710,6 +709,6 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
-    </div>
+    </div >
   );
 }

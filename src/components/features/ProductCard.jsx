@@ -76,22 +76,6 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
-
-            {/* Counter Imagini */}
-            {(() => {
-              const galleryCount = product.gallery_images?.length || 0;
-              const totalImages = 1 + galleryCount;
-
-              if (totalImages > 1) {
-                return (
-                  <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-lg">
-                    <FontAwesomeIcon icon={faImages} className="text-[11px]" />
-                    <span>{totalImages}</span>
-                  </div>
-                );
-              }
-              return null;
-            })()}
           </>
         ) : (
           <div className={`flex items-center justify-center h-full ${config.bgColor}`}>
@@ -112,7 +96,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
 
         {/* Negotiable badge */}
         {product.is_negotiable && (
-          <span className="absolute top-2 right-2 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">NEGOTIABLE</span>
+          <span className="absolute top-4 right-2 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">NEGOTIABLE</span>
         )}
 
         {/* Buton raportare — vizibil la hover */}

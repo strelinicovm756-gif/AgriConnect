@@ -271,10 +271,10 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                     className="w-full flex items-center justify-between group text-left"
                 >
                     <div className="text-left">
-                        <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                            <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600" />
+                        <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <FontAwesomeIcon icon={faLocationDot} className="text-white" />
                             {t.features.nearbyProducers}
-                            <span className={`ml-5 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
+                            <span className={`ml-5 text-base text-white transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                                 <FontAwesomeIcon icon={faChevronDown} />
                             </span>
                         </h3>

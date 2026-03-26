@@ -36,7 +36,7 @@ export function B2CFlipCard({ provider, onNavigate }) {
 
   return (
     <div
-      className="mt-2 w-40 h-60 md:w-60 md:h-80 [perspective:1000px] cursor-pointer mx-auto"
+      className="mt-2 w-40 h-60 md:w-[260px] md:h-80 [perspective:1000px] cursor-pointer mx-auto"
       onClick={handleClick}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}

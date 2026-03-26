@@ -449,7 +449,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                 <div className="max-w-2xl text-white">
                   <span className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-white/30">
                     <FontAwesomeIcon icon={faCalendarDays} />
-                    AgriConnect Moldova
+                    Sezon Moldova
                   </span>
                   <h2 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
                     Fresh products direct from source
@@ -698,7 +698,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-3">
             <FontAwesomeIcon icon={faLeaf} className="text-emerald-600 text-xl" />
-            <span className="text-lg font-bold text-gray-900">AgriConnect</span>
+            <span className="text-lg font-bold text-gray-900">Sezon</span>
           </div>
           <p className="text-gray-500 text-sm">{t.home.footerTagline}</p>
         </div>

@@ -1,5 +1,5 @@
 // src/i18n/translations.js
-// Toate textele aplicației AgriConnect în 3 limbi: română, engleză, franceză
+// Toate textele aplicației Sezon în 3 limbi: română, engleză, franceză
 
 export const translations = {
 

@@ -300,7 +300,7 @@ export function Navbar({ session, onNavigate }) {
           {/* Logo */}
           <div onClick={() => onNavigate('home')} className="flex items-center gap-2 cursor-pointer group flex-shrink-0">
             <img src="/src/assets/IconApp_em_600.svg" alt="Logo" className="h-7 w-7" />
-            <h1 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition hidden sm:block">AgriConnect</h1>
+            <h1 className="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition hidden sm:block">Sezon</h1>
           </div>
 
           {/* Link Evenimente */}

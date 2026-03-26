@@ -1,5 +1,5 @@
 {
-  "name": "agriconnect",
+  "name": "sezon",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -30,7 +30,6 @@
     "motion": "^12.35.1",
     "radix-ui": "^1.4.3",
     "react": "^19.2.0",
-    "react-card-flip": "^1.2.3",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-i18next": "^16.5.8",

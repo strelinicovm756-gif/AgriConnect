@@ -6,6 +6,7 @@ import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faEye,
+  faLeaf,
   faEyeSlash,
   faUserPlus,
   faRightToBracket,

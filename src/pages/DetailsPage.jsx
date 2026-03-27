@@ -316,6 +316,7 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
   }, [session, productId]);
 
   const fetchProductDetails = async () => {
+    const fetchStart = Date.now();
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -353,7 +354,9 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
       toast.error('Product not found');
       onNavigate('home');
     } finally {
-      setLoading(false);
+      const elapsed = Date.now() - fetchStart;
+      const remaining = Math.max(0, 1500 - elapsed);
+      setTimeout(() => setLoading(false), remaining);
     }
     try {
       await supabase.rpc('increment_product_views', { product_id: productId });

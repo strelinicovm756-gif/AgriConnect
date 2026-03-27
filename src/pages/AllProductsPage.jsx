@@ -421,6 +421,7 @@ export default function AllProductsPage({
   useEffect(() => { fetchProducts(); }, [filters, currentPage, dbCategories]);
 
   const fetchProducts = async () => {
+    const fetchStart = Date.now();
     try {
       setLoading(true);
       let query = supabase
@@ -464,7 +465,9 @@ export default function AllProductsPage({
     } catch {
       toast.error('Eroare la încărcarea produselor');
     } finally {
-      setLoading(false);
+      const elapsed = Date.now() - fetchStart;
+      const remaining = Math.max(0, 1500 - elapsed);
+      setTimeout(() => setLoading(false), remaining);
     }
   };
 

@@ -64,7 +64,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
 
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" onClick={() => onViewDetails(product.id)} style={{ cursor: 'pointer' }}>
 
 
       <div className="relative h-36 bg-gray-100 rounded-t-xl overflow-hidden">

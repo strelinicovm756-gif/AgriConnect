@@ -62,10 +62,16 @@ export default function ChatPage({ session, onNavigate }) {
   }, [session]);
 
   const loadConversations = async () => {
-    setLoadingConvs(true);
-    const data = await fetchConversations(session.user.id);
-    setConversations(data);
-    setLoadingConvs(false);
+    const fetchStart = Date.now();
+    try {
+      setLoadingConvs(true);
+      const data = await fetchConversations(session.user.id);
+      setConversations(data);
+    } finally {
+      const elapsed = Date.now() - fetchStart;
+      const remaining = Math.max(0, 1500 - elapsed);
+      setTimeout(() => setLoadingConvs(false), remaining);
+    }
   };
 
   const selectConversation = async (conv) => {

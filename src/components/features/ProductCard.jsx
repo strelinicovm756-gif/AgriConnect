@@ -14,7 +14,6 @@ import {
   faBox,
   faLocationDot,
   faCalendarDays,
-  faImages,
   faLock,
   faFlag
 } from '@fortawesome/free-solid-svg-icons';

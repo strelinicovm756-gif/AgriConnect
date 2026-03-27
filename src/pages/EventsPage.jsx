@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faCalendarDays, faLocationDot, faMapMarkerAlt, faArrowRight, faSpinner
+  faCalendarDays, faLocationDot, faMapMarkerAlt, faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import { useLanguage } from '../i18n/LanguageContext';
 

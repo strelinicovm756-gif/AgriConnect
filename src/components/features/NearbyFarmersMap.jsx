@@ -278,11 +278,6 @@ export default function NearbyFarmersMap({ products = [], onNavigate, dbCategori
                                 <FontAwesomeIcon icon={faChevronDown} />
                             </span>
                         </h3>
-                        <p className="text-gray-500 text-sm mt-1">
-                            {locationStatus === 'granted' && nearbyCount > 0
-                                ? t.features.producersWithin.replace('{n}', nearbyCount).replace('{km}', radiusKm)
-                                : null }
-                        </p>
                     </div>
                 </button>
             </div>

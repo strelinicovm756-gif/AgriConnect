@@ -14,12 +14,30 @@ import {
     faCircleCheck, faHourglassHalf, faXmark, faUser, faPhone,
     faLocationDot, faPenToSquare, faFloppyDisk, faBan,
     faRightFromBracket, faImages, faRotateRight,
-    faCheck, faPen, faStar, faFileLines
+    faCheck, faPen, faStar, faFileLines, faGear, faGlobe, faBell,
+    faCarrot, faTractor, faUsers, faStore, faBuilding,
 } from '@fortawesome/free-solid-svg-icons';
 import {
     Star, MessageSquare, Package,
     ExternalLink, Pencil, Trash2, Calendar
 } from 'lucide-react';
+
+function LangPills() {
+    const { lang, setLang } = useLanguage();
+    return (
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-0.5">
+            {['ro', 'en', 'fr'].map(l => (
+                <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200 ${lang === l ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:text-gray-800'}`}
+                >
+                    {l}
+                </button>
+            ))}
+        </div>
+    );
+}
 
 function Alert({ variant = 'default', title, children, className = '' }) {
     const styles = {
@@ -344,6 +362,10 @@ export default function ProfilePage({ session, onNavigate }) {
     const [editingProductId, setEditingProductId] = useState(null);
     const [dismissedBanner, setDismissedBanner] = useState(false);
     const [dismissedExpiryBanner, setDismissedExpiryBanner] = useState(false);
+    const [notifyEvents, setNotifyEvents] = useState(false);
+    const [profileMarketType, setProfileMarketType] = useState('b2c');
+    const [b2bVerified, setB2bVerified] = useState(false);
+    const [b2bRequestedAt, setB2bRequestedAt] = useState(null);
 
     // ── RATING STATE ──────────────────────────────────────────
     const [avgRating, setAvgRating] = useState(0);
@@ -394,7 +416,11 @@ export default function ProfilePage({ session, onNavigate }) {
             if (error) throw error;
             if (!data) { await createProfile(); return; }
             setProfile(data);
-            setFormData({ full_name: data.full_name || '', phone: data.phone || '', location: data.location || '', bio: data.bio || '' });
+            setNotifyEvents(!!data.notify_events);
+            setProfileMarketType(data.market_type || 'b2c');
+            setB2bVerified(!!data.b2b_verified);
+            setB2bRequestedAt(data.b2b_requested_at || null);
+            setFormData({ full_name: data.full_name || '', phone: data.phone || '', location: data.location || '', bio: data.bio || '', idno: data.idno || '', company_name: data.company_name || '' });
         } catch (error) {
             console.error('Eroare la încărcarea profilului:', error);
             toast.error('Eroare: ' + error.message);
@@ -521,6 +547,31 @@ export default function ProfilePage({ session, onNavigate }) {
         } catch { toast.error('Error resubmitting'); }
     };
 
+    const handleToggleNotifyEvents = async () => {
+        const next = !notifyEvents;
+        setNotifyEvents(next);
+        try {
+            await supabase.from('profiles').update({ notify_events: next }).eq('id', session.user.id);
+            toast.success(t.profile.settingsSaved);
+        } catch {
+            setNotifyEvents(!next);
+        }
+    };
+
+    const handleMarketTypeChange = async (newType) => {
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ market_type: newType })
+                .eq('id', session.user.id);
+            if (error) throw error;
+            setProfileMarketType(newType);
+            toast.success(t.profile.settingsSaved);
+        } catch {
+            toast.error(t.profile.toastProfileError);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.phone || !/^\+373\d{8}$/.test(formData.phone)) return toast.error('Phone must have the format: +373 + 8 digits');
@@ -530,7 +581,9 @@ export default function ProfilePage({ session, onNavigate }) {
             setLoading(true);
             const { error } = await supabase.from('profiles').update({
                 full_name: formData.full_name.trim(), phone: formData.phone,
-                location: formData.location.trim(), bio: formData.bio.trim()
+                location: formData.location.trim(), bio: formData.bio.trim(),
+                company_name: formData.company_name?.trim() || null,
+                idno: formData.idno?.trim() || null,
             }).eq('id', session.user.id);
             if (error) throw error;
             toast.success(t.profile.toastProfileSaved);
@@ -753,6 +806,35 @@ export default function ProfilePage({ session, onNavigate }) {
                                         />
                                     </div>
 
+                                    {(profileMarketType === 'b2b' || profileMarketType === 'both') && (
+                                        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 space-y-4">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
+                                                    <FontAwesomeIcon icon={faBuilding} className="text-blue-600 text-sm" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-blue-900">{t.profile.b2bSectionTitle}</p>
+                                                    <p className="text-xs text-blue-600">{t.profile.b2bSectionSubtitle}</p>
+                                                </div>
+                                            </div>
+                                            <Input
+                                                label={t.profile.companyName}
+                                                value={formData.company_name}
+                                                onChange={e => setFormData(f => ({ ...f, company_name: e.target.value }))}
+                                                placeholder="Ex: SRL Fructe Proaspete"
+                                            />
+                                            <div>
+                                                <Input
+                                                    label={t.profile.idnoLabel}
+                                                    value={formData.idno}
+                                                    onChange={e => setFormData(f => ({ ...f, idno: e.target.value.replace(/\D/g, '').slice(0, 13) }))}
+                                                    placeholder="Ex: 1234567890123"
+                                                />
+                                                <p className="text-xs text-gray-400 mt-1">{t.profile.idnoHint}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {(!formData.phone || !formData.location || !formData.full_name || !/^\+373\d{8}$/.test(formData.phone) || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) && (
                                         <Alert variant="warning" title="To add listings you must complete:">
                                             <ul className="text-amber-800 text-sm space-y-1">
@@ -876,6 +958,38 @@ export default function ProfilePage({ session, onNavigate }) {
                                         </div>
                                     </div>
 
+                                    {/* B2B status card */}
+                                    {(profileMarketType === 'b2b' || profileMarketType === 'both') && (
+                                        <div className={`rounded-2xl border p-4 mt-2 ${b2bVerified ? 'bg-emerald-50 border-emerald-200' : b2bRequestedAt ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-100'}`}>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${b2bVerified ? 'bg-emerald-100' : b2bRequestedAt ? 'bg-amber-100' : 'bg-blue-100'}`}>
+                                                    <FontAwesomeIcon
+                                                        icon={b2bVerified ? faCircleCheck : b2bRequestedAt ? faHourglassHalf : faBuilding}
+                                                        className={`text-sm ${b2bVerified ? 'text-emerald-600' : b2bRequestedAt ? 'text-amber-600' : 'text-blue-600'}`}
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-gray-900">
+                                                        {b2bVerified ? t.profile.b2bStatusVerified : b2bRequestedAt ? t.profile.b2bStatusPending : t.profile.b2bStatusIncomplete}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-0.5">
+                                                        {b2bVerified
+                                                            ? `${t.profile.b2bCompany}: ${profile?.company_name || '—'} · IDNO: ${profile?.idno || '—'}`
+                                                            : b2bRequestedAt ? t.profile.b2bPendingHint : t.profile.b2bIncompleteHint}
+                                                    </p>
+                                                </div>
+                                                {!b2bVerified && (
+                                                    <button
+                                                        onClick={() => setEditing(true)}
+                                                        className="text-xs text-blue-600 hover:text-blue-700 font-semibold bg-white border border-blue-200 px-3 py-1.5 rounded-xl transition flex-shrink-0"
+                                                    >
+                                                        {b2bRequestedAt ? t.profile.b2bEdit : t.profile.b2bComplete}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Incomplete profile alert */}
                                     {getMissingFields(profile, t).length > 0 && (
                                         <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
@@ -924,6 +1038,85 @@ export default function ProfilePage({ session, onNavigate }) {
                                     )}
                                 </div>
                             )}
+                        </div>
+
+                        {/* ── SETĂRI & PREFERINȚE ── */}
+                        <div className="bg-white rounded-3xl border border-gray-200 shadow-lg overflow-hidden mt-8">
+                            <div className="p-6">
+                                {/* Header */}
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                        <FontAwesomeIcon icon={faGear} className="text-emerald-600" />
+                                    </div>
+                                    <p className="font-bold text-gray-900">{t.profile.settingsTitle}</p>
+                                </div>
+
+                                {/* Row: notify_events toggle */}
+                                <div className="flex items-center justify-between gap-4 py-3 border-b border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                            <FontAwesomeIcon icon={faBell} className="text-emerald-600 text-sm" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900">{t.profile.settingsNotifyEvents}</p>
+                                            <p className="text-xs text-gray-500">{t.profile.settingsNotifyEventsDesc}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleToggleNotifyEvents}
+                                        className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none flex-shrink-0 ${notifyEvents ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                                    >
+                                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${notifyEvents ? 'translate-x-5' : 'translate-x-0'}`} />
+                                    </button>
+                                </div>
+
+                                {/* Row: Producer type */}
+                                <div className="flex items-start justify-between gap-4 py-3 border-b border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                            <FontAwesomeIcon icon={faStore} className="text-emerald-600 text-sm" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900">{t.profile.producerType}</p>
+                                            <p className="text-xs text-gray-500">{t.profile.producerTypeHint}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                                        <div className="flex gap-1.5">
+                                            {[
+                                                { key: 'b2c', label: t.profile.producerTypeFood, icon: faCarrot },
+                                                { key: 'b2b', label: t.profile.producerTypeServices, icon: faTractor },
+                                                { key: 'both', label: t.profile.producerTypeBoth, icon: faUsers },
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.key}
+                                                    onClick={() => handleMarketTypeChange(opt.key)}
+                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                                                        profileMarketType === opt.key
+                                                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                                            : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-700'
+                                                    }`}
+                                                >
+                                                    <FontAwesomeIcon icon={opt.icon} className="text-[10px]" />
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-[10px] text-gray-400">{t.profile.producerTypeAutoHint}</p>
+                                    </div>
+                                </div>
+
+                                {/* Row: Language */}
+                                <div className="flex items-center justify-between gap-4 py-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                            <FontAwesomeIcon icon={faGlobe} className="text-emerald-600 text-sm" />
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-900">{t.profile.settingsLanguage}</p>
+                                    </div>
+                                    <LangPills />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Recenzii lăsate */}

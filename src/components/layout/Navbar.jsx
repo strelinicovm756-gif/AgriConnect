@@ -6,7 +6,9 @@ import {
   faLayerGroup, faCarrot, faAppleWhole, faCow, faDrumstickBite,
   faEgg, faJar, faWheatAwn, faTractor, faSeedling, faWrench, faDroplet,
   faCartShopping, faIndustry,
-  faChevronDown as faChevronDownSolid, faCalendarDays
+  faChevronDown as faChevronDownSolid, faCalendarDays, faUsers,
+  faBell, faBellSlash, faCheckDouble, faCircleCheck, faTriangleExclamation,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { getColorForName } from '../../lib/utils';
 import { supabase } from "../../services/supabaseClient";
@@ -63,7 +65,7 @@ function LanguageSwitcher() {
   );
 }
 
-export function Navbar({ session, onNavigate }) {
+export function Navbar({ session, onNavigate, notifications = [], unreadCount = 0, markAsRead, markAllAsRead }) {
   // ── Language ──────────────────────────────────────────────
   const { t } = useLanguage(); // ← NOU
 
@@ -79,8 +81,6 @@ export function Navbar({ session, onNavigate }) {
   const [isSearching, setIsSearching] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [userRole, setUserRole] = useState(null);
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
@@ -132,15 +132,6 @@ export function Navbar({ session, onNavigate }) {
     return () => document.removeEventListener('mousedown', clickOut);
   }, [showOverlay, showMegaMenu]);
 
-  useEffect(() => {
-    if (!session) { setNotifs([]); setUnreadCount(0); return; }
-    loadNotifs();
-    const channel = supabase
-      .channel('notifs_' + session.user.id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'annonce_notifications', filter: `id_profiles=eq.${session.user.id}` }, () => loadNotifs())
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [session]);
 
   useEffect(() => {
     if (!session) { setChatUnreadCount(0); return; }
@@ -207,15 +198,6 @@ export function Navbar({ session, onNavigate }) {
     finally { setIsLoadingProfile(false); }
   };
 
-  const loadNotifs = async () => {
-    if (!session) return;
-    const [{ data }, { count }] = await Promise.all([
-      supabase.from('annonce_notifications').select('*').eq('id_profiles', session.user.id).order('created_at', { ascending: false }).limit(20),
-      supabase.from('annonce_notifications').select('*', { count: 'exact', head: true }).eq('id_profiles', session.user.id).eq('is_read', false),
-    ]);
-    setNotifs(data || []);
-    setUnreadCount(count || 0);
-  };
 
   const relativeTime = (dateStr) => {
     const m = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
@@ -231,20 +213,11 @@ export function Navbar({ session, onNavigate }) {
     return d.toLocaleDateString('ro-RO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  const markAsRead = async (notif) => {
+  const handleNotifClick = (n) => {
     setShowNotifDropdown(false);
-    if (!notif.is_read) {
-      await supabase.from('annonce_notifications').update({ is_read: true }).eq('id', notif.id);
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      setNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
-    }
-    if (notif.id_produit) onNavigate('detalii', notif.id_produit);
-  };
-
-  const markAllAsRead = async () => {
-    await supabase.from('annonce_notifications').update({ is_read: true }).eq('id_profiles', session.user.id).eq('is_read', false);
-    setUnreadCount(0);
-    setNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
+    if (markAsRead) markAsRead(n.id, n._source);
+    if (n.link_type === 'event' && n.link_id) onNavigate('eveniment', n.link_id);
+    else if (n.link_type === 'product' && n.link_id) onNavigate('detalii', n.link_id);
   };
 
   const handleLogout = async () => {
@@ -311,6 +284,15 @@ export function Navbar({ session, onNavigate }) {
           >
             <FontAwesomeIcon icon={faCalendarDays} className="text-white" />
             <span>{t.nav.events}</span>
+          </button>
+
+          {/* Link Producători */}
+          <button
+            onClick={() => onNavigate('producatori')}
+            className="shadow-md hidden md:flex items-center gap-2 bg-white text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-50 transition-colors"
+          >
+            <FontAwesomeIcon icon={faUsers} className="text-emerald-600" />
+            <span>{t.nav.producers}</span>
           </button>
 
           {/* Buton Categorii */}
@@ -391,56 +373,69 @@ export function Navbar({ session, onNavigate }) {
                     onClick={() => setShowNotifDropdown(!showNotifDropdown)}
                     className="relative w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-xl transition"
                   >
-                    <Bell size={18} />
+                    <FontAwesomeIcon icon={faBell} size="lg" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center leading-none">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
                   </button>
 
                   {showNotifDropdown && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-dropdown">
+                    <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+                      {/* Header */}
                       <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
-                        <p className="text-sm font-bold text-gray-900">Notifications</p>
+                        <p className="text-sm font-bold text-gray-900">{t.notifications.title}</p>
                         {unreadCount > 0 && (
-                          <span className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">{unreadCount} noi</span>
+                          <button
+                            onClick={() => markAllAsRead && markAllAsRead()}
+                            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition"
+                          >
+                            <FontAwesomeIcon icon={faCheck} className="text-[11px]" />
+                            {t.notifications.markAllRead}
+                          </button>
                         )}
                       </div>
 
-                      {notifs.length === 0 ? (
-                        <div className="px-5 py-8 text-center text-gray-400">
-                          <Bell size={28} className="mx-auto mb-2 opacity-30" />
-                          <p className="text-sm">No notifications</p>
+                      {/* List */}
+                      {notifications.length === 0 ? (
+                        <div className="px-5 py-10 text-center text-gray-400">
+                          <FontAwesomeIcon icon={faBellSlash} className="text-3xl mb-2 opacity-30 block mx-auto" />
+                          <p className="text-sm">{t.notifications.empty}</p>
                         </div>
                       ) : (
-                        <div>
-                          <div className="max-h-80 overflow-y-auto">
-                            {notifs.map(n => (
+                        <div className="max-h-96 overflow-y-auto">
+                          {notifications.map(n => {
+                            const icon = n.type === 'new_event' ? faCalendarDays
+                              : n.type === 'product_approved' ? faCircleCheck
+                              : n.type === 'product_rejected' ? faTriangleExclamation
+                              : faBell;
+                            const iconColor = n.type === 'new_event' ? 'text-emerald-600'
+                              : n.type === 'product_approved' ? 'text-emerald-600'
+                              : n.type === 'product_rejected' ? 'text-red-500'
+                              : 'text-gray-400';
+                            return (
                               <button
-                                key={n.id}
-                                onClick={() => markAsRead(n)}
-                                className={`w-full text-left px-5 py-3.5 flex gap-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0 ${!n.is_read ? 'bg-blue-50/40' : ''}`}
+                                key={`${n._source}-${n.id}`}
+                                onClick={() => handleNotifClick(n)}
+                                className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0 ${!n.is_read ? 'bg-emerald-50/60 border-l-2 border-l-emerald-500' : ''}`}
                               >
-                                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
+                                <FontAwesomeIcon icon={icon} className={`${iconColor} mt-0.5 flex-shrink-0`} />
                                 <div className="flex-1 min-w-0">
                                   {n.title && <p className="text-sm font-bold text-gray-900 truncate">{n.title}</p>}
-                                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">{n.content}</p>
-                                  <p className="text-[10px] text-gray-400 mt-1">{relativeTime(n.created_at)} · {formatDate(n.created_at)}</p>
+                                  {n.body && <p className="text-xs text-gray-500 line-clamp-2 mt-0.5">{n.body}</p>}
+                                  <p className="text-[10px] text-gray-400 mt-1">{relativeTime(n.created_at)}</p>
                                 </div>
                               </button>
-                            ))}
-                          </div>
-                          {unreadCount > 0 && (
-                            <div className="px-5 py-3 border-t border-gray-100">
-                              <button onClick={markAllAsRead} className="w-full flex items-center justify-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition py-1">
-                                <Check size={14} />
-                                Mark all as read
-                              </button>
-                            </div>
-                          )}
+                            );
+                          })}
                         </div>
                       )}
+
+                      {/* Footer */}
+                      <div className="px-5 py-2.5 border-t border-gray-100 text-center">
+                        <p className="text-[10px] text-gray-400">{t.notifications.footer}</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -830,6 +825,7 @@ export function Navbar({ session, onNavigate }) {
         isOpen={showAddProductModal}
         onClose={() => setShowAddProductModal(false)}
         session={session}
+        onNavigate={onNavigate}
         onSuccess={() => { }}
       />
 

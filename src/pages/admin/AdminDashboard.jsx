@@ -13,7 +13,8 @@ import {
   faPlus, faTrash, faPen, faFloppyDisk,
   faCircleCheck, faTriangleExclamation, faBoxOpen, faFileImage,
   faLocationDot, faCrown,
-  faCartShopping, faIndustry, faCalendarDays
+  faCartShopping, faIndustry, faCalendarDays, faBell, faBuilding,
+  faEye, faChevronLeft
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -78,7 +79,7 @@ function EmptyState({ icon, message }) {
 }
 
 // Queue de Aprobare
-function ApprovalQueue({ userRole }) {
+function ApprovalQueue({ userRole, onNavigate }) {
   const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +87,7 @@ function ApprovalQueue({ userRole }) {
   const [rejectModal, setRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const [previewProduct, setPreviewProduct] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -234,6 +236,13 @@ function ApprovalQueue({ userRole }) {
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
+                    <div className="flex gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => setPreviewProduct(p)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition">
+                      <FontAwesomeIcon icon={faEye} />
+                      Detalii
+                    </button>
                     {filter === 'pending' && (
                       <div className="flex gap-1.5">
                         <button
@@ -270,6 +279,7 @@ function ApprovalQueue({ userRole }) {
                         {p.reject_reason}
                       </p>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -317,6 +327,14 @@ function ApprovalQueue({ userRole }) {
             </div>
           </div>
         </div>
+      )}
+
+      {previewProduct && (
+        <ProductDetailModal
+          product={previewProduct}
+          onClose={() => setPreviewProduct(null)}
+          onNavigate={onNavigate}
+        />
       )}
     </div>
   );
@@ -594,7 +612,7 @@ function CategoryManagement() {
       <div className="flex items-center gap-3 mb-6">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${group === 'b2c' ? 'bg-emerald-50' : 'bg-blue-50'}`}>
           <FontAwesomeIcon
-            icon={group === 'b2c' ? faCartShopping : faIndustry}
+            icon={group === 'b2c' ? faShoppingCart : faIndustry}
             className={`text-base ${group === 'b2c' ? 'text-emerald-600' : 'text-blue-600'}`}
           />
         </div>
@@ -1748,13 +1766,256 @@ function EventManagement() {
   );
 }
 
+// ── Product Detail Modal ───────────────────────────────────────
+function ProductDetailModal({ product, onClose, onNavigate }) {
+  const [imgIdx, setImgIdx] = useState(0);
+  if (!product) return null;
+
+  const images = [product.image_url, ...(product.gallery_images || [])].filter(Boolean);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-3xl">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">{product.name}</h2>
+            <p className="text-xs text-gray-400 mt-0.5">ID: {product.id}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition">
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+
+          {/* Image gallery */}
+          {images.length > 0 && (
+            <div>
+              <div className="relative rounded-2xl overflow-hidden bg-gray-100" style={{ height: '280px' }}>
+                <img src={images[imgIdx]} alt={product.name} className="w-full h-full object-cover" />
+                {images.length > 1 && (
+                  <>
+                    <button onClick={() => setImgIdx(i => Math.max(0, i - 1))} disabled={imgIdx === 0}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow disabled:opacity-30 transition">
+                      <FontAwesomeIcon icon={faChevronLeft} className="text-xs" />
+                    </button>
+                    <button onClick={() => setImgIdx(i => Math.min(images.length - 1, i + 1))} disabled={imgIdx === images.length - 1}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow disabled:opacity-30 transition">
+                      <FontAwesomeIcon icon={faChevronRight} className="text-xs" />
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                      {images.map((_, i) => (
+                        <button key={i} onClick={() => setImgIdx(i)}
+                          className={`w-2 h-2 rounded-full transition ${i === imgIdx ? 'bg-white' : 'bg-white/50'}`} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              {images.length > 1 && (
+                <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+                  {images.map((img, i) => (
+                    <button key={i} onClick={() => setImgIdx(i)}
+                      className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition ${i === imgIdx ? 'border-emerald-500' : 'border-gray-200'}`}>
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Product details grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Categorie', value: product.category },
+              { label: 'Preț', value: product.price ? `${product.price} lei / ${product.unit || '—'}` : null },
+              { label: 'Locație', value: product.location },
+              { label: 'Status', value: product.status },
+              { label: 'Negociabil', value: product.is_negotiable ? 'Da' : 'Nu' },
+              { label: 'Adăugat', value: product.created_at ? new Date(product.created_at).toLocaleDateString('ro-RO') : null },
+            ].filter(item => item.value).map(({ label, value }) => (
+              <div key={label} className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">{label}</p>
+                <p className="text-sm font-semibold text-gray-900 mt-0.5 capitalize">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Description */}
+          {product.description && (
+            <div className="bg-gray-50 rounded-2xl p-4">
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Descriere</p>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{product.description}</p>
+            </div>
+          )}
+
+          {/* Reject reason */}
+          {product.reject_reason && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+              <p className="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">Motiv respingere</p>
+              <p className="text-sm text-red-700">{product.reject_reason}</p>
+            </div>
+          )}
+
+          {/* Seller info */}
+          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Producător</p>
+              <p className="text-sm font-bold text-gray-900">{product.seller_name || '—'}</p>
+              <p className="text-xs text-gray-500">{product.seller_phone || '—'}</p>
+            </div>
+            <button
+              onClick={() => { onClose(); onNavigate('producator', product.user_id); }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition">
+              <FontAwesomeIcon icon={faUser} />
+              Vezi profil
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── B2B Management ─────────────────────────────────────────────
+function B2BManagement({ onStatsChange }) {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const loadRequests = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, company_name, idno, b2b_verified, b2b_requested_at, location')
+        .not('idno', 'is', null)
+        .order('b2b_requested_at', { ascending: false });
+      if (error) throw error;
+      setRequests(data || []);
+    } catch (err) {
+      toast.error('Error loading B2B requests');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadRequests(); }, []);
+
+  const handleVerify = async (profileId) => {
+    setActionLoading(profileId + '_verify');
+    const { error } = await supabase.from('profiles').update({ b2b_verified: true }).eq('id', profileId);
+    if (!error) {
+      toast.success('Profil B2B verificat!');
+      setRequests(prev => prev.map(r => r.id === profileId ? { ...r, b2b_verified: true } : r));
+      onStatsChange?.();
+    } else {
+      toast.error('Eroare la verificare');
+    }
+    setActionLoading(null);
+  };
+
+  const handleRevoke = async (profileId) => {
+    setActionLoading(profileId + '_revoke');
+    const { error } = await supabase.from('profiles').update({ b2b_verified: false }).eq('id', profileId);
+    if (!error) {
+      toast.success('Verificare B2B revocată');
+      setRequests(prev => prev.map(r => r.id === profileId ? { ...r, b2b_verified: false } : r));
+      onStatsChange?.();
+    } else {
+      toast.error('Eroare la revocare');
+    }
+    setActionLoading(null);
+  };
+
+  if (loading) return (
+    <div className="flex justify-center py-12">
+      <FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" />
+    </div>
+  );
+
+  if (requests.length === 0) return (
+    <div className="text-center py-16 text-gray-400">
+      <FontAwesomeIcon icon={faBuilding} className="text-5xl mb-4 opacity-20" />
+      <p className="font-medium">Nicio cerere B2B momentan.</p>
+    </div>
+  );
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+      <table className="w-full text-sm min-w-[700px]">
+        <thead>
+          <tr className="bg-gray-50 border-b border-gray-200 text-left">
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nume</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Companie</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">IDNO</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Locație</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Solicitat la</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acțiuni</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {requests.map(r => (
+            <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+              <td className="px-3 py-3 font-medium text-gray-900">{r.full_name || '—'}</td>
+              <td className="px-3 py-3 text-gray-700">{r.company_name || '—'}</td>
+              <td className="px-3 py-3 font-mono text-xs text-gray-600">{r.idno}</td>
+              <td className="px-3 py-3 text-gray-500 hidden md:table-cell">{r.location || '—'}</td>
+              <td className="px-3 py-3 text-gray-400 text-xs hidden lg:table-cell">
+                {r.b2b_requested_at ? new Date(r.b2b_requested_at).toLocaleDateString('ro-RO') : '—'}
+              </td>
+              <td className="px-3 py-3">
+                {r.b2b_verified ? (
+                  <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2.5 py-1 rounded-full">
+                    <FontAwesomeIcon icon={faCircleCheck} className="text-[10px]" /> Verificat
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold px-2.5 py-1 rounded-full">
+                    În așteptare
+                  </span>
+                )}
+              </td>
+              <td className="px-3 py-3">
+                <div className="flex items-center gap-2">
+                  {!r.b2b_verified ? (
+                    <button
+                      onClick={() => handleVerify(r.id)}
+                      disabled={actionLoading === r.id + '_verify'}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+                    >
+                      {actionLoading === r.id + '_verify' ? '...' : 'Verifică'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleRevoke(r.id)}
+                      disabled={actionLoading === r.id + '_revoke'}
+                      className="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50"
+                    >
+                      {actionLoading === r.id + '_revoke' ? '...' : 'Revocă'}
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ── Main AdminDashboard ────────────────────────────────────────
 export default function AdminDashboard({ session, onNavigate }) {
   const { t } = useLanguage();
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('approvals');
-  const [stats, setStats] = useState({ pending: 0, reports: 0, users: 0 });
+  const [stats, setStats] = useState({ pending: 0, reports: 0, users: 0, subscriptions: 0, b2bPending: 0 });
 
   useEffect(() => {
     if (!session) { onNavigate('home'); return; }
@@ -1763,11 +2024,13 @@ export default function AdminDashboard({ session, onNavigate }) {
 
   const loadRoleAndStats = async () => {
     try {
-      const [profileRes, pendingRes, reportsRes, usersRes] = await Promise.all([
+      const [profileRes, pendingRes, reportsRes, usersRes, subsRes, b2bRes] = await Promise.all([
         supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle(),
         supabase.from('products').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('event_subscriptions').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).not('idno', 'is', null).eq('b2b_verified', false),
       ]);
 
       const role = profileRes.data?.role;
@@ -1781,6 +2044,8 @@ export default function AdminDashboard({ session, onNavigate }) {
         pending: pendingRes.count || 0,
         reports: reportsRes.count || 0,
         users: usersRes.count || 0,
+        subscriptions: subsRes.count || 0,
+        b2bPending: b2bRes.count || 0,
       });
     } catch {
       toast.error('Error verifying access');
@@ -1806,6 +2071,7 @@ export default function AdminDashboard({ session, onNavigate }) {
     { key: 'categories', label: 'Categories', icon: faLayerGroup, badge: 0 },
     { key: 'events', label: t.admin.events, icon: faCalendarDays, badge: 0 },
     { key: 'users', label: t.admin.users, icon: faUsers, badge: 0 },
+    { key: 'b2b', label: 'Cereri B2B', icon: faBuilding, badge: stats.b2bPending },
   ];
 
   return (
@@ -1825,13 +2091,20 @@ export default function AdminDashboard({ session, onNavigate }) {
           ))}
         </div>
 
+        {/* Stats bar */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <StatBadge icon={faBell} value={stats.subscriptions} label="Abonați la Evenimente" color="blue" />
+          <StatBadge icon={faBuilding} value={stats.b2bPending} label="Cereri B2B în așteptare" color="yellow" />
+        </div>
+
         {/* Tab Content */}
         <div className="bg-gray-50 rounded-2xl">
-          {activeTab === 'approvals' && <ApprovalQueue userRole={userRole} />}
+          {activeTab === 'approvals' && <ApprovalQueue userRole={userRole} onNavigate={onNavigate} />}
           {activeTab === 'flags' && <FlagSystem />}
           {activeTab === 'categories' && <CategoryManagement />}
           {activeTab === 'events' && <EventManagement />}
           {activeTab === 'users' && <UserManagement userRole={userRole} />}
+          {activeTab === 'b2b' && <B2BManagement onStatsChange={() => loadRoleAndStats()} />}
         </div>
       </div>
     </div>

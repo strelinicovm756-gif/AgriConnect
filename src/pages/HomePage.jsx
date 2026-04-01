@@ -130,18 +130,17 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
         <div className="px-6 sm:px-8 lg:px-12 pt-2 pb-12">
           {/* Vezi tot */}
 
-          <div className="flex justify-end pr-10 mb-[-1px]"> {/* mb-[-1px] îl lipește perfect de buza caruselului */}
+          <div className="flex justify-end pr-4 sm:pr-8 mb-[-1px]">
 
             {/* 2. Wrapper relativ pentru a controla originea măririi */}
-            <div className="relative w-24 h-9">
+            <div className="relative w-28 h-9">
 
               <button
                 onClick={viewAll}
                 aria-label="Vezi toate"
 
-                className="absolute bottom-0 left-0 w-full h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all duration-100 active:scale-95 origin-bottom hover:h-11"
-
-                style={{ borderRadius: '20px 20px 0 0' }}
+                className="absolute bottom-0 right-0 w-full h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all duration-100 active:scale-95 origin-bottom hover:h-11"
+                style={{ borderRadius: '12px 12px 0 0' }}
               >
 
                 {t.home.seeAll}
@@ -223,18 +222,18 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
       >
         <div className="px-6 sm:px-8 lg:px-12 pt-2 pb-6">
           {/* Vezi tot */}
-          <div className="flex justify-end pr-10 mb-[-1px]">
+
+          <div className="flex justify-end pr-4 sm:pr-8 mb-[-1px]">
 
 
-            <div className="relative w-24 h-9">
+            <div className="relative w-28 h-9">
 
               <button
                 onClick={viewAll}
                 aria-label="Vezi toate"
 
-                className="absolute bottom-0 left-0 w-full h-full flex items-center justify-center bg-white hover:bg-emerald-100 text-emerald-700 shadow-md transition-all duration-100 active:scale-95 origin-bottom hover:h-11"
-
-                style={{ borderRadius: '20px 20px 0 0' }}
+                className="absolute bottom-0 right-0 w-full h-full flex items-center justify-center bg-white hover:bg-emerald-50 text-emerald-700 text-xs font-bold shadow-sm transition-all duration-100 active:scale-95 origin-bottom hover:h-11"
+                style={{ borderRadius: '12px 12px 0 0' }}
               >
 
                 {t.home.seeAll}
@@ -454,6 +453,8 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
     } catch { }
   };
 
+  const viewAllProducers = () => onNavigate('producatori', null, { market_type: 'b2b' });
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -641,17 +642,35 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
           />
 
           {/* ── PRESTATORI B2B ────────────────────────────────── */}
+
           {b2bProviders.length > 0 && (
+
+
             <div className="bg-emerald-700">
               <div className="pl-4 relative z-10 rounded-t-[40px] bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
                 <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
+
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                       <FontAwesomeIcon icon={faHandshake} className="text-emerald-600" />
                       {t.home.serviceProviders}
                     </h3>
+
+
+
                   </div>
                   <div className="relative">
+                    <div className="flex justify-end pr-4 sm:pr-8 mb-[-1px]">
+                      <div className="relative w-28 h-9">
+                        <button
+                          onClick={viewAllProducers}
+                          className="absolute bottom-0 right-0 w-full h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all duration-100 active:scale-95 origin-bottom hover:h-11"
+                          style={{ borderRadius: '12px 12px 0 0' }}
+                        >
+                          {t.home.seeAll}
+                        </button>
+                      </div>
+                    </div>
                     <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
                       <PillNavButton direction="left" onClick={() => scroll('left', b2bProvidersRef)} ariaLabel="Stânga" />
                       <PillNavButton direction="right" onClick={() => scroll('right', b2bProvidersRef)} ariaLabel="Dreapta" />
@@ -672,6 +691,17 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                   <h3 className="text-2xl font-bold text-white">{t.home.foodProducers}</h3>
                 </div>
                 <div className="relative">
+                  <div className="flex justify-end pr-4 sm:pr-8 mb-[-1px]">
+                    <div className="relative w-28 h-9">
+                      <button
+                        onClick={viewAllProducers}
+                        className="absolute bottom-0 right-0 w-full h-full flex items-center justify-center bg-white hover:bg-emerald-50 text-emerald-700 text-xs font-bold shadow-sm transition-all duration-100 active:scale-95 origin-bottom hover:h-11"
+                        style={{ borderRadius: '12px 12px 0 0' }}
+                      >
+                        {t.home.seeAll}
+                      </button>
+                    </div>
+                  </div>
                   <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
                     <PillNavButton direction="left" onClick={() => scroll('left', b2cProvidersRef)} ariaLabel="Stânga" />
                     <PillNavButton direction="right" onClick={() => scroll('right', b2cProvidersRef)} ariaLabel="Dreapta" />
@@ -734,7 +764,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
       </footer>
 
       <AddProductModal isOpen={showAddProductModal} onClose={() => setShowAddProductModal(false)}
-        session={session} onSuccess={fetchProducts} />
+        session={session} onNavigate={onNavigate} onSuccess={fetchProducts} />
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }

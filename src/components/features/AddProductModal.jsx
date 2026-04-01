@@ -155,7 +155,7 @@ const cleanAddress = (placeName) => {
 };
 
 // ── Main Component ─────────────────────────────────────────────
-export default function AddProductModal({ isOpen, onClose, session, onSuccess, product }) {
+export default function AddProductModal({ isOpen, onClose, session, onSuccess, product, onNavigate }) {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(true);
@@ -167,6 +167,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   const locationMarkerRef = useRef(null);
   const [activeGroup, setActiveGroup] = useState('b2c'); // 'b2c' | 'b2b'
   const [expiresAt, setExpiresAt] = useState(product?.expires_at || '');
+  const [b2bVerified, setB2bVerified] = useState(false);
 
   // ── Categories from DB ─────────────────────────────────────
   const [categories, setCategories] = useState([]);
@@ -191,6 +192,8 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   // ── Derived values ──────────────────────────────────────────
   const isB2B = activeGroup === 'b2b';
+  const selectedCategoryData = categories.find(c => c.id === formData.category_id);
+  const isB2BCategory = selectedCategoryData?.market_type === 'b2b';
   const availableUnits = useMemo(() => {
     if (!formData.category_id || categories.length === 0) return CATEGORY_UNITS['default'];
     const selectedCat = categories.find(c => c.id === formData.category_id);
@@ -355,7 +358,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
     try {
       setCheckingProfile(true);
       const { data: profile, error } = await supabase
-        .from('profiles').select('phone, location, full_name')
+        .from('profiles').select('phone, location, full_name, b2b_verified')
         .eq('id', session.user.id).maybeSingle();
       if (error) throw error;
       if (!profile) { toast.error('Profile is incomplete.'); onClose(); return; }
@@ -369,6 +372,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
         onClose(); return;
       }
       setFormData(prev => ({ ...prev, location: profile.location }));
+      setB2bVerified(!!profile.b2b_verified);
     } catch (err) {
       toast.error('Eroare: ' + err.message); onClose();
     } finally {
@@ -427,6 +431,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
+    if (isB2BCategory && !b2bVerified) { toast.error(t.features.b2bNotVerifiedError); return; }
     if (!validateForm()) { toast.error(t.features.fillFieldsCorrectly); return; }
     if (galleryImages.some(img => img.isUploading)) { toast.error(t.features.waitForUpload); return; }
 
@@ -590,6 +595,24 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
                     </div>
                   </div>
                 )}
+              {/* B2B not verified warning */}
+              {isB2BCategory && !b2bVerified && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 mt-4">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-600 text-sm" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-amber-800">{t.features.b2bNotVerifiedTitle}</p>
+                    <p className="text-xs text-amber-700 mt-0.5">{t.features.b2bNotVerifiedDesc}</p>
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); onNavigate?.('profil'); }}
+                      className="mt-2 text-xs font-semibold text-amber-800 underline hover:text-amber-900 transition">
+                      {t.features.b2bGoToProfile}
+                    </button>
+                  </div>
+                </div>
+              )}
               </div>
 
               {/* ── SECȚIUNEA 2: Informații de bază ──────────── */}
@@ -860,7 +883,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
           {/* Submit — outside form, stays fixed at bottom */}
           <div className="bg-white border-t border-gray-100 px-6 py-4 flex gap-3 rounded-b-3xl flex-shrink-0">
-            <button type="button" onClick={handleSubmit} disabled={loading || hasUploadingImages}
+            <button type="button" onClick={handleSubmit} disabled={loading || hasUploadingImages || (isB2BCategory && !b2bVerified)}
               className={`flex-1 font-semibold py-3.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-white
                 ${isB2B ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>
               {loading ? (

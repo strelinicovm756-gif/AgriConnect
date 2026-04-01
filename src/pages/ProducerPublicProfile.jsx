@@ -16,6 +16,8 @@ import {
     Search, X, SlidersHorizontal, MessageCircle, Calendar,
     ChevronLeft, ChevronRight
 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBuilding } from '@fortawesome/free-solid-svg-icons';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -163,7 +165,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
         try {
             setLoading(true);
             const [profileRes, productsRes] = await Promise.all([
-                supabase.from('profiles').select('*').eq('id', producerId).single(),
+                supabase.from('profiles').select('*, company_name, idno, b2b_verified').eq('id', producerId).single(),
                 supabase.from('products_with_user').select('*').eq('user_id', producerId).eq('status', 'active').order('created_at', { ascending: false }),
             ]);
 
@@ -223,13 +225,6 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
     const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
     const pagedReviews = reviews.slice((reviewPage - 1) * REVIEWS_PER_PAGE, reviewPage * REVIEWS_PER_PAGE);
 
-    const getColor = (name, dark = false) => {
-        if (!name) return dark ? '#059669' : '#10b981';
-        const p = [['#10b981', '#059669'], ['#3b82f6', '#2563eb'], ['#8b5cf6', '#7c3aed'], ['#ec4899', '#db2777'], ['#f59e0b', '#d97706'], ['#ef4444', '#dc2626'], ['#06b6d4', '#0891b2'], ['#84cc16', '#65a30d']];
-        const h = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-        return dark ? p[h % p.length][1] : p[h % p.length][0];
-    };
-
     const formatPhone = (ph) => {
         if (!ph || ph.length !== 12) return ph;
         const d = ph.replace('+373', '');
@@ -246,8 +241,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
     );
     if (!producer) return null;
 
-    const color = getColor(producer.full_name);
-    const colorDark = getColor(producer.full_name, true);
+    const color = getColorForName(producer.id || producer.full_name);
     const initial = producer.full_name?.charAt(0) || producer.email?.charAt(0) || '?';
     const isOwnProfile = session?.user?.id === producerId;
 
@@ -263,7 +257,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                             {/* Avatar */}
                             <div className="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center shadow-lg"
-                                style={{ background: `linear-gradient(135deg, ${color} 0%, ${colorDark} 100%)` }}>
+                                style={{ background: color }}>
                                 <span className="text-white text-3xl font-black uppercase">{initial}</span>
                             </div>
 
@@ -271,7 +265,12 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                             <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
                                     <h1 className="text-2xl font-bold text-gray-900">{producer.full_name || 'Producător'}</h1>
-
+                                    {producer.b2b_verified && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-bold flex-shrink-0">
+                                            <FontAwesomeIcon icon={faBuilding} className="text-[10px]" />
+                                            {t.producerProfile.b2bVerified}
+                                        </span>
+                                    )}
                                 </div>
                                 {producer.official_name && producer.official_name !== producer.full_name && (
                                     <p className="text-gray-500 text-sm mb-2">{producer.official_name}</p>
@@ -376,6 +375,18 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                 </div>
                                 {t.producerProfile.about} {producer.official_name || producer.full_name || 'Producător'}
                             </h2>
+                            {producer.company_name && (
+                                <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                                    <FontAwesomeIcon icon={faBuilding} className="text-blue-500 text-sm flex-shrink-0" />
+                                    <div>
+                                        <p className="text-xs text-gray-500">{t.producerProfile.officialCompany}</p>
+                                        <p className="text-sm font-semibold text-gray-900">{producer.company_name}</p>
+                                        {producer.b2b_verified && producer.idno && (
+                                            <p className="text-xs text-gray-400">IDNO: {producer.idno}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                             {producer.bio ? (
                                 <p className="text-gray-600 leading-relaxed whitespace-pre-line">{producer.bio}</p>
                             ) : (

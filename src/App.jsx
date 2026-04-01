@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./services/supabaseClient";
+import { useNotifications } from "./hooks/useNotifications";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import DetailsPage from "./pages/DetailsPage";
@@ -11,6 +12,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ChatPage from './pages/ChatPage';
 import EventDetailsPage from './pages/EventDetailsPage';
 import EventsPage from './pages/EventsPage';
+import ProducersPage from './pages/ProducersPage';
 import { Navbar } from "./components/layout/Navbar";
 import { Toaster } from "react-hot-toast";
 
@@ -18,6 +20,8 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
+
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(session);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,6 +70,14 @@ export default function App() {
       case 'evenimente':
         navigate('/evenimente');
         break;
+      case 'producatori':
+        const params = new URLSearchParams();
+        if (options.market_type) params.set('tip', options.market_type);
+        if (options.search) params.set('cautare', options.search);
+
+        const queryString = params.toString();
+        navigate(`/producatori${queryString ? '?' + queryString : ''}`);
+        break;
       case 'toate-produsele': {
         const params = new URLSearchParams();
         if (options.category) params.set('categorie', options.category);
@@ -106,6 +118,10 @@ export default function App() {
           searchLocation={searchLocation}
           setSearchLocation={setSearchLocation}
           onSearch={handleSearch}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          markAsRead={markAsRead}
+          markAllAsRead={markAllAsRead}
         />
       )}
 
@@ -182,6 +198,11 @@ export default function App() {
           <Route
             path="/eveniment/:id"
             element={<EventDetailsPage session={session} onNavigate={navigateTo} />}
+          />
+
+          <Route
+            path="/producatori"
+            element={<ProducersPage session={session} onNavigate={navigateTo} />}
           />
 
           {/* Orice altă rută → acasă */}

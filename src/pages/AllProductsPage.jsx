@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import { useProducts } from '../hooks/useProducts';
 import { ProductCard } from '../components/features/ProductCard';
 import toast from 'react-hot-toast';
 import { Metronome } from 'ldrs/react';
@@ -73,10 +75,6 @@ const ICON_MAP = {
   faEgg, faJar, faWheatAwn, faSeedling, faLeaf,
   faTractor, faFlask, faWrench, faDroplet
 };
-
-// Detect UUID format (to distinguish new FK values from old varchar names)
-const isUUID = (str) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 // ── Price Range Filter ────────────────────────────────────────
 function PriceRangeFilter({ initialMin, initialMax, onApply, onClear }) {
@@ -343,11 +341,11 @@ function FilterSidebar({
       <div className="px-5 py-4">
         <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">{t.allProducts.options}</h4>
         <label className={`flex items-center gap-3 cursor-pointer px-2 py-2.5 rounded-xl transition-all duration-150
-          ${filters.negotiable ? 'bg-emerald-50 border-l-[3px] border-emerald-500 pl-[5px]' : 'hover:bg-gray-50 border-l-[3px] border-transparent'}`}>
-          <input type="checkbox" checked={filters.negotiable}
+          ${filters.isNegotiable ? 'bg-emerald-50 border-l-[3px] border-emerald-500 pl-[5px]' : 'hover:bg-gray-50 border-l-[3px] border-transparent'}`}>
+          <input type="checkbox" checked={filters.isNegotiable}
             onChange={(e) => onNegotiableChange(e.target.checked)}
             className="w-3.5 h-3.5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 flex-shrink-0" />
-          <span className={`text-sm ${filters.negotiable ? 'text-emerald-700 font-semibold' : 'text-gray-700'}`}>
+          <span className={`text-sm ${filters.isNegotiable ? 'text-emerald-700 font-semibold' : 'text-gray-700'}`}>
             {t.allProducts.negotiablePrice}
           </span>
         </label>
@@ -357,31 +355,66 @@ function FilterSidebar({
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-export default function AllProductsPage({
-  session, onNavigate,
-  initialCategory = null, initialSearch = null, initialSortBy = 'newest', initialType = null, initialVerified = false
-}) {
+export default function AllProductsPage({ session, onNavigate }) {
   const { t } = useLanguage();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [dbCategories, setDbCategories] = useState([]);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortDropdownRef = useRef(null);
 
-  const [filters, setFilters] = useState({
-    categoryId: initialCategory || null, // UUID (new) or name string (old compat)
-    search: initialSearch || '',
-    minPrice: '',
-    maxPrice: '',
-    location: '',
-    negotiable: false,
-    verified: initialVerified,
-    sortBy: initialSortBy || 'newest',
-    type: initialType || null
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const filters = {
+    search: searchParams.get('cautare') || '',
+    categoryId: searchParams.get('categorie') || '',
+    location: searchParams.get('locatie') || '',
+    minPrice: searchParams.get('pretMin') || '',
+    maxPrice: searchParams.get('pretMax') || '',
+    isNegotiable: searchParams.get('negociabil') === 'true',
+    sortBy: searchParams.get('sortare') || 'newest',
+    type: searchParams.get('tip') || '',
+    verified: searchParams.get('verificat') === 'true',
+    page: parseInt(searchParams.get('pagina') || '1', 10),
+  };
+
+  const updateFilters = (updates) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        const paramKey = {
+          search: 'cautare',
+          categoryId: 'categorie',
+          location: 'locatie',
+          minPrice: 'pretMin',
+          maxPrice: 'pretMax',
+          isNegotiable: 'negociabil',
+          sortBy: 'sortare',
+          type: 'tip',
+          verified: 'verificat',
+          page: 'pagina',
+        }[key];
+
+        if (!paramKey) return;
+
+        if (value === '' || value === false || value === null || value === undefined || value === 'newest' || value === 1) {
+          next.delete(paramKey);
+        } else {
+          next.set(paramKey, String(value));
+        }
+      });
+
+      if (!('page' in updates)) {
+        next.delete('pagina');
+      }
+
+      return next;
+    });
+  };
+
+  const clearFilter = (key) => updateFilters({ [key]: '' });
+
+  const clearAllFilters = () => setSearchParams({});
 
   const ITEMS_PER_PAGE = 12;
 
@@ -391,8 +424,9 @@ export default function AllProductsPage({
     { value: 'price_desc', label: t.allProducts.priceHighLow },
   ];
 
-  // Derived: UUIDs of B2B categories (updates when dbCategories loads)
   const b2bIds = dbCategories.filter(c => c.market_type !== 'b2c').map(c => c.id);
+
+  const { products, loading, totalProducts } = useProducts({ ...filters, b2bIds });
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -404,7 +438,6 @@ export default function AllProductsPage({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch categories (with subcategories joined) once on mount
   useEffect(() => {
     const fetchCategories = async () => {
       const { data } = await supabase
@@ -416,60 +449,6 @@ export default function AllProductsPage({
     };
     fetchCategories();
   }, []);
-
-  // Fetch products whenever filters, page, or dbCategories change
-  useEffect(() => { fetchProducts(); }, [filters, currentPage, dbCategories]);
-
-  const fetchProducts = async () => {
-    const fetchStart = Date.now();
-    try {
-      setLoading(true);
-      let query = supabase
-        .from('products_with_user')
-        .select('*', { count: 'exact' })
-        .eq('status', 'active');
-
-      if (filters.categoryId) {
-        if (isUUID(filters.categoryId)) {
-          // New FK-based filter: match either category_id or subcategory_id
-          query = query.or(`category_id.eq.${filters.categoryId},subcategory_id.eq.${filters.categoryId}`);
-        } else {
-          // Backward compat: old varchar name filter
-          query = query.eq('category', filters.categoryId);
-        }
-      } else if (filters.type === 'b2b') {
-        if (b2bIds.length > 0) query = query.in('category_id', b2bIds);
-      } else if (filters.type === 'b2c') {
-        if (b2bIds.length > 0) query = query.not('category_id', 'in', `(${b2bIds.join(',')})`);
-      }
-
-      if (filters.search) query = query.ilike('name', `%${filters.search}%`);
-      if (filters.location) query = query.ilike('location', `%${filters.location}%`);
-      if (filters.negotiable) query = query.eq('is_negotiable', true);
-      if (filters.minPrice) query = query.gte('price', parseFloat(filters.minPrice));
-      if (filters.maxPrice) query = query.lte('price', parseFloat(filters.maxPrice));
-
-      switch (filters.sortBy) {
-        case 'price_asc': query = query.order('price', { ascending: true }); break;
-        case 'price_desc': query = query.order('price', { ascending: false }); break;
-        default: query = query.order('created_at', { ascending: false });
-      }
-
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      query = query.range(from, from + ITEMS_PER_PAGE - 1);
-
-      const { data, error, count } = await query;
-      if (error) throw error;
-      setProducts(data || []);
-      setTotalProducts(count || 0);
-    } catch {
-      toast.error('Eroare la încărcarea produselor');
-    } finally {
-      const elapsed = Date.now() - fetchStart;
-      const remaining = Math.max(0, 1500 - elapsed);
-      setTimeout(() => setLoading(false), remaining);
-    }
-  };
 
   const handleViewDetails = async (productId) => {
     if (session) {
@@ -496,33 +475,9 @@ export default function AllProductsPage({
     } catch { }
   };
 
-  const clearFilter = useCallback((name) => {
-    setFilters(prev => ({
-      ...prev,
-      [name]: name === 'verified' || name === 'negotiable' ? false
-        : (name === 'categoryId' || name === 'type') ? null
-          : ''
-    }));
-    setCurrentPage(1);
-  }, []);
-
-  const clearAllFilters = useCallback(() => {
-    setFilters({ categoryId: null, search: '', minPrice: '', maxPrice: '', location: '', negotiable: false, sortBy: 'newest', type: null });
-    setCurrentPage(1);
-  }, []);
-
-  const handleCategoryChange = useCallback((id) => {
-    setFilters(p => ({ ...p, categoryId: id, type: null }));
-    setCurrentPage(1);
-  }, []);
-  const handleLocationChange = useCallback((v) => { setFilters(p => ({ ...p, location: v })); setCurrentPage(1); }, []);
-  const handleNegotiableChange = useCallback((v) => { setFilters(p => ({ ...p, negotiable: v })); setCurrentPage(1); }, []);
-  const handlePriceApply = useCallback((min, max) => { setFilters(p => ({ ...p, minPrice: min, maxPrice: max })); setCurrentPage(1); }, []);
-  const handlePriceClear = useCallback(() => { setFilters(p => ({ ...p, minPrice: '', maxPrice: '' })); setCurrentPage(1); }, []);
-
   const activeFiltersCount = [
     filters.categoryId, filters.search, filters.minPrice,
-    filters.maxPrice, filters.location, filters.negotiable, filters.type
+    filters.maxPrice, filters.location, filters.isNegotiable, filters.type
   ].filter(Boolean).length;
 
   const totalPages = Math.ceil(totalProducts / ITEMS_PER_PAGE);
@@ -534,7 +489,7 @@ export default function AllProductsPage({
       const sub = (cat.subcategories || []).find(s => s.id === id);
       if (sub) return `${cat.name} → ${sub.name}`;
     }
-    return id; // fallback: show raw value (e.g. old name string)
+    return id;
   };
 
   const getPageTitle = () => {
@@ -565,13 +520,13 @@ export default function AllProductsPage({
             filters={filters}
             activeFiltersCount={activeFiltersCount}
             dbCategories={dbCategories}
-            onCategoryChange={handleCategoryChange}
-            onLocationChange={handleLocationChange}
-            onNegotiableChange={handleNegotiableChange}
+            onCategoryChange={(id) => updateFilters({ categoryId: id || '', type: '' })}
+            onLocationChange={(v) => updateFilters({ location: v })}
+            onNegotiableChange={(v) => updateFilters({ isNegotiable: v })}
             onClearFilter={clearFilter}
             onClearAll={clearAllFilters}
-            onPriceApply={handlePriceApply}
-            onPriceClear={handlePriceClear}
+            onPriceApply={(min, max) => updateFilters({ minPrice: min, maxPrice: max })}
+            onPriceClear={() => updateFilters({ minPrice: '', maxPrice: '' })}
           />
         </div>
       </aside>
@@ -634,7 +589,7 @@ export default function AllProductsPage({
             {(filters.minPrice || filters.maxPrice) && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
                 {filters.minPrice || '0'} – {filters.maxPrice || '∞'} lei
-                <button onClick={handlePriceClear}>
+                <button onClick={() => updateFilters({ minPrice: '', maxPrice: '' })}>
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
               </span>
@@ -648,10 +603,10 @@ export default function AllProductsPage({
                 </button>
               </span>
             )}
-            {filters.negotiable && (
+            {filters.isNegotiable && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
                 {t.allProducts.negotiable}
-                <button onClick={() => clearFilter('negotiable')}>
+                <button onClick={() => clearFilter('isNegotiable')}>
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
               </span>
@@ -722,8 +677,7 @@ export default function AllProductsPage({
                     <button
                       key={option.value}
                       onClick={() => {
-                        setFilters(p => ({ ...p, sortBy: option.value }));
-                        setCurrentPage(1);
+                        updateFilters({ sortBy: option.value });
                         setShowSortDropdown(false);
                       }}
                       className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-colors text-left ${filters.sortBy === option.value
@@ -757,13 +711,13 @@ export default function AllProductsPage({
                 filters={filters}
                 activeFiltersCount={activeFiltersCount}
                 dbCategories={dbCategories}
-                onCategoryChange={(id) => { handleCategoryChange(id); setShowMobileFilters(false); }}
-                onLocationChange={handleLocationChange}
-                onNegotiableChange={handleNegotiableChange}
+                onCategoryChange={(id) => { updateFilters({ categoryId: id || '', type: '' }); setShowMobileFilters(false); }}
+                onLocationChange={(v) => updateFilters({ location: v })}
+                onNegotiableChange={(v) => updateFilters({ isNegotiable: v })}
                 onClearFilter={clearFilter}
                 onClearAll={clearAllFilters}
-                onPriceApply={handlePriceApply}
-                onPriceClear={handlePriceClear}
+                onPriceApply={(min, max) => updateFilters({ minPrice: min, maxPrice: max })}
+                onPriceClear={() => updateFilters({ minPrice: '', maxPrice: '' })}
               />
             </div>
           </div>
@@ -794,17 +748,17 @@ export default function AllProductsPage({
             {/* Paginație */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-1.5 py-4">
-                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                <button onClick={() => updateFilters({ page: filters.page - 1 })} disabled={filters.page === 1}
                   className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
                 </button>
                 {[...Array(totalPages)].map((_, idx) => {
                   const p = idx + 1;
-                  const show = p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1);
-                  const dots = p === currentPage - 2 || p === currentPage + 2;
+                  const show = p === 1 || p === totalPages || (p >= filters.page - 1 && p <= filters.page + 1);
+                  const dots = p === filters.page - 2 || p === filters.page + 2;
                   if (show) return (
-                    <button key={p} onClick={() => setCurrentPage(p)}
-                      className={`w-9 h-9 rounded-xl text-sm font-bold transition-all duration-200 ${currentPage === p
+                    <button key={p} onClick={() => updateFilters({ page: p })}
+                      className={`w-9 h-9 rounded-xl text-sm font-bold transition-all duration-200 ${filters.page === p
                         ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200/50 scale-110'
                         : 'bg-white border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50'}`}>
                       {p}
@@ -813,7 +767,7 @@ export default function AllProductsPage({
                   if (dots) return <span key={p} className="w-6 text-center text-gray-300 text-sm">·</span>;
                   return null;
                 })}
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                <button onClick={() => updateFilters({ page: filters.page + 1 })} disabled={filters.page === totalPages}
                   className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
                 </button>

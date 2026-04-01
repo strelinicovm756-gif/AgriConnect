@@ -453,7 +453,8 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
     } catch { }
   };
 
-  const viewAllProducers = () => onNavigate('producatori', null, { market_type: 'b2b' });
+  const viewAllB2BProducers = () => onNavigate('producatori', null, { marketType: 'b2b' });
+  const viewAllB2CProducers = () => onNavigate('producatori', null, { marketType: 'b2c' });
 
   return (
     <div className="min-h-screen bg-white">
@@ -663,7 +664,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                     <div className="flex justify-end pr-4 sm:pr-8 mb-[-1px]">
                       <div className="relative w-28 h-9">
                         <button
-                          onClick={viewAllProducers}
+                          onClick={viewAllB2BProducers}
                           className="absolute bottom-0 right-0 w-full h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all duration-100 active:scale-95 origin-bottom hover:h-11"
                           style={{ borderRadius: '12px 12px 0 0' }}
                         >
@@ -694,7 +695,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                   <div className="flex justify-end pr-4 sm:pr-8 mb-[-1px]">
                     <div className="relative w-28 h-9">
                       <button
-                        onClick={viewAllProducers}
+                        onClick={viewAllB2CProducers}
                         className="absolute bottom-0 right-0 w-full h-full flex items-center justify-center bg-white hover:bg-emerald-50 text-emerald-700 text-xs font-bold shadow-sm transition-all duration-100 active:scale-95 origin-bottom hover:h-11"
                         style={{ borderRadius: '12px 12px 0 0' }}
                       >

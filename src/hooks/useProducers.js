@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 
-export function useProducers() {
+export function useProducers(filters = {}) {
   const [producers, setProducers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchProducers();
-  }, []);
+  }, [
+    filters.search,
+    filters.marketType,
+    filters.location,
+    filters.minRating,
+    filters.verifiedOnly,
+    filters.b2bVerified,
+  ]);
 
   const fetchProducers = async () => {
     setLoading(true);
@@ -92,9 +99,44 @@ export function useProducers() {
         return b.productCount - a.productCount;
       });
 
-      console.log(`useProducers: ${merged.length} producers loaded (${producerIds.length} unique user_ids found)`);
+      // 6. Apply client-side filters
+      let result = merged;
 
-      setProducers(merged);
+      if (filters.search) {
+        const q = filters.search.toLowerCase();
+        result = result.filter(p =>
+          p.full_name?.toLowerCase().includes(q) ||
+          p.location?.toLowerCase().includes(q) ||
+          p.bio?.toLowerCase().includes(q) ||
+          p.company_name?.toLowerCase().includes(q)
+        );
+      }
+      if (filters.marketType) {
+        result = result.filter(p => {
+          const mt = p.marketType;
+          if (filters.marketType === 'b2c') return mt === 'b2c' || mt === 'both';
+          if (filters.marketType === 'b2b') return mt === 'b2b' || mt === 'both';
+          return true;
+        });
+      }
+      if (filters.location) {
+        result = result.filter(p =>
+          p.location?.toLowerCase().includes(filters.location.toLowerCase())
+        );
+      }
+      if (filters.minRating > 0) {
+        result = result.filter(p => p.avgRating >= filters.minRating);
+      }
+      if (filters.verifiedOnly) {
+        result = result.filter(p => p.is_verified);
+      }
+      if (filters.b2bVerified) {
+        result = result.filter(p => p.b2b_verified);
+      }
+
+      console.log(`useProducers: ${result.length}/${merged.length} producers after filters`);
+
+      setProducers(result);
     } catch (err) {
       console.error('useProducers error:', err);
       setError(err.message || 'Error loading producers');

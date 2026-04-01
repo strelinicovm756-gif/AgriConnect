@@ -70,14 +70,14 @@ export default function App() {
       case 'evenimente':
         navigate('/evenimente');
         break;
-      case 'producatori':
+      case 'producatori': {
         const params = new URLSearchParams();
-        if (options.market_type) params.set('tip', options.market_type);
-        if (options.search) params.set('cautare', options.search);
-
-        const queryString = params.toString();
-        navigate(`/producatori${queryString ? '?' + queryString : ''}`);
+        if (options?.marketType) params.set('tip', options.marketType);
+        if (options?.location) params.set('locatie', options.location);
+        if (options?.search) params.set('cautare', options.search);
+        navigate(`/producatori${params.toString() ? '?' + params.toString() : ''}`);
         break;
+      }
       case 'toate-produsele': {
         const params = new URLSearchParams();
         if (options.category) params.set('categorie', options.category);
@@ -173,7 +173,7 @@ export default function App() {
           <Route
             path="/produse"
             element={
-              <AllProductsPageWrapper
+              <AllProductsPage
                 session={session}
                 onNavigate={navigateTo}
               />
@@ -213,20 +213,3 @@ export default function App() {
   );
 }
 
-// Wrapper care citește query params din URL și le pasează AllProductsPage
-function AllProductsPageWrapper({ session, onNavigate }) {
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-
-  return (
-    <AllProductsPage
-      session={session}
-      onNavigate={onNavigate}
-      initialCategory={params.get('categorie') || null}
-      initialSearch={params.get('cautare') || null}
-      initialSortBy={params.get('sortare') || 'newest'}
-      initialType={params.get('tip') || null}
-      initialVerified={params.get('verificat') === 'true'}
-    />
-  );
-}

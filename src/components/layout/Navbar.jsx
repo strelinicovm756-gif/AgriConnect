@@ -289,9 +289,9 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
           {/* Link Producători */}
           <button
             onClick={() => onNavigate('producatori')}
-            className="shadow-md hidden md:flex items-center gap-2 bg-white text-emerald-700 border border-emerald-200 px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-50 transition-colors"
+            className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white  px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
-            <FontAwesomeIcon icon={faUsers} className="text-emerald-600" />
+            <FontAwesomeIcon icon={faUsers} className="text-white" />
             <span>{t.nav.producers}</span>
           </button>
 
@@ -313,7 +313,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
           <>
             <button
               onClick={() => setShowOverlay(true)}
-              className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-300 hover:bg-white transition-all group shadow-sm"
+              className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-50 hover:bg-white transition-all group shadow-sm"
             >
               <SearchAnimated animateOnHover color="#c2c2c2" strokeWidth={2} size={20} />
               <span className="flex-1">{t.nav.search}</span>

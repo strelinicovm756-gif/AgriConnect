@@ -315,6 +315,8 @@ export const translations = {
       pillRating: 'Rating',
       pillVerified: 'Verificat',
       b2bVerified: 'B2B Verificat',
+      filterB2BVerified: 'Doar B2B Verificați',
+      pillB2BVerified: 'B2B Verificat',
     },
 
     // ── Notifications ────────────────────────────
@@ -858,6 +860,8 @@ export const translations = {
       pillRating: 'Rating',
       pillVerified: 'Verified',
       b2bVerified: 'B2B Verified',
+      filterB2BVerified: 'B2B Verified Only',
+      pillB2BVerified: 'B2B Verified',
     },
 
     // ── Notifications ────────────────────────────
@@ -1396,6 +1400,8 @@ export const translations = {
       pillRating: 'Note',
       pillVerified: 'Vérifié',
       b2bVerified: 'B2B Vérifié',
+      filterB2BVerified: 'B2B Vérifiés Uniquement',
+      pillB2BVerified: 'B2B Vérifié',
     },
 
     // ── Notifications ────────────────────────────

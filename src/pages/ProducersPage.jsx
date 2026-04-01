@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUsers, faCarrot, faTractor, faLocationDot, faCircleCheck,
@@ -123,29 +123,34 @@ function ProducerCard({ producer, onNavigate, t }) {
 }
 
 // ── ProducerFilterSidebar ─────────────────────────────────────────────────────
-function ProducerFilterSidebar({ filters, onChange, t }) {
+function ProducerFilterSidebar({ filters, updateFilters, clearAllFilters, t }) {
   const [locationInput, setLocationInput] = useState(filters.location);
-  const debounceRef = useRef(null);
+  const [searchInput, setSearchInput] = useState(filters.search);
+  const locationDebounceRef = useRef(null);
+  const searchDebounceRef = useRef(null);
 
-  // Sync external filter.location → local input when reset
-  useEffect(() => {
-    setLocationInput(filters.location);
-  }, [filters.location]);
+  useEffect(() => { setLocationInput(filters.location); }, [filters.location]);
+  useEffect(() => { setSearchInput(filters.search); }, [filters.search]);
 
   const handleLocationChange = (val) => {
     setLocationInput(val);
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      onChange(f => ({ ...f, location: val }));
-    }, 300);
+    clearTimeout(locationDebounceRef.current);
+    locationDebounceRef.current = setTimeout(() => updateFilters({ location: val }), 300);
+  };
+
+  const handleSearchChange = (val) => {
+    setSearchInput(val);
+    clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => updateFilters({ search: val }), 300);
   };
 
   const hasAny =
+    filters.search !== '' ||
     filters.marketType !== '' ||
     filters.location !== '' ||
-    filters.minRating !== 0 ||
+    filters.minRating > 0 ||
     filters.verifiedOnly ||
-    filters.search !== '';
+    filters.b2bVerified;
 
   const typeOptions = [
     { key: '', label: t.producers.filterAll, icon: faUsers },
@@ -164,10 +169,7 @@ function ProducerFilterSidebar({ filters, onChange, t }) {
           {t.producers.filterTitle}
         </h3>
         {hasAny && (
-          <button
-            onClick={() => onChange({ marketType: '', location: '', minRating: 0, verifiedOnly: false, search: '' })}
-            className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
-          >
+          <button onClick={clearAllFilters} className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold">
             {t.producers.filterResetAll}
           </button>
         )}
@@ -180,8 +182,8 @@ function ProducerFilterSidebar({ filters, onChange, t }) {
           <input
             type="text"
             placeholder={t.producers.filterLocationPlaceholder}
-            value={filters.search}
-            onChange={e => onChange(f => ({ ...f, search: e.target.value }))}
+            value={searchInput}
+            onChange={e => handleSearchChange(e.target.value)}
             className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-gray-400 transition-colors"
           />
         </div>
@@ -196,7 +198,7 @@ function ProducerFilterSidebar({ filters, onChange, t }) {
           {typeOptions.map(opt => (
             <button
               key={opt.key}
-              onClick={() => onChange(f => ({ ...f, marketType: opt.key }))}
+              onClick={() => updateFilters({ marketType: opt.key })}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${filters.marketType === opt.key
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : 'text-gray-600 hover:bg-gray-50 border border-transparent'
@@ -235,7 +237,7 @@ function ProducerFilterSidebar({ filters, onChange, t }) {
           {ratingOptions.map(r => (
             <button
               key={r}
-              onClick={() => onChange(f => ({ ...f, minRating: r }))}
+              onClick={() => updateFilters({ minRating: r })}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${filters.minRating === r
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : 'text-gray-600 hover:bg-gray-50 border border-transparent'
@@ -257,9 +259,9 @@ function ProducerFilterSidebar({ filters, onChange, t }) {
       </div>
 
       {/* Verified only */}
-      <div className="px-5 py-4">
+      <div className="px-5 py-4 border-b border-gray-50">
         <button
-          onClick={() => onChange(f => ({ ...f, verifiedOnly: !f.verifiedOnly }))}
+          onClick={() => updateFilters({ verifiedOnly: !filters.verifiedOnly })}
           className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${filters.verifiedOnly
               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               : 'text-gray-600 hover:bg-gray-50 border border-transparent'
@@ -269,9 +271,28 @@ function ProducerFilterSidebar({ filters, onChange, t }) {
             <FontAwesomeIcon icon={faCircleCheck} className={`text-sm ${filters.verifiedOnly ? 'text-emerald-500' : 'text-gray-400'}`} />
             {t.producers.filterVerified}
           </span>
-          {/* Toggle pill */}
           <span className={`relative w-10 h-5 rounded-full transition-colors duration-200 flex-shrink-0 ${filters.verifiedOnly ? 'bg-emerald-500' : 'bg-gray-200'}`}>
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${filters.verifiedOnly ? 'translate-x-5' : 'translate-x-0'}`} />
+          </span>
+        </button>
+      </div>
+
+      {/* B2B Verified only */}
+      <div className="px-5 py-4">
+        <button
+          onClick={() => updateFilters({ b2bVerified: !filters.b2bVerified })}
+          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            filters.b2bVerified
+              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+              : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+          }`}
+        >
+          <span className="flex items-center gap-3">
+            <FontAwesomeIcon icon={faBuilding} className={`text-sm ${filters.b2bVerified ? 'text-blue-500' : 'text-gray-400'}`} />
+            {t.producers.filterB2BVerified}
+          </span>
+          <span className={`relative w-10 h-5 rounded-full transition-colors duration-200 flex-shrink-0 ${filters.b2bVerified ? 'bg-blue-500' : 'bg-gray-200'}`}>
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${filters.b2bVerified ? 'translate-x-5' : 'translate-x-0'}`} />
           </span>
         </button>
       </div>
@@ -282,54 +303,76 @@ function ProducerFilterSidebar({ filters, onChange, t }) {
 // ── ProducersPage ─────────────────────────────────────────────────────────────
 export default function ProducersPage({ session, onNavigate }) {
   const { t } = useLanguage();
-  const [searchParams] = useSearchParams();
-  const filterType = searchParams.get('tip');
-  const { producers, loading } = useProducers();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const [filters, setFilters] = useState({
-    marketType: '',
-    location: '',
-    minRating: 0,
-    verifiedOnly: false,
-    search: '',
-  });
+  const filters = {
+    search:       searchParams.get('cautare') || '',
+    marketType:   searchParams.get('tip') || '',
+    location:     searchParams.get('locatie') || '',
+    minRating:    parseInt(searchParams.get('rating') || '0', 10),
+    verifiedOnly: searchParams.get('verificat') === 'true',
+    b2bVerified:  searchParams.get('b2bVerificat') === 'true',
+    page:         parseInt(searchParams.get('pagina') || '1', 10),
+  };
 
-  // Reset page when filters change
-  useEffect(() => { setCurrentPage(1); }, [filters]);
+  const PARAM_MAP = {
+    search:       'cautare',
+    marketType:   'tip',
+    location:     'locatie',
+    minRating:    'rating',
+    verifiedOnly: 'verificat',
+    b2bVerified:  'b2bVerificat',
+    page:         'pagina',
+  };
 
-  // Apply filters
-  const filtered = useMemo(() => {
-    return producers.filter(p => {
-      if (filters.marketType) {
-        const mt = p.marketType;
-        if (filters.marketType === 'b2c' && mt !== 'b2c' && mt !== 'both') return false;
-        if (filters.marketType === 'b2b' && mt !== 'b2b' && mt !== 'both') return false;
+  const DEFAULTS = {
+    search: '', marketType: '', location: '',
+    minRating: 0, verifiedOnly: false, b2bVerified: false, page: 1,
+  };
+
+  const updateFilters = (updates) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        const paramKey = PARAM_MAP[key];
+        if (!paramKey) return;
+
+        const isDefault = value === DEFAULTS[key] || value === '' || value === null || value === undefined;
+        if (isDefault) {
+          next.delete(paramKey);
+        } else {
+          next.set(paramKey, String(value));
+        }
+      });
+
+      if (!('page' in updates)) {
+        next.delete('pagina');
       }
-      if (filters.location && !p.location?.toLowerCase().includes(filters.location.toLowerCase())) return false;
-      if (filters.minRating > 0 && p.avgRating < filters.minRating) return false;
-      if (filters.verifiedOnly && !p.is_verified) return false;
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        const nameMatch = p.full_name?.toLowerCase().includes(q);
-        const locMatch = p.location?.toLowerCase().includes(q);
-        const bioMatch = p.bio?.toLowerCase().includes(q);
-        if (!nameMatch && !locMatch && !bioMatch) return false;
-      }
-      return true;
+
+      return next;
     });
-  }, [producers, filters]);
+  };
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const clearAllFilters = () => setSearchParams({});
+  const clearFilter = (key) => updateFilters({ [key]: DEFAULTS[key] });
+
+  const { producers, loading } = useProducers(filters);
+
+  const totalPages = Math.ceil(producers.length / ITEMS_PER_PAGE);
+  const paginated = producers.slice(
+    (filters.page - 1) * ITEMS_PER_PAGE,
+    filters.page * ITEMS_PER_PAGE
+  );
 
   const hasActiveFilters =
+    filters.search !== '' ||
     filters.marketType !== '' ||
     filters.location !== '' ||
-    filters.minRating !== 0 ||
+    filters.minRating > 0 ||
     filters.verifiedOnly ||
-    filters.search !== '';
+    filters.b2bVerified;
 
   const marketTypeLabel = (key) => {
     if (key === 'b2c') return t.producers.filterB2C;
@@ -355,7 +398,7 @@ export default function ProducersPage({ session, onNavigate }) {
             borderRight: '1px solid #e5e7eb',
           }}
         >
-          <ProducerFilterSidebar filters={filters} onChange={setFilters} t={t} />
+          <ProducerFilterSidebar filters={filters} updateFilters={updateFilters} clearAllFilters={clearAllFilters} t={t} />
         </div>
       </aside>
 
@@ -389,8 +432,8 @@ export default function ProducersPage({ session, onNavigate }) {
             <span className="text-sm text-gray-500 flex-shrink-0">
               {loading ? t.producers.loading : (
                 <>
-                  <span className="font-bold text-emerald-600">{filtered.length}</span>
-                  {' '}{filtered.length === 1 ? t.producers.resultsSingular : t.producers.resultsCount}
+                  <span className="font-bold text-emerald-600">{producers.length}</span>
+                  {' '}{producers.length === 1 ? t.producers.resultsSingular : t.producers.resultsCount}
                 </>
               )}
             </span>
@@ -399,7 +442,7 @@ export default function ProducersPage({ session, onNavigate }) {
             {filters.marketType && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
                 {marketTypeLabel(filters.marketType)}
-                <button onClick={() => setFilters(f => ({ ...f, marketType: '' }))}>
+                <button onClick={() => clearFilter('marketType')}>
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
               </span>
@@ -408,7 +451,7 @@ export default function ProducersPage({ session, onNavigate }) {
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-700 text-white rounded-full text-xs font-semibold flex-shrink-0">
                 <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
                 {filters.location}
-                <button onClick={() => setFilters(f => ({ ...f, location: '' }))} className="hover:opacity-70 transition-opacity">
+                <button onClick={() => clearFilter('location')} className="hover:opacity-70 transition-opacity">
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
               </span>
@@ -417,7 +460,7 @@ export default function ProducersPage({ session, onNavigate }) {
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full text-xs font-semibold border border-yellow-200 flex-shrink-0">
                 <FontAwesomeIcon icon={faStar} className="text-[10px] text-yellow-400" />
                 {filters.minRating}+
-                <button onClick={() => setFilters(f => ({ ...f, minRating: 0 }))}>
+                <button onClick={() => clearFilter('minRating')}>
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
               </span>
@@ -426,7 +469,16 @@ export default function ProducersPage({ session, onNavigate }) {
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
                 <FontAwesomeIcon icon={faCircleCheck} className="text-[10px]" />
                 {t.producers.pillVerified}
-                <button onClick={() => setFilters(f => ({ ...f, verifiedOnly: false }))}>
+                <button onClick={() => clearFilter('verifiedOnly')}>
+                  <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                </button>
+              </span>
+            )}
+            {filters.b2bVerified && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200 flex-shrink-0">
+                <FontAwesomeIcon icon={faBuilding} className="text-[10px]" />
+                {t.producers.pillB2BVerified}
+                <button onClick={() => clearFilter('b2bVerified')}>
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
               </span>
@@ -434,14 +486,14 @@ export default function ProducersPage({ session, onNavigate }) {
             {filters.search && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold border border-emerald-200 flex-shrink-0">
                 {filters.search}
-                <button onClick={() => setFilters(f => ({ ...f, search: '' }))}>
+                <button onClick={() => clearFilter('search')}>
                   <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
                 </button>
               </span>
             )}
             {hasActiveFilters && (
               <button
-                onClick={() => setFilters({ marketType: '', location: '', minRating: 0, verifiedOnly: false, search: '' })}
+                onClick={clearAllFilters}
                 className="bg-gray-100/50 hover:bg-red-50 border border-gray-200 hover:border-red-100 px-3 py-1 rounded-full text-[11px] font-semibold text-gray-500 hover:text-red-600 transition-all flex-shrink-0"
               >
                 {t.producers.filterResetAll}
@@ -458,7 +510,7 @@ export default function ProducersPage({ session, onNavigate }) {
             {t.producers.mobileFilterBtn}
             {hasActiveFilters && (
               <span className="w-4 h-4 bg-emerald-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {[filters.marketType, filters.location, filters.minRating > 0, filters.verifiedOnly, filters.search].filter(Boolean).length}
+                {[filters.marketType, filters.location, filters.minRating > 0, filters.verifiedOnly, filters.b2bVerified, filters.search].filter(Boolean).length}
               </span>
             )}
           </button>
@@ -479,10 +531,8 @@ export default function ProducersPage({ session, onNavigate }) {
               </div>
               <ProducerFilterSidebar
                 filters={filters}
-                onChange={(val) => {
-                  setFilters(val);
-                  setShowMobileFilters(false);
-                }}
+                updateFilters={updateFilters}
+                clearAllFilters={clearAllFilters}
                 t={t}
               />
             </div>
@@ -512,19 +562,19 @@ export default function ProducersPage({ session, onNavigate }) {
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-1.5 py-4">
                 <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => updateFilters({ page: filters.page - 1 })}
+                  disabled={filters.page === 1}
                   className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
                 </button>
                 {[...Array(totalPages)].map((_, idx) => {
                   const p = idx + 1;
-                  const show = p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1);
-                  const dots = p === currentPage - 2 || p === currentPage + 2;
+                  const show = p === 1 || p === totalPages || (p >= filters.page - 1 && p <= filters.page + 1);
+                  const dots = p === filters.page - 2 || p === filters.page + 2;
                   if (show) return (
-                    <button key={p} onClick={() => setCurrentPage(p)}
-                      className={`w-9 h-9 rounded-xl text-sm font-bold transition-all duration-200 ${currentPage === p
+                    <button key={p} onClick={() => updateFilters({ page: p })}
+                      className={`w-9 h-9 rounded-xl text-sm font-bold transition-all duration-200 ${filters.page === p
                           ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200/50 scale-110'
                           : 'bg-white border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50'
                         }`}>
@@ -535,8 +585,8 @@ export default function ProducersPage({ session, onNavigate }) {
                   return null;
                 })}
                 <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => updateFilters({ page: filters.page + 1 })}
+                  disabled={filters.page === totalPages}
                   className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
@@ -551,7 +601,7 @@ export default function ProducersPage({ session, onNavigate }) {
             <p className="text-gray-400 text-sm mb-5">{t.producers.noResultsHint}</p>
             {hasActiveFilters && (
               <button
-                onClick={() => setFilters({ marketType: '', location: '', minRating: 0, verifiedOnly: false, search: '' })}
+                onClick={clearAllFilters}
                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm transition-all"
               >
                 {t.producers.resetFilters}

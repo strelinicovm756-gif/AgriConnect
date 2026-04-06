@@ -15,6 +15,7 @@ import EventsPage from './pages/EventsPage';
 import ProducersPage from './pages/ProducersPage';
 import { Navbar } from "./components/layout/Navbar";
 import { Toaster } from "react-hot-toast";
+import AIAssistant from './components/features/AIAssistant';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -209,6 +210,8 @@ export default function App() {
           <Route path="*" element={<HomePage session={session} onNavigate={navigateTo} searchQuery={searchQuery} searchLocation={searchLocation} />} />
         </Routes>
       </main>
+
+      <AIAssistant session={session} />
     </div>
   );
 }

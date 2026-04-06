@@ -659,7 +659,7 @@ function CategoryManagement() {
                   <button
                     onClick={() => handleMoveCategory(cat.id, otherGroup)}
                     className="p-1.5 rounded-lg text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition text-xs"
-                    title={`Move to ${group === 'b2c' ? 'B2B' : 'B2C'}`}
+                    title={`Move to ${group === 'b2c' ? 'Services' : 'Food Products'}`}
                   >
                     {group === 'b2c' ? <FontAwesomeIcon icon={faArrowRight} /> : <FontAwesomeIcon icon={faArrowLeft} />}
                   </button>
@@ -752,8 +752,8 @@ function CategoryManagement() {
   return (
     <div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2">Food Products</span>)}
-        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2">Services &amp; Utilities</span>)}
+        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2">Produse Alimentare</span>)}
+        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2">Servicii &amp; Utilaje</span>)}
       </div>
     </div>
   );
@@ -1898,7 +1898,7 @@ function B2BManagement({ onStatsChange }) {
       if (error) throw error;
       setRequests(data || []);
     } catch (err) {
-      toast.error('Error loading B2B requests');
+      toast.error('Error loading provider requests');
     } finally {
       setLoading(false);
     }
@@ -1910,7 +1910,7 @@ function B2BManagement({ onStatsChange }) {
     setActionLoading(profileId + '_verify');
     const { error } = await supabase.from('profiles').update({ b2b_verified: true }).eq('id', profileId);
     if (!error) {
-      toast.success('Profil B2B verificat!');
+      toast.success('Prestator verificat!');
       setRequests(prev => prev.map(r => r.id === profileId ? { ...r, b2b_verified: true } : r));
       onStatsChange?.();
     } else {
@@ -1923,7 +1923,7 @@ function B2BManagement({ onStatsChange }) {
     setActionLoading(profileId + '_revoke');
     const { error } = await supabase.from('profiles').update({ b2b_verified: false }).eq('id', profileId);
     if (!error) {
-      toast.success('Verificare B2B revocată');
+      toast.success('Verificare prestator revocată');
       setRequests(prev => prev.map(r => r.id === profileId ? { ...r, b2b_verified: false } : r));
       onStatsChange?.();
     } else {
@@ -1941,7 +1941,7 @@ function B2BManagement({ onStatsChange }) {
   if (requests.length === 0) return (
     <div className="text-center py-16 text-gray-400">
       <FontAwesomeIcon icon={faBuilding} className="text-5xl mb-4 opacity-20" />
-      <p className="font-medium">Nicio cerere B2B momentan.</p>
+      <p className="font-medium">Nicio cerere de prestator momentan.</p>
     </div>
   );
 
@@ -2071,7 +2071,7 @@ export default function AdminDashboard({ session, onNavigate }) {
     { key: 'categories', label: 'Categories', icon: faLayerGroup, badge: 0 },
     { key: 'events', label: t.admin.events, icon: faCalendarDays, badge: 0 },
     { key: 'users', label: t.admin.users, icon: faUsers, badge: 0 },
-    { key: 'b2b', label: 'Cereri B2B', icon: faBuilding, badge: stats.b2bPending },
+    { key: 'b2b', label: 'Cereri Prestatori', icon: faBuilding, badge: stats.b2bPending },
   ];
 
   return (
@@ -2094,7 +2094,7 @@ export default function AdminDashboard({ session, onNavigate }) {
         {/* Stats bar */}
         <div className="flex flex-wrap gap-2 mb-6">
           <StatBadge icon={faBell} value={stats.subscriptions} label="Abonați la Evenimente" color="blue" />
-          <StatBadge icon={faBuilding} value={stats.b2bPending} label="Cereri B2B în așteptare" color="yellow" />
+          <StatBadge icon={faBuilding} value={stats.b2bPending} label="Cereri Prestatori în așteptare" color="yellow" />
         </div>
 
         {/* Tab Content */}

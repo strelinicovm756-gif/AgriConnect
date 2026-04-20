@@ -51,16 +51,16 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
   };
 
   const categoryConfig = {
-    'vegetables':           { icon: faCarrot,       bgColor: 'bg-gray-100',   iconColor: 'text-emerald-600' },
-    'fruit':                { icon: faAppleWhole,   bgColor: 'bg-red-50',     iconColor: 'text-red-600' },
-    'dairy':                { icon: faCow,          bgColor: 'bg-blue-50',    iconColor: 'text-blue-600' },
-    'meat':                 { icon: faDrumstickBite,bgColor: 'bg-orange-50',  iconColor: 'text-orange-600' },
-    'eggs':                 { icon: faEgg,          bgColor: 'bg-yellow-50',  iconColor: 'text-yellow-700' },
-    'grains / cereals':     { icon: faWheatAwn,     bgColor: 'bg-lime-50',    iconColor: 'text-lime-700' },
-    'field-services':       { icon: faTractor,      bgColor: 'bg-amber-50',   iconColor: 'text-amber-700' },
-    'logistics--transport': { icon: faJar,          bgColor: 'bg-purple-50',  iconColor: 'text-purple-600' },
-    'equipment-rentals':    { icon: faWrench,       bgColor: 'bg-gray-50',    iconColor: 'text-gray-600' },
-    'default':              { icon: faBox,          bgColor: 'bg-gray-50',    iconColor: 'text-gray-600' },
+    'vegetables': { icon: faCarrot, bgColor: 'bg-gray-100', iconColor: 'text-emerald-600' },
+    'fruit': { icon: faAppleWhole, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
+    'dairy': { icon: faCow, bgColor: 'bg-blue-50', iconColor: 'text-blue-600' },
+    'meat': { icon: faDrumstickBite, bgColor: 'bg-orange-50', iconColor: 'text-orange-600' },
+    'eggs': { icon: faEgg, bgColor: 'bg-yellow-50', iconColor: 'text-yellow-700' },
+    'grains / cereals': { icon: faWheatAwn, bgColor: 'bg-lime-50', iconColor: 'text-lime-700' },
+    'field-services': { icon: faTractor, bgColor: 'bg-amber-50', iconColor: 'text-amber-700' },
+    'logistics--transport': { icon: faJar, bgColor: 'bg-purple-50', iconColor: 'text-purple-600' },
+    'equipment-rentals': { icon: faWrench, bgColor: 'bg-gray-50', iconColor: 'text-gray-600' },
+    'default': { icon: faBox, bgColor: 'bg-gray-50', iconColor: 'text-gray-600' },
   };
 
   const categorySlug = product.categories?.slug
@@ -78,7 +78,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
             <img
               src={product.image_url}
               alt={product.name}
-              
+
               className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
             />
           </>
@@ -91,20 +91,20 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
           </div>
         )}
 
-        {/* Badge categorie */}
-        <div className="absolute top-3 left-3">
-          <span className="bg-white/95 backdrop-blur-sm text-gray-900 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-md">
-            <FontAwesomeIcon icon={config.icon} className={`text-xs ${config.iconColor}`} />
-            {getCategoryName(
-              product.categories?.slug ?? product.category?.toLowerCase().replace(/ /g, '-'),
-              lang
-            )}
-          </span>
-        </div>
+
 
         {/* Negotiable badge */}
-        {product.is_negotiable && (
-          <span className="absolute top-4 right-2 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">{t.common.negotiable.toUpperCase()}</span>
+        
+        {product.is_negotiable ? (
+          
+          <span className="absolute top-4 right-2 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+            {t.common.negotiable.toUpperCase()}
+          </span>
+        ) : (
+          
+          <span className="absolute top-4 right-2 bg-gray-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+            {t.common.fixedPrice.toUpperCase()}
+          </span>
         )}
 
         {/* Buton raportare — vizibil la hover */}

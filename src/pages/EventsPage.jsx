@@ -14,6 +14,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Bell } from 'lucide-react';
 
+
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 // ── EventCard ────────────────────────────────────────────────────────────────
@@ -454,7 +455,7 @@ export default function EventsPage({ session, onNavigate }) {
         >
 
           {/* Map card header */}
-          <div className="relative z-20 bg-emerald-600 flex items-center justify-between px-5 py-3 border-b border-gray-100">
+          <div className="relative z-20 bg-emerald-600 flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2">
               <FontAwesomeIcon icon={faLocationDot} className="text-white" />
               <span className="font-bold text-white text-sm">{t.events.showMap}</span>
@@ -493,8 +494,8 @@ export default function EventsPage({ session, onNavigate }) {
 
 
 
-                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <FontAwesomeIcon icon={faLocationCrosshairs} className="text-emerald-600 text-3xl" />
+                <div className="w-20 h-20 bg-emerald-600 rounded-full flex items-center justify-center">
+                  <FontAwesomeIcon icon={faLocationDot} className="text-white text-3xl" />
                 </div>
                 <div className="text-center px-6">
                   <p className="text-gray-900 font-bold text-lg mb-1">{t.events.findEventsNearYou}</p>
@@ -504,7 +505,6 @@ export default function EventsPage({ session, onNavigate }) {
                   onClick={requestLocation}
                   className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white
                                rounded-xl text-sm font-semibold shadow-md hover:bg-emerald-700 transition">
-                  <FontAwesomeIcon icon={faLocationCrosshairs} />
                   {t.events.activateLocation}
                 </button>
               </div>
@@ -659,21 +659,6 @@ export default function EventsPage({ session, onNavigate }) {
                 ))}
               </div>
 
-              <button
-                onClick={handleNotify}
-                disabled={notifyLoading}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
-                          border transition-colors disabled:opacity-60
-                          ${notifyActive
-                    ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:text-emerald-600'
-                  }`}>
-                {notifyLoading
-                  ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                  : <Bell size={15} />
-                }
-                {notifyActive ? '✓ ' + t.events.notifySubscribed : t.events.notifyBtn}
-              </button>
             </div>
 
             {/* Period + location filter bar */}

@@ -12,9 +12,9 @@ import {
   faCheck, faXmark, faChevronRight, faSpinner, faSearch,
   faUserShield, faUser, faBan, faUnlock, faArrowRight, faArrowLeft,
   faPlus, faTrash, faPen, faFloppyDisk,
-  faCircleCheck, faTriangleExclamation,faShoppingCart, faBoxOpen, faFileImage,
+  faCircleCheck, faTriangleExclamation, faShoppingCart, faBoxOpen, faFileImage,
   faLocationDot, faCrown,
-  faCartShopping, faIndustry, faCalendarDays, faBell, faBuilding,
+  faIndustry, faCalendarDays, faBell, faBuilding,
   faEye, faChevronLeft
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -55,9 +55,8 @@ function TabBtn({ active, onClick, icon, label, badge }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
-        active ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
-      }`}
+      className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${active ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+        }`}
     >
       <FontAwesomeIcon icon={icon} />
       <span>{label}</span>
@@ -102,7 +101,7 @@ function ApprovalQueue({ userRole, onNavigate }) {
       if (error) throw error;
       setProducts(data || []);
     } catch (e) {
-      toast.error('Error loading products');
+      toast.error(t.admin.loading);
     } finally {
       setLoading(false);
     }
@@ -115,25 +114,25 @@ function ApprovalQueue({ userRole, onNavigate }) {
     try {
       const { error } = await supabase.from('products').update({ status: 'active' }).eq('id', id);
       if (error) throw error;
-      toast.success('Product approved!');
+      toast.success(t.admin.approve + '!');
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch {
-      toast.error('Error approving product');
+      toast.error(t.admin.approve + ' error');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to permanently delete this listing?')) return;
+    if (!window.confirm(t.admin.deleteListingConfirm)) return;
     setActionLoading(id + '_delete');
     try {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Listing deleted!');
+      toast.success(t.admin.delete + '!');
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch {
-      toast.error('Error deleting');
+      toast.error(t.admin.delete + ' error');
     } finally {
       setActionLoading(null);
     }
@@ -145,24 +144,24 @@ function ApprovalQueue({ userRole, onNavigate }) {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ status: 'rejected', reject_reason: rejectReason || 'Does not comply with platform regulations' })
+        .update({ status: 'rejected', reject_reason: rejectReason || t.admin.rejectReasons[0] })
         .eq('id', rejectModal);
       if (error) throw error;
-      toast.success('Product rejected!');
+      toast.success(t.admin.reject + '!');
       setProducts(prev => prev.filter(p => p.id !== rejectModal));
       setRejectModal(null);
       setRejectReason('');
     } catch {
-      toast.error('Error rejecting product');
+      toast.error(t.admin.reject + ' error');
     } finally {
       setActionLoading(null);
     }
   };
 
   const filterBtns = [
-    { key: 'pending', label: 'Pending' },
-    { key: 'active', label: 'Approved' },
-    { key: 'rejected', label: 'Rejected' },
+    { key: 'pending', label: t.admin.pending },
+    { key: 'active', label: t.admin.approved },
+    { key: 'rejected', label: t.admin.rejected },
   ];
 
   return (
@@ -173,11 +172,10 @@ function ApprovalQueue({ userRole, onNavigate }) {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-              filter === f.key
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition ${filter === f.key
                 ? 'bg-emerald-600 text-white shadow'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+              }`}
           >
             {f.label}
           </button>
@@ -189,20 +187,19 @@ function ApprovalQueue({ userRole, onNavigate }) {
           <FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <EmptyState icon={faBoxOpen} message={`No ${filter === 'pending' ? 'pending' : filter === 'active' ? 'approved' : 'rejected'} products`} />
+        <EmptyState icon={faBoxOpen} message={t.admin.noProductsFound} />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200 text-left">
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">Img</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Seller</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Location</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Date</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12">{t.admin.image}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.product}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t.admin.location}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.price}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{t.admin.date}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.status}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -226,63 +223,61 @@ function ApprovalQueue({ userRole, onNavigate }) {
                       {p.subcategory ? ` › ${getSubcategoryName(p.subcategory?.toLowerCase().replace(/ /g, '-'), lang)}` : ''}
                     </p>
                   </td>
-                  <td className="px-3 py-2.5 text-xs text-gray-600 whitespace-nowrap">{p.full_name || '—'}</td>
                   <td className="px-3 py-2.5 text-xs text-gray-500 hidden md:table-cell whitespace-nowrap">{p.location || '—'}</td>
                   <td className="px-3 py-2.5 text-xs font-semibold text-emerald-700 whitespace-nowrap">{p.price} lei/{p.unit}</td>
                   <td className="px-3 py-2.5 text-xs text-gray-400 hidden lg:table-cell whitespace-nowrap">{new Date(p.created_at).toLocaleDateString('ro-RO')}</td>
                   <td className="px-3 py-2.5">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
-                      p.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                      p.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {p.status === 'active' ? 'Active' : p.status === 'rejected' ? 'Rejected' : 'Pending'}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${p.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                        p.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
+                      }`}>
+                      {p.status === 'active' ? t.admin.active : p.status === 'rejected' ? t.admin.rejected : t.admin.pending}
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1.5 flex-wrap">
-                    <button
-                      onClick={() => setPreviewProduct(p)}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition">
-                      <FontAwesomeIcon icon={faEye} />
-                      Detalii
-                    </button>
-                    {filter === 'pending' && (
-                      <div className="flex gap-1.5">
+                      <button
+                        onClick={() => setPreviewProduct(p)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition">
+                        <FontAwesomeIcon icon={faEye} />
+                        {t.admin.details}
+                      </button>
+                      {filter === 'pending' && (
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => handleApprove(p.id)}
+                            disabled={actionLoading === p.id + '_approve'}
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
+                          >
+                            {actionLoading === p.id + '_approve' ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faCheck} />}
+                            {t.admin.approve}
+                          </button>
+                          <button
+                            onClick={() => { setRejectModal(p.id); setRejectReason(''); }}
+                            disabled={!!actionLoading}
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-200 transition disabled:opacity-60"
+                          >
+                            <FontAwesomeIcon icon={faXmark} />
+                            {t.admin.reject}
+                          </button>
+                        </div>
+                      )}
+                      {filter === 'active' && (
                         <button
-                          onClick={() => handleApprove(p.id)}
-                          disabled={actionLoading === p.id + '_approve'}
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition disabled:opacity-60"
-                        >
-                          {actionLoading === p.id + '_approve' ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faCheck} />}
-                          {t.admin.approve}
-                        </button>
-                        <button
-                          onClick={() => { setRejectModal(p.id); setRejectReason(''); }}
-                          disabled={!!actionLoading}
+                          onClick={() => handleDelete(p.id)}
+                          disabled={actionLoading === p.id + '_delete'}
                           className="flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-200 transition disabled:opacity-60"
                         >
-                          <FontAwesomeIcon icon={faXmark} />
-                          {t.admin.reject}
+                          {actionLoading === p.id + '_delete' ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faTrash} />}
+                          {t.admin.delete}
                         </button>
-                      </div>
-                    )}
-                    {filter === 'active' && (
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        disabled={actionLoading === p.id + '_delete'}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-semibold hover:bg-red-200 transition disabled:opacity-60"
-                      >
-                        {actionLoading === p.id + '_delete' ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" /> : <FontAwesomeIcon icon={faTrash} />}
-                        {t.admin.delete}
-                      </button>
-                    )}
-                    {filter === 'rejected' && p.reject_reason && (
-                      <p className="text-xs text-red-500 max-w-[140px] truncate" title={p.reject_reason}>
-                        <FontAwesomeIcon icon={faTriangleExclamation} className="mr-1" />
-                        {p.reject_reason}
-                      </p>
-                    )}
+                      )}
+                      {filter === 'rejected' && p.reject_reason && (
+                        <p className="text-xs text-red-500 max-w-[140px] truncate" title={p.reject_reason}>
+                          <FontAwesomeIcon icon={faTriangleExclamation} className="mr-1" />
+                          {p.reject_reason}
+                        </p>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -298,10 +293,10 @@ function ApprovalQueue({ userRole, onNavigate }) {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
               <FontAwesomeIcon icon={faXmark} className="text-red-500" />
-              Rejection reason
+              {t.admin.rejectionReason}
             </h3>
             <div className="space-y-2 mb-4">
-              {['Does not comply with platform regulations', 'Prohibited product', 'Inappropriate images', 'False / misleading description', 'Abusive price'].map(r => (
+              {t.admin.rejectReasons.map(r => (
                 <button
                   key={r}
                   onClick={() => setRejectReason(r)}
@@ -312,14 +307,14 @@ function ApprovalQueue({ userRole, onNavigate }) {
               ))}
             </div>
             <textarea
-              placeholder="Or write a custom reason..."
+              placeholder={t.admin.rejectionReasonPlaceholder}
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400 mb-4"
               rows={3}
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setRejectModal(null)} className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+              <button onClick={() => setRejectModal(null)} className="px-5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">{t.admin.cancel}</button>
               <button
                 onClick={handleReject}
                 disabled={actionLoading?.includes('_reject')}
@@ -369,7 +364,7 @@ function FlagSystem() {
       setReports(data || []);
     } catch (e) {
       console.error(e);
-      toast.error('Error loading reports');
+      toast.error(t.admin.reportsTitle + ' error');
     } finally {
       setLoading(false);
     }
@@ -389,19 +384,19 @@ function FlagSystem() {
         .update({ status: action === 'dismiss' ? 'dismissed' : 'resolved', resolved_at: new Date().toISOString() })
         .eq('id', reportId);
       if (error) throw error;
-      toast.success(action === 'dismiss' ? 'Report dismissed' : 'Report resolved!');
+      toast.success(action === 'dismiss' ? t.admin.dismissed : t.admin.resolved + '!');
       setReports(prev => prev.filter(r => r.id !== reportId));
     } catch {
-      toast.error('Error processing report');
+      toast.error(t.admin.reportsTitle + ' error');
     } finally {
       setActionLoading(null);
     }
   };
 
   const filterBtns = [
-    { key: 'pending', label: 'Pending' },
-    { key: 'resolved', label: 'Resolved' },
-    { key: 'dismissed', label: 'Dismissed' },
+    { key: 'pending', label: t.admin.pending },
+    { key: 'resolved', label: t.admin.resolved },
+    { key: 'dismissed', label: t.admin.dismissed },
   ];
 
   return (
@@ -411,9 +406,8 @@ function FlagSystem() {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
-              filter === f.key ? 'bg-emerald-600 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition ${filter === f.key ? 'bg-emerald-600 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
           >
             {f.label}
           </button>
@@ -425,7 +419,7 @@ function FlagSystem() {
           <FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" />
         </div>
       ) : reports.length === 0 ? (
-        <EmptyState icon={faFlag} message="No reports in this category" />
+        <EmptyState icon={faFlag} message={t.admin.noReportsFound} />
       ) : (
         <div className="space-y-4">
           {reports.map(r => (
@@ -445,26 +439,25 @@ function FlagSystem() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 flex-wrap">
                     <div>
-                      <h3 className="font-bold text-gray-900">{r.product?.name || 'Deleted product'}</h3>
+                      <h3 className="font-bold text-gray-900">{r.product?.name || t.admin.deletedProduct}</h3>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Category: <span className="font-medium">{r.product?.category || '—'}</span>
+                        {t.admin.category}: <span className="font-medium">{r.product?.category || '—'}</span>
                         {' · '}
-                        Reported by: <span className="font-medium">{r.reporter?.full_name || 'Anonymous'}</span>
+                        {t.admin.reportedBy}: <span className="font-medium">{r.reporter?.full_name || t.admin.anonymous}</span>
                         {' · '}
                         {new Date(r.created_at).toLocaleDateString('ro-RO')}
                       </p>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                      r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                      r.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {r.status === 'pending' ? 'Pending' : r.status === 'resolved' ? 'Resolved' : 'Dismissed'}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                        r.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
+                          'bg-gray-100 text-gray-600'
+                      }`}>
+                      {r.status === 'pending' ? t.admin.pending : r.status === 'resolved' ? t.admin.resolved : t.admin.dismissed}
                     </span>
                   </div>
 
                   <div className="mt-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5">
-                    <p className="text-xs font-semibold text-orange-700 mb-0.5">Report reason:</p>
+                    <p className="text-xs font-semibold text-orange-700 mb-0.5">{t.admin.reportReason}:</p>
                     <p className="text-sm text-orange-800">{r.reason}</p>
                     {r.description && <p className="text-xs text-orange-600 mt-1">{r.description}</p>}
                   </div>
@@ -477,7 +470,7 @@ function FlagSystem() {
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold hover:bg-red-700 transition disabled:opacity-60"
                       >
                         <FontAwesomeIcon icon={faBan} />
-                        Remove product
+                        {t.admin.removeProduct}
                       </button>
                       <button
                         onClick={() => handleAction(r.id, r.product_id, 'resolve')}
@@ -485,7 +478,7 @@ function FlagSystem() {
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold hover:bg-emerald-200 transition disabled:opacity-60"
                       >
                         <FontAwesomeIcon icon={faCheck} />
-                        Mark as resolved
+                        {t.admin.markResolved}
                       </button>
                       <button
                         onClick={() => handleAction(r.id, r.product_id, 'dismiss')}
@@ -493,7 +486,7 @@ function FlagSystem() {
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-200 transition disabled:opacity-60"
                       >
                         <FontAwesomeIcon icon={faXmark} />
-                        Dismiss report
+                        {t.admin.dismissReport}
                       </button>
                     </div>
                   )}
@@ -529,7 +522,7 @@ function CategoryManagement() {
       setB2cCategories(data.filter(c => c.market_type !== 'b2b'));
       setB2bCategories(data.filter(c => c.market_type !== 'b2c'));
     } catch {
-      toast.error('Error loading categories');
+      toast.error(t.admin.categories + ' error');
     } finally {
       setLoading(false);
     }
@@ -695,7 +688,7 @@ function CategoryManagement() {
                         value={newSubInput.value}
                         onChange={e => setNewSubInput(prev => ({ ...prev, value: e.target.value }))}
                         onKeyDown={e => e.key === 'Enter' && handleAddSubcategory(cat.id, newSubInput.value)}
-                        placeholder="Subcategory name..."
+                        placeholder={t.admin.subcategoryPlaceholder}
                         className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400"
                       />
                       <button onClick={() => handleAddSubcategory(cat.id, newSubInput.value)} className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition">
@@ -711,7 +704,7 @@ function CategoryManagement() {
                       className="mt-3 flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-800 font-medium transition"
                     >
                       <FontAwesomeIcon icon={faPlus} />
-                      Add subcategory
+                      {t.admin.addSubcategory}
                     </button>
                   )}
                 </div>
@@ -728,7 +721,7 @@ function CategoryManagement() {
               value={newCatInput.value}
               onChange={e => setNewCatInput(prev => ({ ...prev, value: e.target.value }))}
               onKeyDown={e => e.key === 'Enter' && handleAddCategory(group, newCatInput.value)}
-              placeholder="New category name..."
+              placeholder={t.admin.categoryPlaceholder}
               className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
             />
             <button onClick={() => handleAddCategory(group, newCatInput.value)} className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">
@@ -744,7 +737,7 @@ function CategoryManagement() {
             className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm font-medium hover:border-emerald-300 hover:text-emerald-500 hover:bg-emerald-50/30 transition-all duration-200"
           >
             <FontAwesomeIcon icon={faPlus} />
-            Add category
+            {t.admin.addCategory}
           </button>
         )}
       </div>
@@ -756,20 +749,230 @@ function CategoryManagement() {
   return (
     <div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2">Produse Alimentare</span>)}
-        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2">Servicii &amp; Utilaje</span>)}
+        {renderGroup('b2c', b2cCategories, <span className="flex items-center gap-2">{t.admin.foodProducts}</span>)}
+        {renderGroup('b2b', b2bCategories, <span className="flex items-center gap-2">{t.admin.servicesProducts}</span>)}
       </div>
     </div>
   );
 }
 
+// ── User Detail Modal ──────────────────────────────────────────
+function UserDetailModal({ user, onClose, onNavigate }) {
+  const { t } = useLanguage();
+  const [userProducts, setUserProducts] = useState([]);
+  const [userEvents, setUserEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchUserData = async () => {
+      setLoading(true);
+      const [productsRes, eventsRes] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id, name, status, price, unit, category, created_at, image_url')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('event_subscriptions')
+          .select('event_id, created_at, events(id, title, event_date, type, location_text)')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+      ]);
+      setUserProducts(productsRes.data || []);
+      setUserEvents(eventsRes.data || []);
+      setLoading(false);
+    };
+    fetchUserData();
+  }, [user]);
+
+  if (!user) return null;
+
+  const roleInfo = ROLE_LABELS[user.role] || ROLE_LABELS.user;
+  const isBanned = user.role === 'banned';
+
+  const EVENT_TYPE_COLORS = {
+    iarmaroc: 'bg-emerald-100 text-emerald-700',
+    curs_agricol: 'bg-blue-100 text-blue-700',
+    piata_locala: 'bg-amber-100 text-amber-800',
+  };
+
+
+  {/*user*/ }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+
+
+
+        {/* Header */}
+        <div className="overflow-hidden flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-3xl">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white text-lg font-black ${isBanned ? 'bg-red-400' : 'bg-emerald-500'}`}>
+              {(user.full_name || '?')[0].toUpperCase()}
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">{user.full_name || t.admin.noName}</h2>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 ${isBanned ? 'bg-red-100 text-red-700' : roleInfo.color}`}>
+                  <FontAwesomeIcon icon={isBanned ? faBan : roleInfo.icon} className="text-[10px]" />
+                  {isBanned ? 'Banned' : roleInfo.label}
+                </span>
+                {user.is_verified && (
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700 inline-flex items-center gap-1">
+                    <FontAwesomeIcon icon={faCircleCheck} className="text-[10px]" />
+                    {t.admin.verified}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition">
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
+        </div>
+        <div className="overflow-y-auto flex-1 custom-scrollbar">
+
+          <div className="p-8 space-y-6 ">
+
+
+            {/* User info grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: t.admin.phone, value: user.phone },
+                { label: t.admin.location, value: user.location },
+                { label: t.admin.registered, value: user.created_at ? new Date(user.created_at).toLocaleDateString() : null },
+              ].filter(i => i.value).map(({ label, value }) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">{label}</p>
+                  <p className="text-sm font-semibold text-gray-900 mt-0.5">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <FontAwesomeIcon icon={faSpinner} className="text-2xl text-emerald-600 animate-spin" />
+              </div>
+            ) : (
+              <>
+                {/* User's products */}
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faBoxOpen} />
+                    {t.admin.product} ({userProducts.length})
+                  </p>
+                  {userProducts.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic">{t.admin.noProductsFound}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {userProducts.map(p => (
+                        <div key={p.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                          <div className="w-10 h-10 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0">
+                            {p.image_url
+                              ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                              : <div className="w-full h-full flex items-center justify-center text-gray-300"><FontAwesomeIcon icon={faFileImage} /></div>
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{p.name}</p>
+                            <p className="text-xs text-gray-400">{p.category} · {p.price} lei/{p.unit}</p>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${p.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                              p.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                'bg-yellow-100 text-yellow-700'
+                            }`}>
+                            {p.status === 'active' ? t.admin.active :
+                              p.status === 'rejected' ? t.admin.rejected : t.admin.pending}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Event subscriptions */}
+                <div>
+                  <p className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faCalendarDays} />
+                    {t.admin.events} ({userEvents.length})
+                  </p>
+                  {userEvents.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic">
+                      {t.admin.noEventsYet}
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {userEvents.map(sub => {
+                        const ev = sub.events;
+                        if (!ev) return null;
+                        return (
+                          <div key={sub.event_id} className="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <FontAwesomeIcon icon={faCalendarDays} className="text-blue-600 text-sm" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{ev.title}</p>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {ev.event_date && (
+                                  <p className="text-xs text-gray-500">
+                                    {new Date(ev.event_date).toLocaleDateString()}
+                                  </p>
+                                )}
+                                {ev.location_text && (
+                                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                                    <FontAwesomeIcon icon={faLocationDot} className="text-[9px]" />
+                                    {ev.location_text}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${EVENT_TYPE_COLORS[ev.type] || 'bg-gray-100 text-gray-600'}`}>
+                              {ev.type === 'iarmaroc' ? t.admin.eventTypeFair
+                                : ev.type === 'curs_agricol' ? t.admin.eventTypeCourse
+                                  : t.admin.eventTypeMarket}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+          </div>
+
+          
+        </div>
+
+        {/* View profile button */}
+          <div className=" p-4 flex justify-end pt-2 border-t border-gray-100">
+            <button
+              onClick={() => { onClose(); onNavigate('producator', user.id); }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition"
+            >
+              <FontAwesomeIcon icon={faUser} />
+              {t.admin.viewProfile}
+            </button>
+          </div>
+
+      </div>
+    </div>
+
+  );
+}
+
 // ── Gestionare Utilizatori ─────────────────────────────────────
-function UserManagement({ userRole }) {
+function UserManagement({ userRole, onNavigate }) {
   const { t } = useLanguage();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -830,7 +1033,7 @@ function UserManagement({ userRole }) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-gray-400">
         <FontAwesomeIcon icon={faCrown} className="text-4xl mb-3 opacity-30" />
-        <p className="text-sm">This section is accessible only to Super Admins</p>
+        <p className="text-sm">{t.admin.superAdminOnly}</p>
       </div>
     );
   }
@@ -851,19 +1054,19 @@ function UserManagement({ userRole }) {
       {loading ? (
         <div className="flex justify-center py-16"><FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" /></div>
       ) : filtered.length === 0 ? (
-        <EmptyState icon={faUsers} message="No users found" />
+        <EmptyState icon={faUsers} message={t.admin.noUsersFound} />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
           <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200 text-left">
                 <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider w-10">Av.</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Phone</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Location</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Registered</th>
-                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.name}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">{t.admin.phone}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t.admin.location}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.status}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{t.admin.registered}</th>
+                <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -879,7 +1082,7 @@ function UserManagement({ userRole }) {
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-gray-900 text-sm">{u.full_name || 'No name'}</span>
+                        <span className="font-semibold text-gray-900 text-sm">{u.full_name || t.admin.noName}</span>
                         {u.is_verified && <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 text-xs" title="Verificat" />}
                       </div>
                     </td>
@@ -894,6 +1097,12 @@ function UserManagement({ userRole }) {
                     <td className="px-3 py-2.5 text-xs text-gray-400 hidden lg:table-cell whitespace-nowrap">{new Date(u.created_at).toLocaleDateString('ro-RO')}</td>
                     <td className="px-3 py-2.5">
                       <div className="flex gap-1.5 items-center">
+                        <button
+                          onClick={() => setSelectedUser(u)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition">
+                          <FontAwesomeIcon icon={faEye} />
+                          {t.admin.details}
+                        </button>
                         {!isBanned && u.role !== 'super_admin' && (
                           <select
                             value={u.role || 'user'}
@@ -909,9 +1118,8 @@ function UserManagement({ userRole }) {
                         <button
                           onClick={() => handleBan(u.id, u.role)}
                           disabled={!!actionLoading || u.role === 'super_admin'}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50 ${
-                            isBanned ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-red-100 text-red-700 hover:bg-red-200'
-                          }`}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50 ${isBanned ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            }`}
                         >
                           <FontAwesomeIcon icon={isBanned ? faUnlock : faBan} />
                           {isBanned ? t.admin.unban : t.admin.ban}
@@ -924,6 +1132,13 @@ function UserManagement({ userRole }) {
             </tbody>
           </table>
         </div>
+      )}
+      {selectedUser && (
+        <UserDetailModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onNavigate={onNavigate}
+        />
       )}
     </div>
   );
@@ -969,6 +1184,7 @@ function EventManagement() {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+  const [subscriberCounts, setSubscriberCounts] = useState({});
   const [mapReady, setMapReady] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const eventMapRef = useRef(null);
@@ -1000,6 +1216,21 @@ function EventManagement() {
   };
   const [form, setForm] = useState(emptyForm);
 
+  const loadSubscriberCounts = async (eventsList) => {
+    if (!eventsList.length) return;
+    const { data } = await supabase
+      .from('event_subscriptions')
+      .select('event_id')
+      .in('event_id', eventsList.map(e => e.id));
+    if (data) {
+      const counts = {};
+      data.forEach(row => {
+        counts[row.event_id] = (counts[row.event_id] || 0) + 1;
+      });
+      setSubscriberCounts(counts);
+    }
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -1009,6 +1240,7 @@ function EventManagement() {
         .order('event_date', { ascending: false });
       if (error) throw error;
       setEvents(data || []);
+      loadSubscriberCounts(data || []);
     } catch {
       toast.error('Error loading events');
     } finally {
@@ -1247,9 +1479,14 @@ function EventManagement() {
   const handleTogglePublish = async (ev) => {
     setActionLoading(ev.id + '_publish');
     try {
-      const { error } = await supabase.from('events').update({ is_published: !ev.is_published }).eq('id', ev.id);
+      const newPublished = !ev.is_published;
+      const updatePayload = {
+        is_published: newPublished,
+        ...(newPublished ? { notifications_sent: false } : {}),
+      };
+      const { error } = await supabase.from('events').update(updatePayload).eq('id', ev.id);
       if (error) throw error;
-      toast.success(ev.is_published ? 'Event hidden!' : 'Event published!');
+      toast.success(newPublished ? 'Event published!' : 'Event hidden!');
       load();
     } catch {
       toast.error('Error');
@@ -1259,7 +1496,7 @@ function EventManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Permanently delete this event?')) return;
+    if (!window.confirm(t.admin.deleteEventConfirm)) return;
     setActionLoading(id + '_delete');
     try {
       const { error } = await supabase.from('events').delete().eq('id', id);
@@ -1304,9 +1541,9 @@ function EventManagement() {
   };
 
   const TYPE_CONFIG = {
-    iarmaroc:     { label: 'Fair',              color: 'bg-emerald-100 text-emerald-700' },
-    curs_agricol: { label: 'Agricultural Course', color: 'bg-blue-100 text-blue-700' },
-    piata_locala: { label: 'Local Market',       color: 'bg-amber-100 text-amber-800' },
+    iarmaroc: { label: t.admin.eventTypeFair, color: 'bg-emerald-100 text-emerald-700' },
+    curs_agricol: { label: t.admin.eventTypeCourse, color: 'bg-blue-100 text-blue-700' },
+    piata_locala: { label: t.admin.eventTypeMarket, color: 'bg-amber-100 text-amber-800' },
   };
 
   return (
@@ -1314,15 +1551,41 @@ function EventManagement() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <p className="text-sm text-gray-500">
-          Published events appear in the slider on the main page.
+          {t.admin.publishedEvents}
         </p>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-md"
-        >
-          <FontAwesomeIcon icon={faPlus} />
-          New event
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              try {
+                const res = await fetch(
+                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-nearby-events`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                    },
+                  }
+                );
+                const data = await res.json();
+                toast.success(`${t.admin.subscribersCount}: ${data.notificationsSent ?? 0}`);
+              } catch {
+                toast.error('Error sending notifications');
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-md"
+          >
+            <FontAwesomeIcon icon={faBell} />
+            {t.admin.subscribersCount}
+          </button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-md"
+          >
+            <FontAwesomeIcon icon={faPlus} />
+            {t.admin.newEvent}
+          </button>
+        </div>
       </div>
 
       {/* Form modal */}
@@ -1332,7 +1595,7 @@ function EventManagement() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
                 <FontAwesomeIcon icon={faCalendarDays} className="text-emerald-600" />
-                {editingEvent ? 'Edit event' : 'New event'}
+                {editingEvent ? t.admin.editEvent : t.admin.newEvent}
               </h3>
               <button
                 onClick={() => { setShowForm(false); setEditingEvent(null); }}
@@ -1346,12 +1609,12 @@ function EventManagement() {
               {/* Titlu */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Title <span className="text-red-500">*</span>
+                  {t.admin.eventTitle} <span className="text-red-500">*</span>
                 </label>
                 <input
                   value={form.title}
                   onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                  placeholder="e.g.: Autumn Fair Pirita 2026"
+                  placeholder={t.admin.eventTitlePlaceholder}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 />
               </div>
@@ -1359,15 +1622,15 @@ function EventManagement() {
               {/* Tip + Publicat */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Event type</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.admin.eventType}</label>
                   <select
                     value={form.type}
                     onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
                   >
-                    <option value="iarmaroc">Fair</option>
-                    <option value="curs_agricol">Agricultural Course</option>
-                    <option value="piata_locala">Local Market</option>
+                    <option value="iarmaroc">{t.admin.eventTypeFair}</option>
+                    <option value="curs_agricol">{t.admin.eventTypeCourse}</option>
+                    <option value="piata_locala">{t.admin.eventTypeMarket}</option>
                   </select>
                 </div>
                 <div className="flex items-end">
@@ -1379,7 +1642,7 @@ function EventManagement() {
                       <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.is_published ? 'translate-x-5' : 'translate-x-0.5'}`} />
                     </div>
                     <span className="text-sm font-medium text-gray-700">
-                      {form.is_published ? 'Published' : 'Hidden'}
+                      {form.is_published ? t.admin.published : t.admin.hidden}
                     </span>
                   </label>
                 </div>
@@ -1389,7 +1652,7 @@ function EventManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Start date <span className="text-red-500">*</span>
+                    {t.admin.startDate} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="datetime-local"
@@ -1399,7 +1662,7 @@ function EventManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">End date</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.admin.endDate}</label>
                   <input
                     type="datetime-local"
                     value={form.end_date}
@@ -1414,31 +1677,29 @@ function EventManagement() {
                 <div className="flex items-center justify-between mb-3">
                   <label className="block text-sm font-semibold text-gray-700">
                     <FontAwesomeIcon icon={faLocationDot} className="text-emerald-500 mr-1.5" />
-                    Location
+                    {t.admin.locationLabel}
                   </label>
                   {/* Toggle buttons */}
                   <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
                     <button
                       type="button"
                       onClick={() => setLocationMode('map')}
-                      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                        locationMode === 'map'
+                      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${locationMode === 'map'
                           ? 'bg-white text-emerald-600 shadow-sm'
                           : 'text-gray-500 hover:text-gray-700'
-                      }`}
+                        }`}
                     >
-                      Map
+                      {t.admin.mapMode}
                     </button>
                     <button
                       type="button"
                       onClick={() => setLocationMode('manual')}
-                      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                        locationMode === 'manual'
+                      className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${locationMode === 'manual'
                           ? 'bg-white text-emerald-600 shadow-sm'
                           : 'text-gray-500 hover:text-gray-700'
-                      }`}
+                        }`}
                     >
-                      Manual
+                      {t.admin.manualMode}
                     </button>
                   </div>
                 </div>
@@ -1447,7 +1708,7 @@ function EventManagement() {
                 <input
                   value={form.location_text}
                   onChange={e => setForm(p => ({ ...p, location_text: e.target.value }))}
-                  placeholder="e.g.: Pirita village, Middle School"
+                  placeholder={t.admin.locationPlaceholder}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl
                     text-sm text-gray-900 placeholder-gray-400
                     focus:outline-none focus:border-emerald-500 focus:bg-white
@@ -1472,7 +1733,7 @@ function EventManagement() {
                         </span>
                       ) : (
                         <span className="text-xs text-gray-400">
-                          Click on the map to set the exact location
+                          {t.admin.clickMapToPin}
                         </span>
                       )}
                       {form.latitude && form.longitude && (
@@ -1481,7 +1742,7 @@ function EventManagement() {
                           onClick={() => setForm(p => ({ ...p, latitude: '', longitude: '' }))}
                           className="text-xs text-red-400 hover:text-red-600 transition"
                         >
-                          Remove pin
+                          {t.admin.removePinBtn}
                         </button>
                       )}
                     </div>
@@ -1494,7 +1755,7 @@ function EventManagement() {
                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm
                           px-3 py-1.5 rounded-full shadow-sm flex items-center gap-2 z-10">
                           <FontAwesomeIcon icon={faSpinner} className="animate-spin text-emerald-600 text-xs" />
-                          <span className="text-xs text-gray-600 font-medium">Searching...</span>
+                          <span className="text-xs text-gray-600 font-medium">{t.admin.searching}</span>
                         </div>
                       )}
 
@@ -1502,12 +1763,12 @@ function EventManagement() {
                         <div className="absolute bottom-3 left-1/2 -translate-x-1/2
                           bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1.5
                           rounded-full pointer-events-none z-10">
-                          Click on the map to place the pin
+                          {t.admin.clickMapToPin}
                         </div>
                       )}
                     </div>
                     <p className="text-xs text-gray-400 mt-2 mb-1">
-                      Type the address above for automatic geocoding, or click directly on the map.
+                      {t.admin.geocodingHint}
                     </p>
                   </div>
                 </div>
@@ -1555,10 +1816,10 @@ function EventManagement() {
                       />
                     </div>
                     <p className="col-span-2 text-xs text-gray-400">
-                      Find coordinates on
+                      {t.admin.googleMapsHint}
                       <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer"
                         className="text-emerald-600 underline ml-1">Google Maps</a>
-                      → right-click on a location.
+                      → {t.admin.coordsHint}.
                     </p>
                   </div>
                 </div>
@@ -1567,7 +1828,7 @@ function EventManagement() {
               {/* Imagine eveniment */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Event image (optional)
+                  {t.admin.eventImage}
                 </label>
 
                 {!form.image_url ? (
@@ -1580,15 +1841,15 @@ function EventManagement() {
                     {uploadingImage ? (
                       <>
                         <FontAwesomeIcon icon={faSpinner} className="animate-spin text-emerald-600 text-xl" />
-                        <p className="text-xs text-gray-500">Uploading...</p>
+                        <p className="text-xs text-gray-500">{t.admin.uploadingImage}</p>
                       </>
                     ) : (
                       <>
                         <FontAwesomeIcon icon={faFileImage} className="text-gray-300 text-2xl" />
                         <p className="text-sm font-medium text-gray-500">
-                          Click to choose an image
+                          {t.admin.clickToChooseImage}
                         </p>
-                        <p className="text-xs text-gray-400">JPG, PNG, WebP · max 5MB</p>
+                        <p className="text-xs text-gray-400">{t.admin.imageFormatHint}</p>
                       </>
                     )}
                   </div>
@@ -1613,7 +1874,7 @@ function EventManagement() {
                       className="absolute bottom-2 right-2 px-3 py-1.5 bg-black/50
                         hover:bg-black/70 text-white text-xs rounded-lg transition"
                     >
-                      Change
+                      {t.admin.changeImage}
                     </button>
                   </div>
                 )}
@@ -1633,11 +1894,11 @@ function EventManagement() {
 
               {/* Descriere */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.admin.descriptionLabel}</label>
                 <textarea
                   value={form.description}
                   onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                  placeholder="Describe the event..."
+                  placeholder={t.admin.descriptionPlaceholder}
                   rows={3}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 />
@@ -1645,11 +1906,11 @@ function EventManagement() {
 
               {/* Program */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Schedule (optional)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.admin.scheduleLabel}</label>
                 <textarea
                   value={form.schedule}
                   onChange={e => setForm(p => ({ ...p, schedule: e.target.value }))}
-                  placeholder={'e.g.: 09:00 — Opening\n10:00 — Local products contest\n14:00 — Award ceremony'}
+                  placeholder={t.admin.schedulePlaceholder}
                   rows={4}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 />
@@ -1661,7 +1922,7 @@ function EventManagement() {
                 onClick={() => { setShowForm(false); setEditingEvent(null); }}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
               >
-                Cancel
+                {t.admin.cancel}
               </button>
               <button
                 onClick={handleSave}
@@ -1672,7 +1933,7 @@ function EventManagement() {
                   ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
                   : <FontAwesomeIcon icon={faFloppyDisk} />
                 }
-                {editingEvent ? 'Save changes' : 'Create event'}
+                {editingEvent ? t.admin.saveChanges : t.admin.createEvent}
               </button>
             </div>
           </div>
@@ -1685,7 +1946,7 @@ function EventManagement() {
           <FontAwesomeIcon icon={faSpinner} className="text-3xl text-emerald-600 animate-spin" />
         </div>
       ) : events.length === 0 ? (
-        <EmptyState icon={faCalendarDays} message="No events created yet" />
+        <EmptyState icon={faCalendarDays} message={t.admin.noEventsYet} />
       ) : (
         <div className="space-y-3">
           {events.map(ev => {
@@ -1707,10 +1968,9 @@ function EventManagement() {
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${typeInfo.color}`}>
                         {typeInfo.label}
                       </span>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        ev.is_published ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {ev.is_published ? '● Published' : '○ Hidden'}
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ev.is_published ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                        {ev.is_published ? `● ${t.admin.published}` : `○ ${t.admin.hidden}`}
                       </span>
                     </div>
                     <div className="flex gap-1.5 flex-shrink-0">
@@ -1718,13 +1978,12 @@ function EventManagement() {
                         onClick={() => handleTogglePublish(ev)}
                         disabled={!!actionLoading}
                         title={ev.is_published ? 'Hide' : 'Publish'}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50 ${
-                          ev.is_published
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition disabled:opacity-50 ${ev.is_published
                             ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                        }`}
+                          }`}
                       >
-                        {ev.is_published ? 'Hide' : 'Publish'}
+                        {ev.is_published ? t.admin.hidden : t.admin.published}
                       </button>
                       <button
                         onClick={() => openEdit(ev)}
@@ -1772,6 +2031,7 @@ function EventManagement() {
 
 // ── Product Detail Modal ───────────────────────────────────────
 function ProductDetailModal({ product, onClose, onNavigate }) {
+  const { t } = useLanguage();
   const [imgIdx, setImgIdx] = useState(0);
   if (!product) return null;
 
@@ -1834,12 +2094,12 @@ function ProductDetailModal({ product, onClose, onNavigate }) {
           {/* Product details grid */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Categorie', value: product.category },
-              { label: 'Preț', value: product.price ? `${product.price} lei / ${product.unit || '—'}` : null },
-              { label: 'Locație', value: product.location },
-              { label: 'Status', value: product.status },
-              { label: 'Negociabil', value: product.is_negotiable ? 'Da' : 'Nu' },
-              { label: 'Adăugat', value: product.created_at ? new Date(product.created_at).toLocaleDateString('ro-RO') : null },
+              { label: t.admin.category, value: product.category },
+              { label: t.admin.price, value: product.price ? `${product.price} lei / ${product.unit || '—'}` : null },
+              { label: t.admin.location, value: product.location },
+              { label: t.admin.status, value: product.status },
+              { label: t.common.negotiable, value: product.is_negotiable ? 'Da' : 'Nu' },
+              { label: t.admin.date, value: product.created_at ? new Date(product.created_at).toLocaleDateString('ro-RO') : null },
             ].filter(item => item.value).map(({ label, value }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-3">
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">{label}</p>
@@ -1851,7 +2111,7 @@ function ProductDetailModal({ product, onClose, onNavigate }) {
           {/* Description */}
           {product.description && (
             <div className="bg-gray-50 rounded-2xl p-4">
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Descriere</p>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">{t.admin.descriptionLabel}</p>
               <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{product.description}</p>
             </div>
           )}
@@ -1859,7 +2119,7 @@ function ProductDetailModal({ product, onClose, onNavigate }) {
           {/* Reject reason */}
           {product.reject_reason && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-              <p className="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">Motiv respingere</p>
+              <p className="text-xs text-red-500 font-bold uppercase tracking-wider mb-1">{t.admin.rejectionReason}</p>
               <p className="text-sm text-red-700">{product.reject_reason}</p>
             </div>
           )}
@@ -1867,7 +2127,7 @@ function ProductDetailModal({ product, onClose, onNavigate }) {
           {/* Seller info */}
           <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Producător</p>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">{t.admin.product}</p>
               <p className="text-sm font-bold text-gray-900">{product.seller_name || '—'}</p>
               <p className="text-xs text-gray-500">{product.seller_phone || '—'}</p>
             </div>
@@ -1875,7 +2135,7 @@ function ProductDetailModal({ product, onClose, onNavigate }) {
               onClick={() => { onClose(); onNavigate('producator', product.user_id); }}
               className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition">
               <FontAwesomeIcon icon={faUser} />
-              Vezi profil
+              {t.admin.viewProfile}
             </button>
           </div>
 
@@ -1887,6 +2147,7 @@ function ProductDetailModal({ product, onClose, onNavigate }) {
 
 // ── B2B Management ─────────────────────────────────────────────
 function B2BManagement({ onStatsChange }) {
+  const { t } = useLanguage();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
@@ -1902,7 +2163,7 @@ function B2BManagement({ onStatsChange }) {
       if (error) throw error;
       setRequests(data || []);
     } catch (err) {
-      toast.error('Error loading provider requests');
+      toast.error(t.admin.providerRequests + ' error');
     } finally {
       setLoading(false);
     }
@@ -1914,11 +2175,11 @@ function B2BManagement({ onStatsChange }) {
     setActionLoading(profileId + '_verify');
     const { error } = await supabase.from('profiles').update({ b2b_verified: true }).eq('id', profileId);
     if (!error) {
-      toast.success('Prestator verificat!');
+      toast.success(t.admin.verified + '!');
       setRequests(prev => prev.map(r => r.id === profileId ? { ...r, b2b_verified: true } : r));
       onStatsChange?.();
     } else {
-      toast.error('Eroare la verificare');
+      toast.error(t.admin.verifyBtn + ' error');
     }
     setActionLoading(null);
   };
@@ -1927,11 +2188,11 @@ function B2BManagement({ onStatsChange }) {
     setActionLoading(profileId + '_revoke');
     const { error } = await supabase.from('profiles').update({ b2b_verified: false }).eq('id', profileId);
     if (!error) {
-      toast.success('Verificare prestator revocată');
+      toast.success(t.admin.revokeBtn + '!');
       setRequests(prev => prev.map(r => r.id === profileId ? { ...r, b2b_verified: false } : r));
       onStatsChange?.();
     } else {
-      toast.error('Eroare la revocare');
+      toast.error(t.admin.revokeBtn + ' error');
     }
     setActionLoading(null);
   };
@@ -1945,7 +2206,7 @@ function B2BManagement({ onStatsChange }) {
   if (requests.length === 0) return (
     <div className="text-center py-16 text-gray-400">
       <FontAwesomeIcon icon={faBuilding} className="text-5xl mb-4 opacity-20" />
-      <p className="font-medium">Nicio cerere de prestator momentan.</p>
+      <p className="font-medium">{t.admin.noProviderRequests}</p>
     </div>
   );
 
@@ -1954,13 +2215,13 @@ function B2BManagement({ onStatsChange }) {
       <table className="w-full text-sm min-w-[700px]">
         <thead>
           <tr className="bg-gray-50 border-b border-gray-200 text-left">
-            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nume</th>
-            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Companie</th>
-            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">IDNO</th>
-            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Locație</th>
-            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Solicitat la</th>
-            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acțiuni</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.name}</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.company}</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.idno}</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{t.admin.location}</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">{t.admin.requestedAt}</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.status}</th>
+            <th className="px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.admin.actions}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -1976,11 +2237,11 @@ function B2BManagement({ onStatsChange }) {
               <td className="px-3 py-3">
                 {r.b2b_verified ? (
                   <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-2.5 py-1 rounded-full">
-                    <FontAwesomeIcon icon={faCircleCheck} className="text-[10px]" /> Verificat
+                    <FontAwesomeIcon icon={faCircleCheck} className="text-[10px]" /> {t.admin.verified}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold px-2.5 py-1 rounded-full">
-                    În așteptare
+                    {t.admin.waitingVerification}
                   </span>
                 )}
               </td>
@@ -1992,7 +2253,7 @@ function B2BManagement({ onStatsChange }) {
                       disabled={actionLoading === r.id + '_verify'}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50"
                     >
-                      {actionLoading === r.id + '_verify' ? '...' : 'Verifică'}
+                      {actionLoading === r.id + '_verify' ? '...' : t.admin.verifyBtn}
                     </button>
                   ) : (
                     <button
@@ -2000,7 +2261,7 @@ function B2BManagement({ onStatsChange }) {
                       disabled={actionLoading === r.id + '_revoke'}
                       className="bg-red-500 hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50"
                     >
-                      {actionLoading === r.id + '_revoke' ? '...' : 'Revocă'}
+                      {actionLoading === r.id + '_revoke' ? '...' : t.admin.revokeBtn}
                     </button>
                   )}
                 </div>
@@ -2071,11 +2332,11 @@ export default function AdminDashboard({ session, onNavigate }) {
 
   const tabs = [
     { key: 'approvals', label: t.admin.products, icon: faClockRotateLeft, badge: stats.pending },
-    { key: 'flags', label: 'Reports', icon: faFlag, badge: stats.reports },
-    { key: 'categories', label: 'Categories', icon: faLayerGroup, badge: 0 },
+    { key: 'flags', label: t.admin.reports, icon: faFlag, badge: stats.reports },
+    { key: 'categories', label: t.admin.categories, icon: faLayerGroup, badge: 0 },
     { key: 'events', label: t.admin.events, icon: faCalendarDays, badge: 0 },
     { key: 'users', label: t.admin.users, icon: faUsers, badge: 0 },
-    { key: 'b2b', label: 'Cereri Prestatori', icon: faBuilding, badge: stats.b2bPending },
+    { key: 'b2b', label: t.admin.providerRequests, icon: faBuilding, badge: stats.b2bPending },
   ];
 
   return (
@@ -2097,8 +2358,7 @@ export default function AdminDashboard({ session, onNavigate }) {
 
         {/* Stats bar */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <StatBadge icon={faBell} value={stats.subscriptions} label="Abonați la Evenimente" color="blue" />
-          <StatBadge icon={faBuilding} value={stats.b2bPending} label="Cereri Prestatori în așteptare" color="yellow" />
+          <StatBadge icon={faBuilding} value={stats.b2bPending} label={t.admin.b2bPendingLabel} color="yellow" />
         </div>
 
         {/* Tab Content */}
@@ -2107,7 +2367,7 @@ export default function AdminDashboard({ session, onNavigate }) {
           {activeTab === 'flags' && <FlagSystem />}
           {activeTab === 'categories' && <CategoryManagement />}
           {activeTab === 'events' && <EventManagement />}
-          {activeTab === 'users' && <UserManagement userRole={userRole} />}
+          {activeTab === 'users' && <UserManagement userRole={userRole} onNavigate={onNavigate} />}
           {activeTab === 'b2b' && <B2BManagement onStatsChange={() => loadRoleAndStats()} />}
         </div>
       </div>

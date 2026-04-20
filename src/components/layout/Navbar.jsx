@@ -377,9 +377,9 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
           <>
             <button
               onClick={() => setShowOverlay(true)}
-              className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-left text-gray-400 text-sm hover:border-emerald-50 hover:bg-white transition-all group shadow-sm"
+              className="hidden md:flex flex-1 items-center gap-3 px-4 py-2.5 bg-gray-50 rounded-xl text-left text-emerald-600 text-sm font-semibold hover:border-emerald-50 hover:bg-white transition-all group shadow-sm"
             >
-              <SearchAnimated animateOnHover color="#c2c2c2" strokeWidth={2} size={20} />
+              <SearchAnimated animateOnHover color-emerald-600 strokeWidth={2} size={20} />
               <span className="flex-1">{t.nav.search}</span>
             </button>
             <button

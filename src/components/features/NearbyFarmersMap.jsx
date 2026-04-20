@@ -396,7 +396,7 @@ export default function NearbyFarmersMap({ products = [], producers = [], onNavi
             <div className="px-6 sm:px-8 lg:px-12 mb-4">
                 <button onClick={toggle} className="w-full flex items-center justify-between group">
                     <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faMapLocationDot} className="text-white text-2xl" />
+                        <FontAwesomeIcon icon={faLocationDot} className="text-white text-2xl" />
                         <h3 className="text-2xl font-bold text-white">
                             {t.features.nearbyProducers}
                         </h3>
@@ -422,15 +422,14 @@ export default function NearbyFarmersMap({ products = [], producers = [], onNavi
                     {/* idle */}
                     {locationStatus === 'idle' && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-gradient-to-br bg-white z-10">
-                            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
-                                <FontAwesomeIcon icon={faLocationCrosshairs} className="text-emerald-600 text-3xl" />
+                            <div className="w-20 h-20 bg-emerald-600 rounded-full flex items-center justify-center">
+                                <FontAwesomeIcon icon={faLocationDot} className="text-white text-3xl" />
                             </div>
                             <div className="text-center px-6">
                                 <p className="text-gray-900 font-bold text-lg mb-1">{t.features.whereAreYou}</p>
                                 <p className="text-gray-500 text-sm">{t.features.allowLocationHint}</p>
                             </div>
-                            <button onClick={requestLocation} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-semibold shadow-lg transition-all hover:scale-105">
-                                <FontAwesomeIcon icon={faLocationDot} className="mr-2" />
+                            <button onClick={requestLocation} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-semibold shadow-lg transition-all">
                                 {t.features.allowLocation}
                             </button>
                         </div>

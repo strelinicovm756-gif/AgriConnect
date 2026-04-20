@@ -325,7 +325,7 @@ const getProfileCompletion = (profile) => {
     if (!profile) return 0;
     const fields = [
         profile.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name)
-            && profile.full_name.trim().length >= 2,
+        && profile.full_name.trim().length >= 2,
         profile.phone && profile.phone.length >= 10,
         profile.location && profile.location.trim().length > 0,
         profile.bio && profile.bio.trim().length > 0,
@@ -349,11 +349,10 @@ const getMissingFields = (profile, t) => {
 
 function ProfileFieldRow({ icon, label, isEditing, isValid, onEdit, onSave, onCancel, displayValue, children }) {
     return (
-        <div className={`group rounded-2xl transition-all duration-200 ${
-            isEditing
+        <div className={`group rounded-2xl transition-all duration-200 ${isEditing
                 ? 'bg-gray-50 border border-emerald-200 p-5'
                 : 'border border-transparent hover:border-gray-100 hover:bg-gray-50/50 p-4'
-        }`}>
+            }`}>
             {isEditing ? (
                 <div className="space-y-3">
                     <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -381,9 +380,8 @@ function ProfileFieldRow({ icon, label, isEditing, isValid, onEdit, onSave, onCa
                 </div>
             ) : (
                 <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        isValid ? 'bg-emerald-50' : 'bg-red-50'
-                    }`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-red-50'
+                        }`}>
                         <FontAwesomeIcon icon={icon} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -941,13 +939,13 @@ export default function ProfilePage({ session, onNavigate }) {
                             {(!profile?.full_name || !profile?.phone || !profile?.location ||
                                 !/^\+373\d{8}$/.test(profile?.phone || '') ||
                                 !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile?.full_name || '')) && (
-                                <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-500 flex-shrink-0" />
-                                    <p className="text-sm text-amber-800 font-medium">
-                                        Completează profilul pentru a putea adăuga anunțuri
-                                    </p>
-                                </div>
-                            )}
+                                    <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+                                        <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-500 flex-shrink-0" />
+                                        <p className="text-sm text-amber-800 font-medium">
+                                            Completează profilul pentru a putea adăuga anunțuri
+                                        </p>
+                                    </div>
+                                )}
 
                             {/* B2B status card */}
                             {(profileMarketType === 'b2b' || profileMarketType === 'both') && (
@@ -1040,11 +1038,10 @@ export default function ProfilePage({ session, onNavigate }) {
                                                 <div className="mt-2 space-y-1">
                                                     <div className="flex gap-1">
                                                         {[1, 2, 3, 4].map(i => (
-                                                            <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${
-                                                                i <= passwordStrength(newPassword)
+                                                            <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= passwordStrength(newPassword)
                                                                     ? ['', 'bg-red-400', 'bg-amber-400', 'bg-emerald-400', 'bg-emerald-600'][i]
                                                                     : 'bg-gray-200'
-                                                            }`} />
+                                                                }`} />
                                                         ))}
                                                     </div>
                                                     <p className="text-xs text-gray-400">
@@ -1065,11 +1062,10 @@ export default function ProfilePage({ session, onNavigate }) {
                                                     value={confirmPassword}
                                                     onChange={e => setConfirmPassword(e.target.value)}
                                                     placeholder={t.profile.confirmPasswordPlaceholder}
-                                                    className={`w-full border rounded-xl px-4 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 bg-white ${
-                                                        confirmPassword && newPassword !== confirmPassword
+                                                    className={`w-full border rounded-xl px-4 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 bg-white ${confirmPassword && newPassword !== confirmPassword
                                                             ? 'border-red-300 focus:ring-red-300'
                                                             : 'border-gray-200 focus:ring-emerald-400'
-                                                    }`}
+                                                        }`}
                                                 />
                                                 <button type="button" onClick={() => setShowConfirm(p => !p)}
                                                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -1129,6 +1125,66 @@ export default function ProfilePage({ session, onNavigate }) {
                                     </button>
                                 </div>
 
+                                {notifyEvents && (
+                                    <div className="py-4 border-b border-gray-100 space-y-4">
+                                        {/* Partea de sus: Iconiță și Text */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                                <FontAwesomeIcon icon={faBell} className="text-blue-500 text-sm" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-sm font-semibold text-gray-900">{t.profile.notificationRadius}</p>
+                                                    {/* Afișăm valoarea curentă în timp real */}
+                                                    <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                                                        {profile?.notification_radius_km ?? 10} km
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-500">{t.profile.notificationRadiusHint}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Bara de selecție (Slider-ul) */}
+                                        <div className="px-2">
+                                            <input
+                                                type="range"
+                                                min="1"
+                                                max="35"
+                                                step="1"
+                                                value={profile?.notification_radius_km ?? 10}
+                                                onChange={(e) => {
+                                                    const radius = parseInt(e.target.value);
+                                                    // Actualizăm doar starea locală pentru a fi fluid (fără lag)
+                                                    setProfile(prev => ({ ...prev, notification_radius_km: radius }));
+                                                }}
+                                                // Actualizăm baza de date doar când utilizatorul dă drumul la mouse
+                                                onMouseUp={async (e) => {
+                                                    const radius = parseInt(e.target.value);
+                                                    await supabase.from('profiles')
+                                                        .update({ notification_radius_km: radius })
+                                                        .eq('id', session.user.id);
+                                                    toast.success(t.profile.settingsSaved);
+                                                }}
+                                                // Pentru ecrane tactile (mobile)
+                                                onTouchEnd={async (e) => {
+                                                    const radius = parseInt(e.target.value);
+                                                    await supabase.from('profiles')
+                                                        .update({ notification_radius_km: radius })
+                                                        .eq('id', session.user.id);
+                                                    toast.success(t.profile.settingsSaved);
+                                                }}
+                                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                            />
+                                            <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-medium">
+                                                <span>1 km</span>
+                                                <span>10 km</span>
+                                                <span>20 km</span>
+                                                <span>35 km</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Row: Producer type */}
                                 <div className="flex items-start justify-between gap-4 py-3 border-b border-gray-100">
                                     <div className="flex items-center gap-3">
@@ -1150,11 +1206,10 @@ export default function ProfilePage({ session, onNavigate }) {
                                                 <button
                                                     key={opt.key}
                                                     onClick={() => handleMarketTypeChange(opt.key)}
-                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
-                                                        profileMarketType === opt.key
+                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${profileMarketType === opt.key
                                                             ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                                                             : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-700'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <FontAwesomeIcon icon={opt.icon} className="text-[10px]" />
                                                     {opt.label}
@@ -1231,10 +1286,10 @@ export default function ProfilePage({ session, onNavigate }) {
                                                 const isExpiringSoon = expiresDate && !isExpired && (expiresDate - now) < 48 * 60 * 60 * 1000;
                                                 return (
                                                     <div key={product.id} className={`relative rounded-2xl border bg-white hover:shadow-lg transition-all duration-300 overflow-hidden ${product.status === 'rejected' ? 'border-red-400' :
-                                                            product.status === 'inactive' || isExpired ? 'border-red-300' :
-                                                                isExpiringSoon ? 'border-orange-400' :
-                                                                    product.status === 'pending' ? 'border-yellow-400' :
-                                                                        'border-gray-200'
+                                                        product.status === 'inactive' || isExpired ? 'border-red-300' :
+                                                            isExpiringSoon ? 'border-orange-400' :
+                                                                product.status === 'pending' ? 'border-yellow-400' :
+                                                                    'border-gray-200'
                                                         }`}>
                                                         <ProductCard product={product} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
                                                         {/* Edit action bar */}
@@ -1292,8 +1347,8 @@ export default function ProfilePage({ session, onNavigate }) {
                                                         )}
                                                         {expiresDate && (
                                                             <div className={`absolute bottom-0 left-0 right-0 px-4 py-1.5 text-xs flex items-center gap-1.5 ${isExpired || product.status === 'inactive' ? 'bg-red-50 text-red-500' :
-                                                                    isExpiringSoon ? 'bg-orange-50 text-orange-600' :
-                                                                        'bg-gray-50 text-gray-400'
+                                                                isExpiringSoon ? 'bg-orange-50 text-orange-600' :
+                                                                    'bg-gray-50 text-gray-400'
                                                                 }`}>
                                                                 <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
                                                                 Valid until: {expiresDate.toLocaleDateString('en-GB')}

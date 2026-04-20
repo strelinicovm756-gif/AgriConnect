@@ -144,7 +144,7 @@ export default function B2BProviderCarousel({ providers, onNavigate, scrollRef }
   return (
     <div
       ref={scrollRef}
-      className="flex overflow-x-auto gap-5 py-4 items-start snap-x snap-mandatory"
+      className="flex overflow-x-auto gap-4 py-4 items-start snap-x snap-mandatory"
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
     >
       {providers.slice(0, 8).map(p => (

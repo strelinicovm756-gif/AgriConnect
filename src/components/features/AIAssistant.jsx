@@ -22,9 +22,6 @@ export default function AIAssistant({ session }) {
   const { messages, loading, sendMessage, clearHistory } = useAIAssistant(session);
   const location = useLocation();
 
-  // Hide on /chat page
-  if (location.pathname === '/chat') return null;
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -32,6 +29,9 @@ export default function AIAssistant({ session }) {
   useEffect(() => {
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 100);
   }, [isOpen]);
+
+  // Hide on /chat page — AFTER all hooks
+  if (location.pathname === '/chat') return null;
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -208,9 +208,7 @@ export default function AIAssistant({ session }) {
               <FontAwesomeIcon icon={faPaperPlane} className="text-sm" />
             </button>
           </div>
-          <p className="text-[10px] text-gray-400 text-center mt-2">
-            Powered by GitHub Models · Datele sunt în timp real
-          </p>
+
         </div>
       </div>
     </>

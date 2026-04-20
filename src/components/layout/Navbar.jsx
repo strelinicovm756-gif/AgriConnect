@@ -7,7 +7,7 @@ import {
   faEgg, faJar, faWheatAwn, faTractor, faSeedling, faWrench, faDroplet,
   faCartShopping, faIndustry,
   faChevronDown as faChevronDownSolid, faCalendarDays, faUsers,
-  faBell, faBellSlash, faCheckDouble, faCircleCheck, faTriangleExclamation,
+  faBell, faBellSlash, faCircleCheck, faTriangleExclamation,
   faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { getColorForName } from '../../lib/utils';
@@ -23,9 +23,19 @@ import {
 } from 'lucide-react';
 import AddProductModal from "../features/AddProductModal";
 import { useChat } from "../../hooks/useChat";
-import { useLanguage } from "../../i18n/LanguageContext"; // ← NOU
+import { useLanguage } from "../../i18n/LanguageContext";
+import { getCategoryName, getSubcategoryName } from "../../i18n/categoryTranslations";
 
 const CATEGORY_ICONS = {
+  // slug-based keys (primary)
+  'vegetables': Carrot,
+  'fruit': Apple,
+  'dairy': Milk,
+  'meat': Beef,
+  'eggs': Egg,
+  'grains / cereals': Wheat,
+  'field-services': Tractor,
+  // English name fallbacks (legacy)
   'Vegetables': Carrot,
   'Fruits': Apple,
   'Dairy': Milk,
@@ -41,34 +51,77 @@ const ICON_MAP = {
   faTractor, faSeedling, faWrench, faDroplet,
 };
 
-// ── Language Switcher Component ───────────────────────────────
+// Language Switcher Component 
+
+
 function LanguageSwitcher() {
   const { lang, setLang } = useLanguage();
-  const langs = ['ro', 'en', 'fr'];
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const langs = [
+    { id: 'ro', label: 'Română' },
+    { id: 'en', label: 'English' },
+    { id: 'fr', label: 'Français' }
+  ];
+
+  // Închidem popup-ul dacă dăm click în afara lui
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   return (
-    <div className="flex items-center bg-gray-100 rounded-xl p-0.5 gap-0.5 flex-shrink-0">
-      {langs.map((l) => (
-        <button
-          key={l}
-          onClick={() => setLang(l)}
-          className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200
-            ${lang === l
-              ? 'bg-white text-emerald-700 shadow-sm'
-              : 'text-gray-400 hover:text-gray-600'
-            }`}
+    <div className="relative flex-shrink-0" ref={dropdownRef}>
+      {/* Butonul care declanșează popup-ul */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200"
+      >
+        <span className="text-xs font-bold uppercase text-emerald-700 tracking-wide">
+          {lang}
+        </span>
+        {/* Iconiță mică de săgeată */}
+        <svg
+          className={`w-3 h-3 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor"
         >
-          {l}
-        </button>
-      ))}
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Popup-ul propriu-zis */}
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-32 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-[100] animate-in fade-in zoom-in duration-150">
+          {langs.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => {
+                setLang(l.id);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors
+                ${lang === l.id
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                }`}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export function Navbar({ session, onNavigate, notifications = [], unreadCount = 0, markAsRead, markAllAsRead }) {
-  // ── Language ──────────────────────────────────────────────
-  const { t } = useLanguage(); // ← NOU
-
+  const { t, lang } = useLanguage();
   const [profileName, setProfileName] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(!!session);
@@ -135,13 +188,24 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
 
   useEffect(() => {
     if (!session) { setChatUnreadCount(0); return; }
-    const loadChatUnread = async () => {
+
+    const refreshUnread = async () => {
       const count = await getUnreadCount(session.user.id);
       setChatUnreadCount(count);
     };
-    loadChatUnread();
-    const interval = setInterval(loadChatUnread, 30000);
-    return () => clearInterval(interval);
+
+    refreshUnread();
+
+    const channel = supabase
+      .channel('navbar_chat_unread')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        refreshUnread
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
   }, [session]);
 
   useEffect(() => {
@@ -225,7 +289,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
     if (!error) {
       setShowDropdown(false);
       setProfileName('');
-      toast.success(t.login.toastWelcomeBack); // ← tradus
+      toast.success(t.login.toastWelcomeBack);
       onNavigate('home');
     }
   };
@@ -269,7 +333,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
   return (
     <>
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm h-16">
-        <div className="max-w-7xl mx-auto px-4 h-full flex items-center gap-4">
+        <div className="max-w-[95%] mx-auto px-4 h-full flex items-center gap-4">
 
           {/* Logo */}
           <div onClick={() => onNavigate('home')} className="flex items-center gap-2 cursor-pointer group flex-shrink-0">
@@ -280,7 +344,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
           {/* Link Evenimente */}
           <button
             onClick={() => onNavigate('evenimente')}
-            className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
+            className=" w-[133px] shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faCalendarDays} className="text-white" />
             <span>{t.nav.events}</span>
@@ -289,7 +353,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
           {/* Link Producători */}
           <button
             onClick={() => onNavigate('producatori')}
-            className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white  px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
+            className="w-[133px] shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white  px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faUsers} className="text-white" />
             <span>{t.nav.producers}</span>
@@ -299,7 +363,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
           <button
             ref={categoriiBtnRef}
             onClick={() => setShowMegaMenu(p => !p)}
-            className="shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
+            className="w-[133px] shadow-md hidden md:flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl font-semibold text-sm flex-shrink-0 hover:bg-emerald-700 transition-colors"
           >
             <FontAwesomeIcon icon={faLayerGroup} />
             <span>{t.nav.products}</span>
@@ -320,7 +384,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
             </button>
             <button
               onClick={() => setShowOverlay(true)}
-              className="md:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition"
+              className=" md:hidden flex-shrink-0 w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-lg transition"
             >
               <Search size={18} />
             </button>
@@ -329,15 +393,14 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
           {/* Dreapta: Language Switcher + butoane + avatar */}
           <div className="flex items-center gap-3 flex-shrink-0">
 
-            {/* ── LANGUAGE SWITCHER ── */}
-            <LanguageSwitcher />
+            
 
             {session ? (
               <>
                 {/* Buton Adaugă anunț */}
                 <button
                   onClick={() => setShowAddProductModal(true)}
-                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-full text-sm hover:bg-emerald-700 shadow-md"
+                  className="w-[145px] hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-full text-sm hover:bg-emerald-700 shadow-md"
                 >
                   <Plus size={14} />
                   <span>{t.nav.home === 'Acasă' ? 'Adaugă anunț' : t.nav.home === 'Home' ? 'Add listing' : 'Ajouter'}</span>
@@ -350,6 +413,9 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                 >
                   <Plus size={14} />
                 </button>
+
+                {/* ── LANGUAGE SWITCHER ── */}
+            <LanguageSwitcher />
 
                 {/* Chat */}
                 <div className="relative">
@@ -408,12 +474,12 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                           {notifications.map(n => {
                             const icon = n.type === 'new_event' ? faCalendarDays
                               : n.type === 'product_approved' ? faCircleCheck
-                              : n.type === 'product_rejected' ? faTriangleExclamation
-                              : faBell;
+                                : n.type === 'product_rejected' ? faTriangleExclamation
+                                  : faBell;
                             const iconColor = n.type === 'new_event' ? 'text-emerald-600'
                               : n.type === 'product_approved' ? 'text-emerald-600'
-                              : n.type === 'product_rejected' ? 'text-red-500'
-                              : 'text-gray-400';
+                                : n.type === 'product_rejected' ? 'text-red-500'
+                                  : 'text-gray-400';
                             return (
                               <button
                                 key={`${n._source}-${n.id}`}
@@ -531,7 +597,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                               <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0">
                                 <FontAwesomeIcon icon={ICON_MAP[cat.icon] ?? faCarrot} className="text-white text-sm" />
                               </div>
-                              <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{cat.name}</span>
+                              <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{getCategoryName(cat.slug, lang)}</span>
                             </button>
                             {(() => {
                               const isOpen = openCategoryId === cat.id;
@@ -553,7 +619,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                                             onClick={() => handleMegaNav({ category: cat.id, subcategory: sub.id })}
                                             className="text-xs font-medium text-gray-500 hover:text-emerald-600 hover:bg-gray-100/50 hover:pl-2 px-1 py-1 rounded-md transition-all duration-200 text-left w-full truncate"
                                           >
-                                            {sub.name}
+                                            {getSubcategoryName(sub.slug, lang)}
                                           </button>
                                         </motion.li>
                                       ))}
@@ -606,7 +672,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                               <div className="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0">
                                 <FontAwesomeIcon icon={ICON_MAP[cat.icon] ?? faTractor} className="text-white text-sm" />
                               </div>
-                              <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{cat.name}</span>
+                              <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{getCategoryName(cat.slug, lang)}</span>
                             </button>
                             {(() => {
                               const isOpen = openCategoryId === cat.id;
@@ -628,7 +694,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                                             onClick={() => handleMegaNav({ category: cat.id, subcategory: sub.id, type: 'b2b' })}
                                             className="text-xs font-medium text-gray-500 hover:text-emerald-600 hover:bg-emerald-50/50 hover:pl-2 px-1 py-1 rounded-md transition-all duration-200 text-left w-full truncate"
                                           >
-                                            {sub.name}
+                                            {getSubcategoryName(sub.slug, lang)}
                                           </button>
                                         </motion.li>
                                       ))}
@@ -733,13 +799,14 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                   </p>
                   <div className="space-y-1">
                     {matchedCategories.map(catId => {
-                      const CatIcon = CATEGORY_ICONS[catId] || Package;
+                      const slugKey = catId?.toLowerCase().replace(/ /g, '-');
+                      const CatIcon = CATEGORY_ICONS[slugKey] || CATEGORY_ICONS[catId] || Package;
                       return (
                         <button key={catId} onClick={() => handleSelectCategory(catId)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-all group">
                           <div className="w-7 h-7 rounded-lg bg-emerald-100 group-hover:bg-emerald-200 flex items-center justify-center flex-shrink-0 transition-colors">
                             <CatIcon size={12} className="text-emerald-600" />
                           </div>
-                          <span className="font-medium truncate">{catId}</span>
+                          <span className="font-medium truncate">{getCategoryName(slugKey, lang)}</span>
                           <span className="ml-auto text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5 flex-shrink-0">{searchResults.filter(p => p.category === catId).length}</span>
                         </button>
                       );
@@ -776,7 +843,8 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
               <div className="flex-1 overflow-y-auto">
                 <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {filteredResults.map(product => {
-                    const ProdIcon = CATEGORY_ICONS[product.category] || Package;
+                    const prodSlug = product.categories?.slug ?? product.category?.toLowerCase().replace(/ /g, '-');
+                    const ProdIcon = CATEGORY_ICONS[prodSlug] || CATEGORY_ICONS[product.category] || Package;
                     return (
                       <button key={product.id} onClick={() => handleSelectProduct(product.id)} className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-md hover:border-emerald-200 transition-all duration-200 text-left group">
                         <div className="h-28 bg-gray-50 overflow-hidden relative">
@@ -789,7 +857,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                           )}
                           <span className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                             <ProdIcon size={10} className="text-emerald-600" />
-                            {product.category}
+                            {getCategoryName(prodSlug, lang)}
                           </span>
                         </div>
                         <div className="p-2.5">

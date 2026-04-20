@@ -15,7 +15,7 @@ import {
   faPlus, faLeaf, faCircleCheck, faHandshake,
   faArrowRight, faTruck, faSeedling, faChevronLeft, faChevronRight,
   faTractor, faFlask, faStar, faMapMarkerAlt,
-  faWrench, faDroplet, faChevronDown, faCalendarDays, faLocationDot,
+  faWrench, faDroplet, faChevronUp, faCalendarDays, faLocationDot,
   faCarrot, faAppleWhole, faCow, faDrumstickBite, faEgg, faJar, faWheatAwn
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -25,7 +25,7 @@ const ICON_MAP = {
   faEgg, faJar, faWheatAwn,
   faTractor, faFlask, faWrench, faDroplet,
   faSeedling, faLeaf
-};
+}
 
 // Pill Nav Button — acum fără `absolute`, poziționat de wrapper-ul părintе
 function PillNavButton({ direction, onClick, ariaLabel }) {
@@ -104,17 +104,28 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
 
       {/* Header */}
       <div className="px-6 sm:px-8 lg:px-12 pt-8 pb-12">
-        <button onClick={toggle} className="w-full flex items-center justify-between group text-left">
-          <div className="text-left">
-            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <FontAwesomeIcon icon={faSeedling} className="text-emerald-600" />
+        <button onClick={toggle} className="w-full flex items-center justify-between group">
+
+
+          <div className="flex items-center gap-2">
+            <FontAwesomeIcon icon={faSeedling} className="text-emerald-600 text-2xl" />
+            <h3 className="text-2xl font-bold text-emerald-600">
               {t.home.foodProducts}
-              <span className={`ml-15 text-base text-gray-400 transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
-                <FontAwesomeIcon icon={faChevronDown} />
-              </span>
             </h3>
           </div>
+
+          <div
+            className=' items-center mr-16 rounded-3xl w-12 py-2'
+
+          >
+            <div
+              className={`   transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}
+            >
+              <FontAwesomeIcon icon={faChevronUp} className=" text-emerald-600 text-xl" />
+            </div>
+          </div>
         </button>
+
       </div>
 
       {/* Conținut animat */}
@@ -159,7 +170,7 @@ function B2CBlock({ b2cProducts, getNewProducts, session, onNavigate, handleView
 
               <div
                 ref={carouselRef}
-                className="flex overflow-x-auto gap-4 py-2 snap-x snap-mandatory"
+                className="px-4 flex overflow-x-auto gap-4 py-2 snap-x snap-mandatory"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {activeProducts.length > 0 ? activeProducts.map(p => (
@@ -187,6 +198,12 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
   const viewAll = () => onNavigate('toate-produsele', null, { sortBy: 'newest', type: 'b2b' });
   const [isExpanded, setIsExpanded] = useState(true);
 
+  const toggle = () => {
+    const next = !isExpanded;
+    setIsExpanded(next);
+    onExpandChange?.(next);
+  };
+
   if (b2bProducts.length === 0) return null;
 
   return (
@@ -198,18 +215,32 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
       {/* Header */}
 
       <div className="px-6 sm:px-8 lg:px-12 pt-8 pb-12">
-        <button onClick={() => setIsExpanded(p => !p)} className="w-full flex items-center justify-between group text-left">
-          <div className="text-left">
-            <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-              <FontAwesomeIcon icon={faTractor} className="text-white" />
+        <button onClick={toggle} className="w-full flex items-center justify-between group">
+
+
+          <div className="flex items-center gap-2">
+            <FontAwesomeIcon icon={faTractor} className="text-white text-2xl" />
+            <h3 className="text-2xl font-bold text-white">
               {t.home.servicesUtilities}
-              <span className={`ml-[10.5px] text-base text-white transition-transform duration-300 inline-block ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
-                <FontAwesomeIcon icon={faChevronDown} />
-              </span>
             </h3>
+          </div>
+
+          <div
+            className=' items-center mr-16 rounded-3xl w-12 py-2'
+
+          >
+            <div
+              className={`   transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}
+            >
+              <FontAwesomeIcon icon={faChevronUp} className=" text-white text-xl" />
+            </div>
           </div>
         </button>
       </div>
+
+
+
+
 
       {/* Conținut animat */}
       <div
@@ -275,6 +306,7 @@ function B2BBlock({ b2bProducts, session, onNavigate, handleViewDetails, handleC
 export default function HomePage({ session, onNavigate, searchQuery = '', searchLocation = '' }) {
   const [products, setProducts] = useState([]);
   const [verifiedFarmers, setVerifiedFarmers] = useState([]);
+  const [producers, setProducers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -289,7 +321,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
   const b2cProvidersRef = useRef(null);
   const [b2cExpanded, setB2cExpanded] = useState(true);
 
-  useEffect(() => { fetchProducts(); fetchVerifiedFarmers(); fetchDbCategories(); }, []);
+  useEffect(() => { fetchProducts(); fetchVerifiedFarmers(); fetchDbCategories(); fetchProducers(); }, []);
   useEffect(() => {
     const fetchHeroEvents = async () => {
       try {
@@ -339,6 +371,17 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
     const { data } = await supabase
       .from('categories').select('*').eq('is_active', true).order('sort_order');
     if (data) setDbCategories(data);
+  };
+
+  const fetchProducers = async () => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, location, market_type, is_verified')
+        .not('location', 'is', null)
+        .in('market_type', ['b2c', 'b2b', 'both']);
+      if (data) setProducers(data.map(p => ({ ...p, user_id: p.id })));
+    } catch { }
   };
 
   const scroll = (direction, ref) => {
@@ -602,7 +645,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
       {/* ── HARTA ─────────────────────────────────────────────── */}
       <div className="relative z-10 -mt-16 bg-emerald-700 rounded-t-[40px] shadow-xl pt-10 pb-10">
-        <NearbyFarmersMap products={products} onNavigate={onNavigate} dbCategories={dbCategories} />
+        <NearbyFarmersMap products={products} producers={producers} onNavigate={onNavigate} dbCategories={dbCategories} />
       </div>
 
       {/* ── LOADING ───────────────────────────────────────────── */}
@@ -648,7 +691,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
 
             <div className="bg-emerald-700">
-              <div className="pl-4 relative z-10 rounded-t-[40px] bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
+              <div className="pl-4 p-4 relative z-10 rounded-t-[40px] bg-white shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
                 <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
 
                   <div className="flex items-center justify-between mb-6">
@@ -685,10 +728,10 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
 
           {/* ── PRESTATORI B2C ────────────────────────────────── */}
           {b2cProviders.length > 0 && (
-            <div className="pl-4 relative z-10 rounded-t-[40px] bg-emerald-700 shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
+            <div className="pl-4 p-4 relative z-10 rounded-t-[40px] bg-emerald-700 shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.06)]">
               <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-10">
                 <div className="flex items-center gap-2 mb-6">
-                  <FontAwesomeIcon icon={faSeedling} className="text-white text-xl" />
+                  <FontAwesomeIcon icon={faAppleWhole} size="xl" className="text-white text-xl" />
                   <h3 className="text-2xl font-bold text-white">{t.home.foodProducers}</h3>
                 </div>
                 <div className="relative">
@@ -703,7 +746,7 @@ export default function HomePage({ session, onNavigate, searchQuery = '', search
                       </button>
                     </div>
                   </div>
-                  <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6">
+                  <div className="relative rounded-2xl shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_1px_6px_-2px_rgba(0,0,0,0.08)] bg-white p-6 ">
                     <PillNavButton direction="left" onClick={() => scroll('left', b2cProvidersRef)} ariaLabel="Stânga" />
                     <PillNavButton direction="right" onClick={() => scroll('right', b2cProvidersRef)} ariaLabel="Dreapta" />
                     <B2CProviderCarousel providers={b2cProviders} onNavigate={onNavigate} scrollRef={b2cProvidersRef} />

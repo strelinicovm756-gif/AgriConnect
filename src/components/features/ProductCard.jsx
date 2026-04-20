@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { getCategoryName } from '../../i18n/categoryTranslations';
 import { getColorForName } from '../../lib/utils';
 import { supabase } from '../../services/supabaseClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,6 +13,8 @@ import {
   faJar,
   faWheatAwn,
   faBox,
+  faTractor,
+  faWrench,
   faLocationDot,
   faCalendarDays,
   faLock,
@@ -19,7 +22,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 export function ProductCard({ product, session, onViewDetails, onContactClick }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [isReported, setIsReported] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
 
@@ -48,19 +51,21 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
   };
 
   const categoryConfig = {
-    'Legume': { icon: faCarrot, bgColor: 'bg-gray-100', iconColor: 'text-emerald-600' },
-    'Fructe': { icon: faAppleWhole, bgColor: 'bg-red-50', iconColor: 'text-red-600' },
-    'Lactate': { icon: faCow, bgColor: 'bg-blue-50', iconColor: 'text-blue-600' },
-    'Carne': { icon: faDrumstickBite, bgColor: 'bg-orange-50', iconColor: 'text-orange-600' },
-    'Ouă': { icon: faEgg, bgColor: 'bg-yellow-50', iconColor: 'text-yellow-700' },
-    'Miere': { icon: faJar, bgColor: 'bg-amber-50', iconColor: 'text-amber-700' },
-    'Cereale': { icon: faWheatAwn, bgColor: 'bg-lime-50', iconColor: 'text-lime-700' },
-    'Conserve': { icon: faJar, bgColor: 'bg-purple-50', iconColor: 'text-purple-600' },
-    'Altele': { icon: faBox, bgColor: 'bg-gray-50', iconColor: 'text-gray-600' }
+    'vegetables':           { icon: faCarrot,       bgColor: 'bg-gray-100',   iconColor: 'text-emerald-600' },
+    'fruit':                { icon: faAppleWhole,   bgColor: 'bg-red-50',     iconColor: 'text-red-600' },
+    'dairy':                { icon: faCow,          bgColor: 'bg-blue-50',    iconColor: 'text-blue-600' },
+    'meat':                 { icon: faDrumstickBite,bgColor: 'bg-orange-50',  iconColor: 'text-orange-600' },
+    'eggs':                 { icon: faEgg,          bgColor: 'bg-yellow-50',  iconColor: 'text-yellow-700' },
+    'grains / cereals':     { icon: faWheatAwn,     bgColor: 'bg-lime-50',    iconColor: 'text-lime-700' },
+    'field-services':       { icon: faTractor,      bgColor: 'bg-amber-50',   iconColor: 'text-amber-700' },
+    'logistics--transport': { icon: faJar,          bgColor: 'bg-purple-50',  iconColor: 'text-purple-600' },
+    'equipment-rentals':    { icon: faWrench,       bgColor: 'bg-gray-50',    iconColor: 'text-gray-600' },
+    'default':              { icon: faBox,          bgColor: 'bg-gray-50',    iconColor: 'text-gray-600' },
   };
 
-  const categoryName = product.categories?.name ?? product.category;
-  const config = categoryConfig[categoryName] || categoryConfig['Altele'];
+  const categorySlug = product.categories?.slug
+    ?? product.category?.toLowerCase().replace(/ /g, '-');
+  const config = categoryConfig[categorySlug] || categoryConfig['default'];
 
 
   return (
@@ -73,7 +78,8 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
             <img
               src={product.image_url}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              
+              className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
             />
           </>
         ) : (
@@ -89,13 +95,16 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
         <div className="absolute top-3 left-3">
           <span className="bg-white/95 backdrop-blur-sm text-gray-900 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-md">
             <FontAwesomeIcon icon={config.icon} className={`text-xs ${config.iconColor}`} />
-            {product.categories?.name ?? product.category}
+            {getCategoryName(
+              product.categories?.slug ?? product.category?.toLowerCase().replace(/ /g, '-'),
+              lang
+            )}
           </span>
         </div>
 
         {/* Negotiable badge */}
         {product.is_negotiable && (
-          <span className="absolute top-4 right-2 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">NEGOTIABLE</span>
+          <span className="absolute top-4 right-2 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">{t.common.negotiable.toUpperCase()}</span>
         )}
 
         {/* Buton raportare — vizibil la hover */}
@@ -113,7 +122,7 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
       </div>
 
       {/* Content */}
-      <div className="flex flex-col flex-1 p-4 bg-white rounded-b-xl">
+      <div className="flex flex-col flex-1 p-4 bg-white">
 
         {/* Top content — grows to fill space */}
         <div className="flex-1">
@@ -196,10 +205,10 @@ export function ProductCard({ product, session, onViewDetails, onContactClick })
           <div className="mt-3 pt-3 border-t border-gray-200 flex justify-end text-xs text-gray-500">
             <span className="flex items-center gap-1.5">
               <FontAwesomeIcon icon={faCalendarDays} />
-              {new Date(product.created_at).toLocaleDateString('ro-RO', {
-                day: 'numeric',
-                month: 'short'
-              })}
+              {new Date(product.created_at).toLocaleDateString(
+                { ro: 'ro-RO', en: 'en-GB', fr: 'fr-FR' }[lang] || 'ro-RO',
+                { day: 'numeric', month: 'short' }
+              )}
             </span>
           </div>
         </div>

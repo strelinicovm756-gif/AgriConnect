@@ -6,12 +6,13 @@ mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useLanguage } from '../../i18n/LanguageContext';
+import { getCategoryName, getSubcategoryName } from '../../i18n/categoryTranslations';
 import {
   faClockRotateLeft, faFlag, faLayerGroup, faUsers,
   faCheck, faXmark, faChevronRight, faSpinner, faSearch,
   faUserShield, faUser, faBan, faUnlock, faArrowRight, faArrowLeft,
   faPlus, faTrash, faPen, faFloppyDisk,
-  faCircleCheck, faTriangleExclamation, faBoxOpen, faFileImage,
+  faCircleCheck, faTriangleExclamation,faShoppingCart, faBoxOpen, faFileImage,
   faLocationDot, faCrown,
   faCartShopping, faIndustry, faCalendarDays, faBell, faBuilding,
   faEye, faChevronLeft
@@ -80,7 +81,7 @@ function EmptyState({ icon, message }) {
 
 // Queue de Aprobare
 function ApprovalQueue({ userRole, onNavigate }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
@@ -220,7 +221,10 @@ function ApprovalQueue({ userRole, onNavigate }) {
                   </td>
                   <td className="px-3 py-2.5 max-w-[180px]">
                     <p className="font-semibold text-gray-900 truncate text-sm">{p.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{p.category}{p.subcategory ? ` › ${p.subcategory}` : ''}</p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {getCategoryName(p.category?.toLowerCase().replace(/ /g, '-'), lang)}
+                      {p.subcategory ? ` › ${getSubcategoryName(p.subcategory?.toLowerCase().replace(/ /g, '-'), lang)}` : ''}
+                    </p>
                   </td>
                   <td className="px-3 py-2.5 text-xs text-gray-600 whitespace-nowrap">{p.full_name || '—'}</td>
                   <td className="px-3 py-2.5 text-xs text-gray-500 hidden md:table-cell whitespace-nowrap">{p.location || '—'}</td>

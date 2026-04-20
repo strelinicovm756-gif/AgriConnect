@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
+
+const CONTEXT_TTL_MS = 5 * 60 * 1000; // 5-minute cache
 
 
 
@@ -9,7 +11,14 @@ export function useAIAssistant(session) {
   const [loading, setLoading] = useState(false);
   const [sessionId] = useState(() => crypto.randomUUID());
 
+  const contextCacheRef = useRef({ data: null, timestamp: 0 });
+
   const fetchPlatformContext = async () => {
+    const now = Date.now();
+    if (contextCacheRef.current.data && now - contextCacheRef.current.timestamp < CONTEXT_TTL_MS) {
+      return contextCacheRef.current.data;
+    }
+
     let context = '';
 
     try {
@@ -87,6 +96,7 @@ export function useAIAssistant(session) {
       context += '\n\nEroare la încărcarea datelor platformei.\n';
     }
 
+    contextCacheRef.current = { data: context, timestamp: Date.now() };
     return context;
   };
 
@@ -114,7 +124,6 @@ export function useAIAssistant(session) {
       // 3. Apelul către Edge Function prin supabase.functions.invoke
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
-          model: 'gpt-4o-mini',
           userId: session?.user?.id || 'anonymous',
           messages: [
             {

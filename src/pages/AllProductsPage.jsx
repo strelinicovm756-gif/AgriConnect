@@ -14,6 +14,7 @@ import {
   faTractor, faFlask, faWrench, faDroplet
 } from '@fortawesome/free-solid-svg-icons';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getCategoryName, getSubcategoryName } from '../i18n/categoryTranslations';
 
 const globalCSS = `
   @keyframes dropdownIn {
@@ -152,6 +153,7 @@ function PriceRangeFilter({ initialMin, initialMax, onApply, onClear }) {
 
 // ── Category Accordion Item ───────────────────────────────────
 function CategoryAccordionItem({ cat, selectedCategory, onSelect }) {
+  const { lang } = useLanguage();
   const hasSubs = cat.subs && cat.subs.length > 0;
 
   const isSubSelected = hasSubs && cat.subs.some(s => s.id === selectedCategory);
@@ -188,7 +190,7 @@ function CategoryAccordionItem({ cat, selectedCategory, onSelect }) {
           className={`text-sm flex-shrink-0 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}
         />
         <span className={`text-sm flex-1 ${isActive ? 'text-emerald-700 font-semibold' : 'text-gray-700'}`}>
-          {cat.name}
+          {getCategoryName(cat.slug, lang)}
         </span>
         {hasSubs && (
           <FontAwesomeIcon
@@ -213,7 +215,7 @@ function CategoryAccordionItem({ cat, selectedCategory, onSelect }) {
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
               >
-                <span className="text-xs">{sub.name}</span>
+                <span className="text-xs">{getSubcategoryName(sub.slug, lang)}</span>
                 {isSubActive && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
                 )}
@@ -232,17 +234,19 @@ function FilterSidebar({
   onCategoryChange, onLocationChange, onNegotiableChange,
   onClearFilter, onClearAll, onPriceApply, onPriceClear
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   // Build accordion-ready structures from DB categories
   const b2cCats = dbCategories
     .filter(c => c.market_type !== 'b2b')
     .map(c => ({
       id: c.id,
       name: c.name,
+      slug: c.slug,
       icon: ICON_MAP[c.icon] ?? faBoxesStacked,
       subs: (c.subcategories || []).map(s => ({
         id: s.id,
         name: s.name,
+        slug: s.slug,
         icon: ICON_MAP[c.icon] ?? faBoxesStacked
       }))
     }));
@@ -252,10 +256,12 @@ function FilterSidebar({
     .map(c => ({
       id: c.id,
       name: c.name,
+      slug: c.slug,
       icon: ICON_MAP[c.icon] ?? faTractor,
       subs: (c.subcategories || []).map(s => ({
         id: s.id,
         name: s.name,
+        slug: s.slug,
         icon: ICON_MAP[c.icon] ?? faTractor
       }))
     }));
@@ -356,7 +362,7 @@ function FilterSidebar({
 
 // ── Main Page ─────────────────────────────────────────────────
 export default function AllProductsPage({ session, onNavigate }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [dbCategories, setDbCategories] = useState([]);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
@@ -485,9 +491,9 @@ export default function AllProductsPage({ session, onNavigate }) {
   const getCategoryDisplayName = (id) => {
     if (!id) return null;
     for (const cat of dbCategories) {
-      if (cat.id === id) return cat.name;
+      if (cat.id === id) return getCategoryName(cat.slug, lang);
       const sub = (cat.subcategories || []).find(s => s.id === id);
-      if (sub) return `${cat.name} → ${sub.name}`;
+      if (sub) return `${getCategoryName(cat.slug, lang)} → ${getSubcategoryName(sub.slug, lang)}`;
     }
     return id;
   };

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l \"/c/ProiectAn4/AgriConnect/agriconnect/src/pages\"/*.jsx \"/c/ProiectAn4/AgriConnect/agriconnect/src/components/features\"/*.jsx)",
+      "Bash(grep -n \"^function.*{$\\\\|^const.*=.*=>.*{$\\\\|^function.*=>\" \"/c/ProiectAn4/AgriConnect/agriconnect/src/pages/HomePage.jsx\")",
+      "Bash(grep -E \"\\\\.js$|\\\\.jsx$\")"
+    ]
+  }
+}

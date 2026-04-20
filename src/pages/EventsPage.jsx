@@ -10,141 +10,146 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCalendarDays, faLocationDot, faXmark,
   faChevronDown, faChevronUp,
-  faLocationCrosshairs, faSpinner, faBell, faCircleCheck,
+  faLocationCrosshairs, faSpinner, faArrowRight,
 } from '@fortawesome/free-solid-svg-icons';
+import { Bell } from 'lucide-react';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('ro-RO', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  });
-};
-
-function formatDateBadge(startStr, endStr) {
-  if (!startStr) return null;
-  const start = new Date(startStr);
-  const end = endStr ? new Date(endStr) : null;
-  const dayS = start.getDate();
-  const monS = start.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase();
-  const curYear = new Date().getFullYear();
-  const yearS = start.getFullYear() !== curYear ? start.getFullYear() : null;
-
-  if (!end || end.toDateString() === start.toDateString()) {
-    return { day: dayS, month: monS, year: yearS };
-  }
-  const dayE = end.getDate();
-  const monE = end.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase();
-  if (monS === monE) return { range: `${dayS}–${dayE}`, month: monS };
-  return { range: `${dayS} ${monS} – ${dayE} ${monE}` };
-}
-
 // ── EventCard ────────────────────────────────────────────────────────────────
-function EventCard({ event, typeConfig, onNavigate, t }) {
+function EventCard({ event, typeConfig, onNavigate, t, formatDate }) {
   const type = typeConfig[event.type] || typeConfig.iarmaroc;
-  const badge = formatDateBadge(event.event_date, event.end_date);
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:border-emerald-200 transition-all duration-300 flex flex-col">
-      {/* Image / placeholder */}
-      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-emerald-400 to-emerald-600">
+    <button
+      onClick={() => onNavigate('eveniment', event.id)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="bg-white rounded-2xl border border-gray-100 overflow-hidden
+                 hover:border-emerald-200 transition-all text-left group w-full"
+      style={{
+        boxShadow: hovered
+          ? '0 8px 24px rgba(0,0,0,0.10)'
+          : '0 1px 6px rgba(0,0,0,0.05)',
+      }}>
+
+      {/* Image — aspect ratio 16/9 */}
+      <div className="w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
         {event.image_url ? (
           <img
             src={event.image_url}
             alt={event.title}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <FontAwesomeIcon icon={faCalendarDays} className="text-white opacity-30 text-4xl" />
+          <div className="w-full h-full relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 40%, #6ee7b7 100%)' }}>
+            <div className="absolute inset-0 opacity-10"
+              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23059669' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E")` }}>
+            </div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <FontAwesomeIcon icon={faCalendarDays} className="text-emerald-600 text-3xl opacity-50" />
+              <span className="text-xs font-medium text-emerald-700 opacity-60">{t.events.eventLabel}</span>
+            </div>
           </div>
         )}
-
-        {/* Date badge */}
-        {badge && (
-          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-xl px-2.5 py-1.5 text-center shadow-sm min-w-[44px]">
-            {badge.range ? (
-              <>
-                <p className="text-[11px] font-black text-gray-900 leading-tight">{badge.range}</p>
-                {badge.month && (
-                  <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-wide">{badge.month}</p>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="text-xl font-black text-gray-900 leading-none">{badge.day}</p>
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide">{badge.month}</p>
-                {badge.year && <p className="text-[9px] text-gray-400">{badge.year}</p>}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Type badge */}
-        <span className={`absolute top-3 right-3 text-[10px] font-semibold px-2 py-1 rounded-full shadow-sm ${type.color}`}>
-          {type.label}
-        </span>
       </div>
 
-      {/* Content */}
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="font-bold text-gray-900 text-base leading-snug mb-2 line-clamp-2">
+      {/* Body */}
+      <div className="p-5 flex flex-col h-full">
+        {/* Date badge + Type badge */}
+        <div className="flex items-center flex-wrap gap-2 mb-3">
+          {event.event_date && (
+            <span className="inline-block text-xs font-semibold text-emerald-700
+                             bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-lg">
+              {formatDate(event.event_date)}
+            </span>
+          )}
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${type.color}`}>
+            {type.label}
+          </span>
+        </div>
+
+        <h3 className="font-bold text-gray-900 text-base leading-snug mt-3 mb-1.5
+                       group-hover:text-emerald-700 transition-colors line-clamp-2 min-h-[2.5rem]">
           {event.title}
         </h3>
-        {event.location_text && (
-          <p className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
-            <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600 flex-shrink-0 text-[12px]" />
-            <span className="truncate">{event.location_text}</span>
+
+        {event.location_text ? (
+          <p className="text-xs text-slate-500 flex items-center gap-1.5 mb-3">
+            <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
+            {event.location_text}
+          </p>
+        ) : (
+          <p className="text-xs text-slate-500 flex items-center gap-1.5 mb-3 invisible">
+            placeholder
           </p>
         )}
-        {event.schedule && !event.description && (
-          <p className="text-xs text-gray-400 mb-1 line-clamp-1">{event.schedule}</p>
+
+        {event.description ? (
+          <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+            {event.description}
+          </p>
+        ) : (
+          <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed invisible">
+            placeholder placeholder placeholder placeholder placeholder placeholder
+          </p>
         )}
-        <p className="text-sm text-gray-500 line-clamp-2 flex-1 mb-4">
-          {event.description || 'Descoperă produsele locale la acest eveniment.'}
-        </p>
-        <button
-          onClick={() => onNavigate('eveniment', event.id)}
-          className="mt-auto w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 hover:text-white text-white font-semibold text-sm rounded-xl  duration-200 border border-emerald-600 hover:border-emerald-700">
+
+        {/* "Află mai mult" link */}
+        <div className="mt-4 flex items-center gap-1.5 text-sm font-semibold
+                        text-emerald-600 group-hover:gap-2.5 transition-all">
           {t.events.learnMore}
-        </button>
+          <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+        </div>
       </div>
-    </div>
+    </button>
   );
 }
 
 // ── EmptyState ───────────────────────────────────────────────────────────────
-function EmptyState({ t, session, onSubscribe, isMarkets, isSubscribed }) {
+function EmptyState({ isMarkets, t }) {
+  if (isMarkets) {
+    return (
+      <div className="text-center py-24">
+        <div className="inline-flex items-center justify-center w-16 h-16
+                        rounded-2xl bg-amber-50 border border-amber-100 mb-5">
+          <FontAwesomeIcon icon={faLocationDot} className="text-2xl text-amber-400" />
+        </div>
+        <p className="font-bold text-gray-800 text-lg mb-2">
+          {t.events.noMarkets}
+        </p>
+      </div>
+    );
+  }
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-14 text-center">
-      <FontAwesomeIcon icon={faCalendarDays} className="text-gray-200 text-5xl block mx-auto mb-5" />
-      <p className="text-xl font-bold text-gray-800 mb-2">
-        {isMarkets ? t.events.noMarkets : t.events.noEvents}
+    <div className="text-center py-24">
+      <div className="inline-flex items-center justify-center w-16 h-16
+                      rounded-2xl bg-emerald-50 border border-emerald-100 mb-5">
+        <FontAwesomeIcon icon={faCalendarDays} className="text-2xl text-emerald-400" />
+      </div>
+      <p className="font-bold text-gray-800 text-lg mb-2">
+        {t.events.noEvents}
       </p>
-      <p className="text-sm text-gray-500 mb-7 max-w-xs mx-auto">
+      <p className="text-gray-400 text-sm max-w-xs mx-auto leading-relaxed">
         {t.events.noEventsHint}
       </p>
-      {isSubscribed ? (
-        <span className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 font-semibold rounded-xl text-sm border border-emerald-200 cursor-default">
-          <FontAwesomeIcon icon={faCircleCheck} />
-          {t.events.notifySubscribed}
-        </span>
-      ) : (
-        <button
-          onClick={session ? onSubscribe : undefined}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-emerald-100">
-          <FontAwesomeIcon icon={faBell} />
-          {session ? t.events.notifyBtn : t.events.notifyLoginRequired}
-        </button>
-      )}
     </div>
   );
 }
 
 // ── EventsPage ───────────────────────────────────────────────────────────────
 export default function EventsPage({ session, onNavigate }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+
+  const localeMap = { ro: 'ro-RO', en: 'en-GB', fr: 'fr-FR' };
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString(localeMap[lang] || 'ro-RO', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    });
+  };
 
   const TYPE_CONFIG = {
     iarmaroc: { label: t.events.typeFair, color: 'bg-emerald-100 text-emerald-700' },
@@ -164,7 +169,8 @@ export default function EventsPage({ session, onNavigate }) {
   const [userLocation, setUserLocation] = useState(null);     // { lat, lon }
   const [mapReady, setMapReady] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [notifyActive, setNotifyActive] = useState(false);
+  const [notifyLoading, setNotifyLoading] = useState(false);
 
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
@@ -193,33 +199,35 @@ export default function EventsPage({ session, onNavigate }) {
     fetchAll();
   }, []);
 
-  // ── Subscription check ──────────────────────────────────────────────────
+  // ── Notify preference from profiles ─────────────────────────────────────
   useEffect(() => {
     if (!session) return;
     supabase
-      .from('event_subscriptions')
-      .select('id')
-      .eq('user_id', session.user.id)
-      .maybeSingle()
-      .then(({ data }) => setIsSubscribed(!!data));
+      .from('profiles')
+      .select('notify_events')
+      .eq('id', session.user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setNotifyActive(data.notify_events ?? false);
+      });
   }, [session]);
 
-  // ── Subscribe handler ────────────────────────────────────────────────────
-  const handleSubscribe = async () => {
+  // ── Notify button handler ────────────────────────────────────────────────
+  const handleNotify = async () => {
     if (!session) { onNavigate('login'); return; }
-    try {
-      const { error } = await supabase
-        .from('event_subscriptions')
-        .upsert({
-          user_id: session.user.id,
-          email: session.user.email,
-        }, { onConflict: 'user_id' });
-      if (error) throw error;
-      setIsSubscribed(true);
-      toast.success(t.events.notifySuccess);
-    } catch {
-      toast.error(t.events.notifyError);
+    setNotifyLoading(true);
+    const newValue = !notifyActive;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ notify_events: newValue })
+      .eq('id', session.user.id);
+    if (!error) {
+      setNotifyActive(newValue);
+      toast.success(newValue ? 'Vei fi notificat despre evenimente noi!' : 'Notificări dezactivate');
+    } else {
+      toast.error('Eroare la salvarea preferinței');
     }
+    setNotifyLoading(false);
   };
 
   // Reset filters and map selection when switching tabs
@@ -241,10 +249,8 @@ export default function EventsPage({ session, onNavigate }) {
     today.setHours(0, 0, 0, 0);
 
     return activeItems.filter(ev => {
-      // Location
       if (locationFilter && ev.location_text !== locationFilter) return false;
 
-      // Period
       if (periodFilter !== 'all' && ev.event_date) {
         const start = new Date(ev.event_date);
         start.setHours(0, 0, 0, 0);
@@ -322,7 +328,6 @@ export default function EventsPage({ session, onNavigate }) {
       zoom: 8,
     });
 
-    // Persistent user-location marker
     const userEl = document.createElement('div');
     userEl.innerHTML = '<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 0 4px rgba(59,130,246,0.3);"></div>';
     new mapboxgl.Marker({ element: userEl, anchor: 'center' })
@@ -431,311 +436,313 @@ export default function EventsPage({ session, onNavigate }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* ─── Subscribe button (stays above map) ─── */}
-        {!isSubscribed && (
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={handleSubscribe}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 bg-white hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50 transition shadow-sm">
-              <FontAwesomeIcon icon={faBell} className="text-xs" />
-              {t.events.notifyBtn}
-            </button>
-          </div>
-        )}
+      {/* ─── Page header ─── */}
+      <div className="max-w-6xl mx-auto px-4 pt-8 pb-2">
+        <h1 className="text-2xl font-bold text-gray-900">{t.events.pageTitle}</h1>
+      </div>
 
-        
+      <div className="max-w-6xl mx-auto px-4 flex flex-col gap-8 pb-12">
 
-        {/* ─── Map section header ─── */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600" />
-            <span className="font-bold text-gray-900 text-sm">Evenimente pe hartă</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1">
-              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${mapFilteredItems.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`} />
-              <span className="text-gray-700 text-xs font-semibold">
-                {mapFilteredItems.length} {mapFilteredItems.length === 1 ? 'eveniment' : 'evenimente'}
-              </span>
-            </div>
-            <button
-              onClick={() => setMapIsExpanded(e => !e)}
-              className="text-gray-400 hover:text-gray-700 transition p-1">
-              <FontAwesomeIcon icon={mapIsExpanded ? faChevronUp : faChevronDown} />
-            </button>
-          </div>
-        </div>
-
-        {/* ─── Map container ─── */}
+        {/* ─── Map card ─── */}
         <div
-          className="relative rounded-2xl border border-gray-100 shadow-md overflow-hidden mb-8 transition-all duration-500 ease-in-out"
+          className="bg-white rounded-2xl overflow-hidden"
           style={{
-            height: mapIsExpanded ? '460px' : '0px',
-            opacity: mapIsExpanded ? 1 : 0,
+            boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+            border: '1px solid rgba(0,0,0,0.06)',
           }}
         >
-          {/* idle */}
-          {locationStatus === 'idle' && (
-            <div className="absolute inset-0 z-10">
-              {/* Blurred static map background */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundImage: `url(https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/static/28.8638,47.0105,6,0/1200x460?access_token=${import.meta.env.VITE_MAPBOX_TOKEN})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  filter: 'blur(1px) brightness(0.97)',
-                }}
-              />
-              {/* CTA overlay */}
-              <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center gap-5">
+
+          {/* Map card header */}
+          <div className="relative z-20 bg-emerald-600 flex items-center justify-between px-5 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <FontAwesomeIcon icon={faLocationDot} className="text-white" />
+              <span className="font-bold text-white text-sm">{t.events.showMap}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1">
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${mapFilteredItems.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`} />
+                <span className="text-gray-700 text-xs font-semibold">
+                  {mapFilteredItems.length} {mapFilteredItems.length === 1 ? t.events.eventSingular : t.events.eventPlural}
+                </span>
+              </div>
+              <button
+                onClick={() => setMapIsExpanded(e => !e)}
+                className="text-white p-2 flex items-center justify-center"
+              >
+                <div className={`transition-transform duration-700 ${mapIsExpanded ? 'rotate-0' : 'rotate-180'
+                  }`}
+                  style={{ transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}>
+                  <FontAwesomeIcon icon={faChevronUp} />
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Map container */}
+          <div
+            className="relative transition-all duration-500 ease-in-out overflow-hidden"
+            style={{
+              height: mapIsExpanded ? '480px' : '0px',
+              opacity: mapIsExpanded ? 1 : 0,
+            }}
+          >
+            {/* idle */}
+            {locationStatus === 'idle' && (
+              <div className="absolute inset-0 z-10 bg-white flex flex-col items-center justify-center gap-5">
+
+
+
                 <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
                   <FontAwesomeIcon icon={faLocationCrosshairs} className="text-emerald-600 text-3xl" />
                 </div>
                 <div className="text-center px-6">
-                  <p className="text-gray-900 font-bold text-lg mb-1">Găsește evenimente lângă tine</p>
-                  <p className="text-gray-500 text-sm">Activează localizarea pentru a vedea evenimentele din apropiere</p>
+                  <p className="text-gray-900 font-bold text-lg mb-1">{t.events.findEventsNearYou}</p>
+                  <p className="text-gray-500 text-sm">{t.events.activateLocationHint}</p>
                 </div>
                 <button
                   onClick={requestLocation}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-full font-semibold shadow-lg transition-all hover:scale-105">
-                  <FontAwesomeIcon icon={faLocationDot} className="mr-2" />
-                  Activează localizarea
+                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white
+                               rounded-xl text-sm font-semibold shadow-md hover:bg-emerald-700 transition">
+                  <FontAwesomeIcon icon={faLocationCrosshairs} />
+                  {t.events.activateLocation}
                 </button>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* loading */}
-          {locationStatus === 'loading' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white z-10">
-              <FontAwesomeIcon icon={faSpinner} className="text-emerald-600 text-4xl animate-spin" />
-              <p className="text-gray-600 font-medium">Se determină locația...</p>
-            </div>
-          )}
-
-          {/* denied */}
-          {locationStatus === 'denied' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-gray-50 to-white z-10 px-6 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                <FontAwesomeIcon icon={faLocationCrosshairs} className="text-gray-400 text-2xl" />
+            {/* loading */}
+            {locationStatus === 'loading' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-white z-10">
+                <FontAwesomeIcon icon={faSpinner} className="text-emerald-600 text-4xl animate-spin" />
+                <p className="text-gray-600 font-medium">{t.events.determiningLocation}</p>
               </div>
-              <p className="text-gray-700 font-semibold">Localizare indisponibilă</p>
-              <p className="text-gray-500 text-sm max-w-xs">Activează localizarea din setările browserului sau explorează toate evenimentele mai jos</p>
-              <button
-                onClick={requestLocation}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all">
-                <FontAwesomeIcon icon={faLocationCrosshairs} className="mr-2" />
-                Încearcă din nou
-              </button>
-            </div>
-          )}
+            )}
 
-          {/* Map canvas */}
-          <div
-            ref={mapContainerRef}
-            className="w-full h-full"
-            style={{ display: locationStatus === 'granted' ? 'block' : 'none' }}
-          />
+            {/* denied */}
+            {locationStatus === 'denied' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-gray-50 to-white z-10 px-6 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                  <FontAwesomeIcon icon={faLocationCrosshairs} className="text-gray-400 text-2xl" />
+                </div>
+                <p className="text-gray-700 font-semibold">{t.events.locationUnavailableTitle}</p>
+                <p className="text-gray-500 text-sm max-w-xs">{t.events.locationDeniedEventsHint}</p>
+                <button
+                  onClick={requestLocation}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all">
+                  <FontAwesomeIcon icon={faLocationCrosshairs} className="mr-2" />
+                  {t.common.retry}
+                </button>
+              </div>
+            )}
 
-          {/* Filter pills — absolute top-left overlay */}
-          {locationStatus === 'granted' && (
-            <div className="absolute top-4 left-4 z-20" style={{ pointerEvents: 'none' }}>
-              <div
-                className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 px-3 py-2 flex gap-1.5"
-                style={{ pointerEvents: 'auto' }}
-                onMouseDown={e => e.stopPropagation()}
-                onTouchStart={e => e.stopPropagation()}
-              >
-                {[
-                  { key: 'all', label: t.events.filterAll },
-                  { key: 'today', label: t.events.filterToday },
-                  { key: 'weekend', label: t.events.filterWeekend },
-                  { key: 'month', label: t.events.filterMonth },
-                ].map(pf => (
-                  <button
-                    key={pf.key}
-                    onClick={() => setMapPeriodFilter(pf.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${mapPeriodFilter === pf.key
+            {/* Map canvas */}
+            <div
+              ref={mapContainerRef}
+              className="w-full h-[480px]"
+              style={{ display: locationStatus === 'granted' ? 'block' : 'none' }}
+            />
+
+            {/* Filter pills — absolute top-left overlay */}
+            {locationStatus === 'granted' && (
+              <div className="absolute top-4 left-4 z-20" style={{ pointerEvents: 'none' }}>
+                <div
+                  className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 px-3 py-2 flex gap-1.5"
+                  style={{ pointerEvents: 'auto' }}
+                  onMouseDown={e => e.stopPropagation()}
+                  onTouchStart={e => e.stopPropagation()}
+                >
+                  {[
+                    { key: 'all', label: t.events.filterAll },
+                    { key: 'today', label: t.events.filterToday },
+                    { key: 'weekend', label: t.events.filterWeekend },
+                    { key: 'month', label: t.events.filterMonth },
+                  ].map(pf => (
+                    <button
+                      key={pf.key}
+                      onClick={() => setMapPeriodFilter(pf.key)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${mapPeriodFilter === pf.key
                         ? 'bg-emerald-600 text-white shadow-sm'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}>
+                      {pf.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No-events overlay */}
+            {locationStatus === 'granted' && mapReady && mapFilteredItems.length === 0 && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm gap-2 pointer-events-none">
+                <FontAwesomeIcon icon={faCalendarDays} className="text-gray-300 text-3xl" />
+                <p className="text-gray-500 text-sm font-medium text-center px-6">
+                  {t.events.noEventsForPeriod}
+                </p>
+              </div>
+            )}
+
+            {/* Selected event — floating card bottom-left */}
+            {locationStatus === 'granted' && selectedEvent && (
+              <div
+                className="absolute bottom-4 left-4 z-20 bg-white rounded-2xl shadow-xl border border-gray-100 p-3"
+                style={{ maxWidth: 'calc(100% - 2rem)', pointerEvents: 'auto' }}
+              >
+                <div className="flex items-center gap-3">
+                  {selectedEvent.image_url ? (
+                    <img
+                      src={selectedEvent.image_url}
+                      alt={selectedEvent.title}
+                      className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-gray-100"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <FontAwesomeIcon icon={faCalendarDays} className="text-emerald-600" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900 text-sm line-clamp-1">{selectedEvent.title}</p>
+                    {selectedEvent.location_text && (
+                      <p className="flex items-center gap-1 text-xs text-emerald-600 mt-0.5">
+                        <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
+                        {selectedEvent.location_text}
+                      </p>
+                    )}
+                    {selectedEvent.event_date && (
+                      <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                        <FontAwesomeIcon icon={faCalendarDays} className="text-[10px]" />
+                        {formatDate(selectedEvent.event_date)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => onNavigate('eveniment', selectedEvent.id)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition">
+                      {t.events.viewEvent}
+                    </button>
+                    <button
+                      onClick={() => setSelectedEvent(null)}
+                      className="text-gray-400 hover:text-gray-600 p-1.5">
+                      <FontAwesomeIcon icon={faXmark} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ─── List section ─── */}
+        <div>
+
+          {/* ── Unified filter bar ── */}
+          <div
+            className="bg-white rounded-2xl border border-gray-100 px-5 py-4 mb-6"
+            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+          >
+            {/* Filter row: tabs LEFT + notify button RIGHT */}
+            <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { key: 'events', label: t.events.tabEvents },
+                  { key: 'markets', label: t.events.tabMarkets },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all border ${activeTab === tab.key
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-700'
+                      }`}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={handleNotify}
+                disabled={notifyLoading}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
+                          border transition-colors disabled:opacity-60
+                          ${notifyActive
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:text-emerald-600'
+                  }`}>
+                {notifyLoading
+                  ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                  : <Bell size={15} />
+                }
+                {notifyActive ? '✓ ' + t.events.notifySubscribed : t.events.notifyBtn}
+              </button>
+            </div>
+
+            {/* Period + location filter bar */}
+            <div className="flex items-center justify-between gap-4 flex-col sm:flex-row">
+              <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-0.5 w-full sm:w-auto">
+                {PERIOD_FILTERS.map(pf => (
+                  <button
+                    key={pf.key}
+                    onClick={() => setPeriodFilter(pf.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none ${periodFilter === pf.key
+                      ? 'bg-white text-emerald-700 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
                       }`}>
                     {pf.label}
                   </button>
                 ))}
               </div>
-            </div>
-          )}
 
-          {/* No-events overlay */}
-          {locationStatus === 'granted' && mapReady && mapFilteredItems.length === 0 && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm gap-2 pointer-events-none">
-              <FontAwesomeIcon icon={faCalendarDays} className="text-gray-300 text-3xl" />
-              <p className="text-gray-500 text-sm font-medium text-center px-6">
-                Niciun eveniment pentru perioada selectată
-              </p>
-            </div>
-          )}
-
-          
-
-          {/* Selected event — floating card bottom-left */}
-          {locationStatus === 'granted' && selectedEvent && (
-            <div
-              className="absolute bottom-4 left-4 z-20 bg-white rounded-2xl shadow-xl border border-gray-100 p-3"
-              style={{ maxWidth: 'calc(100% - 2rem)', pointerEvents: 'auto' }}
-            >
-              <div className="flex items-center gap-3">
-                {selectedEvent.image_url ? (
-                  <img
-                    src={selectedEvent.image_url}
-                    alt={selectedEvent.title}
-                    className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-gray-100"
-                  />
-                ) : (
-                  <div className="w-14 h-14 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <FontAwesomeIcon icon={faCalendarDays} className="text-emerald-600" />
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                {(periodFilter !== 'all' || locationFilter) && (
+                  <span className="text-xs text-gray-400 font-medium whitespace-nowrap">
+                    {filteredItems.length} {filteredItems.length === 1 ? t.events.eventSingular : t.events.eventPlural}
+                  </span>
+                )}
+                {uniqueLocations.length > 0 && (
+                  <div className="relative">
+                    <FontAwesomeIcon
+                      icon={faLocationDot}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"
+                    />
+                    <select
+                      value={locationFilter}
+                      onChange={e => setLocationFilter(e.target.value)}
+                      className="pl-8 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-200 focus:outline-none appearance-none cursor-pointer transition-all font-medium">
+                      <option value="">{t.events.allLocations}</option>
+                      {uniqueLocations.map(loc => (
+                        <option key={loc} value={loc}>{loc}</option>
+                      ))}
+                    </select>
+                    <FontAwesomeIcon
+                      icon={faChevronDown}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"
+                    />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-sm line-clamp-1">{selectedEvent.title}</p>
-                  {selectedEvent.location_text && (
-                    <p className="flex items-center gap-1 text-xs text-emerald-600 mt-0.5">
-                      <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
-                      {selectedEvent.location_text}
-                    </p>
-                  )}
-                  {selectedEvent.event_date && (
-                    <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-                      <FontAwesomeIcon icon={faCalendarDays} className="text-[10px]" />
-                      {formatDate(selectedEvent.event_date)}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button
-                    onClick={() => onNavigate('eveniment', selectedEvent.id)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition">
-                    Vezi
-                  </button>
-                  <button
-                    onClick={() => setSelectedEvent(null)}
-                    className="text-gray-400 hover:text-gray-600 p-1.5">
-                    <FontAwesomeIcon icon={faXmark} />
-                  </button>
-                </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>{/* ── end unified filter bar ── */}
 
-
-        {/* ─── Main container ─── */}
-        <div className="bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden mt-6">
-
-          {/* Row 1: Tabs */}
-          <div className="flex border-b border-gray-100">
-            {[
-              { key: 'events', label: t.events.tabEvents },
-              { key: 'markets', label: t.events.tabMarkets },
-            ].map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-6 py-4 text-sm font-semibold transition-all relative ${
-                  activeTab === tab.key
-                    ? 'text-emerald-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}>
-                {tab.label}
-                {activeTab === tab.key && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full" />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Row 2: Filter bar */}
-          <div className="flex items-center justify-between gap-4 px-5 py-3 bg-gray-50/50 border-b border-gray-100 flex-col sm:flex-row">
-            {/* Left: segmented period control */}
-            <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-0.5 w-full sm:w-auto">
-              {PERIOD_FILTERS.map(pf => (
-                <button
-                  key={pf.key}
-                  onClick={() => setPeriodFilter(pf.key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none ${
-                    periodFilter === pf.key
-                      ? 'bg-white text-emerald-700 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}>
-                  {pf.label}
-                </button>
+          {/* Event grid or empty state */}
+          {filteredItems.length === 0 ? (
+            <EmptyState isMarkets={activeTab === 'markets'} t={t} />
+          ) : (
+            <div className="shadow-xl bg-emerald-600 rounded-2xl  px-5 py-4 mb-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
+              {filteredItems.map(ev => (
+                <EventCard
+                  key={ev.id}
+                  event={ev}
+                  typeConfig={TYPE_CONFIG}
+                  onNavigate={onNavigate}
+                  t={t}
+                  formatDate={formatDate}
+                />
               ))}
             </div>
-
-            {/* Right: location dropdown + results count */}
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-              {(periodFilter !== 'all' || locationFilter) && (
-                <span className="text-xs text-gray-400 font-medium whitespace-nowrap">
-                  {filteredItems.length} {filteredItems.length === 1 ? t.events.eventSingular : t.events.eventPlural}
-                </span>
-              )}
-              {uniqueLocations.length > 0 && (
-                <div className="relative">
-                  <FontAwesomeIcon
-                    icon={faLocationDot}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"
-                  />
-                  <select
-                    value={locationFilter}
-                    onChange={e => setLocationFilter(e.target.value)}
-                    className="pl-8 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-200 focus:outline-none appearance-none cursor-pointer transition-all font-medium">
-                    <option value="">{t.events.allLocations}</option>
-                    {uniqueLocations.map(loc => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
-                  </select>
-                  <FontAwesomeIcon
-                    icon={faChevronDown}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Row 3: Card grid or empty state */}
-          <div className="p-5 sm:p-6">
-            {filteredItems.length === 0 ? (
-              <EmptyState
-                t={t}
-                session={session}
-                onSubscribe={handleSubscribe}
-                isMarkets={activeTab === 'markets'}
-                isSubscribed={isSubscribed}
-              />
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredItems.map(ev => (
-                  <EventCard
-                    key={ev.id}
-                    event={ev}
-                    typeConfig={TYPE_CONFIG}
-                    onNavigate={onNavigate}
-                    t={t}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          )}
 
         </div>
-
-
-      </main>
-
-    </div>
+      </div>
+    </div >
   );
 }

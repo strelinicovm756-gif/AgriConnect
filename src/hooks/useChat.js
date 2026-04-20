@@ -97,19 +97,24 @@ export function useChat() {
 
       if (error) throw error;
 
-      const withUnread = await Promise.all(
-        (data || []).map(async (conv) => {
-          const { count } = await supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversation_id', conv.id)
-            .neq('sender_id', userId)
-            .is('read_at', null);
-          return { ...conv, unread_count: count || 0 };
-        })
-      );
+      const convs = data || [];
+      if (convs.length === 0) return [];
 
-      return withUnread;
+      // Single query for all unread counts instead of one per conversation
+      const convIds = convs.map(c => c.id);
+      const { data: unreadMsgs } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .in('conversation_id', convIds)
+        .neq('sender_id', userId)
+        .is('read_at', null);
+
+      const unreadMap = {};
+      (unreadMsgs || []).forEach(m => {
+        unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1;
+      });
+
+      return convs.map(conv => ({ ...conv, unread_count: unreadMap[conv.id] || 0 }));
     } catch (err) {
       toast.error('Eroare la încărcarea conversațiilor');
       return [];

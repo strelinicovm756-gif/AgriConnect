@@ -6,6 +6,7 @@ import ProductMapModal from "../components/features/ProductMapModal";
 import ChatModal from "../components/features/ChatModal";
 import toast from 'react-hot-toast';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getCategoryName, getSubcategoryName } from '../i18n/categoryTranslations';
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -291,7 +292,7 @@ function ReviewsSection({ productId, session, productOwnerId }) {
 }
 
 export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { id: productId } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -477,13 +478,19 @@ export default function DetailsPage({ onNavigate, onNavigateBack, session }) {
                           className="text-emerald-600"
                         />
                         <span className="text-gray-900 font-semibold text-sm">
-                          {product.categories?.name ?? product.category}
+                          {getCategoryName(
+                            product.categories?.slug ?? (product.categories?.name ?? product.category)?.toLowerCase().replace(/ /g, '-'),
+                            lang
+                          )}
                         </span>
                         {(product.subcategories?.name ?? product.subcategory) && (
                           <>
                             <span className="text-gray-300 text-xs">›</span>
                             <span className="text-gray-600 text-xs font-medium">
-                              {product.subcategories?.name ?? product.subcategory}
+                              {getSubcategoryName(
+                                product.subcategories?.slug ?? (product.subcategories?.name ?? product.subcategory)?.toLowerCase().replace(/ /g, '-'),
+                                lang
+                              )}
                             </span>
                           </>
                         )}

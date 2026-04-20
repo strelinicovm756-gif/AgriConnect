@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import { useChat } from '../hooks/useChat';
 import { getColorForName } from '../lib/utils';
@@ -37,7 +38,7 @@ function timeAgo(dateStr) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export default function ChatPage({ session, onNavigate }) {
+export default function ChatPage({ session }) {
   const { t } = useLanguage();
   const [conversations, setConversations] = useState([]);
   const [loadingConvs, setLoadingConvs] = useState(true);
@@ -57,7 +58,7 @@ export default function ChatPage({ session, onNavigate }) {
   const { fetchConversations, fetchMessages, sendMessage, subscribeToMessages, markMessagesAsRead } = useChat();
 
   useEffect(() => {
-    if (!session) { onNavigate('login'); return; }
+    if (!session) return;
     loadConversations();
   }, [session]);
 
@@ -89,14 +90,17 @@ export default function ChatPage({ session, onNavigate }) {
     setMessages([]);
     setLoadingMsgs(true);
 
-    const msgs = await fetchMessages(conv.id);
-    setMessages(msgs);
-    await markMessagesAsRead(conv.id, session.user.id);
-    setLoadingMsgs(false);
+    try {
+      const msgs = await fetchMessages(conv.id);
+      setMessages(msgs);
+      await markMessagesAsRead(conv.id, session.user.id);
 
-    setConversations(prev =>
-      prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
-    );
+      setConversations(prev =>
+        prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
+      );
+    } finally {
+      setLoadingMsgs(false);
+    }
 
     // Subscribe with convId captured in closure — NOT selectedConv
     const convId = conv.id;
@@ -219,7 +223,7 @@ export default function ChatPage({ session, onNavigate }) {
     }
   };
 
-  if (!session) return null;
+  if (!session) return <Navigate to="/login" replace />;
 
   // Determine the "other" participant name for a conversation
   const getOtherName = (conv) => {

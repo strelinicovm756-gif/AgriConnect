@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getCategoryName } from '../i18n/categoryTranslations';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { ProductCard } from '../components/features/ProductCard';
 import { Metronome } from 'ldrs/react';
 import 'ldrs/react/Metronome.css';
 import EditProductModal from '../components/features/EditProductModal';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faChevronDown, faBoxesStacked, faTriangleExclamation,
@@ -16,6 +17,7 @@ import {
     faRightFromBracket, faImages, faRotateRight,
     faCheck, faPen, faStar, faFileLines, faGear, faGlobe, faBell,
     faCarrot, faTractor, faUsers, faStore, faBuilding,
+    faLock, faEye, faEyeSlash, faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import {
     Star, MessageSquare, Package,
@@ -95,7 +97,7 @@ function StarDisplay({ value = 0, size = 14 }) {
 }
 
 function MyReviewsSection({ session, onNavigate }) {
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
@@ -224,7 +226,7 @@ function MyReviewsSection({ session, onNavigate }) {
                                                 <p className="font-bold text-gray-900 truncate">{product?.name || 'Deleted product'}</p>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     {product?.category && (
-                                                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{product.category}</span>
+                                                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{getCategoryName(product.category?.toLowerCase().replace(/ /g, '-'), lang)}</span>
                                                     )}
                                                     {product?.location && (
                                                         <span className="text-xs text-gray-400 flex items-center gap-1">
@@ -296,10 +298,6 @@ function MyReviewsSection({ session, onNavigate }) {
                                                                 className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition" title="Delete">
                                                                 <Trash2 size={13} />
                                                             </button>
-                                                            <Toaster
-                                                                position="bottom-right"
-                                                                reverseOrder={false}
-                                                            />
                                                         </div>
                                                     </div>
                                                     <p className="text-gray-700 text-sm leading-relaxed">{review.content}</p>
@@ -349,12 +347,78 @@ const getMissingFields = (profile, t) => {
     return missing;
 };
 
+function ProfileFieldRow({ icon, label, isEditing, isValid, onEdit, onSave, onCancel, displayValue, children }) {
+    return (
+        <div className={`group rounded-2xl transition-all duration-200 ${
+            isEditing
+                ? 'bg-gray-50 border border-emerald-200 p-5'
+                : 'border border-transparent hover:border-gray-100 hover:bg-gray-50/50 p-4'
+        }`}>
+            {isEditing ? (
+                <div className="space-y-3">
+                    <label className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <FontAwesomeIcon icon={icon} className="text-emerald-500" />
+                        {label}
+                    </label>
+                    {children}
+                    <div className="flex gap-2 pt-1">
+                        <button
+                            type="button"
+                            onClick={onSave}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors"
+                        >
+                            <FontAwesomeIcon icon={faFloppyDisk} className="text-[10px]" />
+                            Salvează
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-gray-100 text-gray-600 text-xs font-semibold rounded-xl border border-gray-200 transition-colors"
+                        >
+                            Anulează
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        isValid ? 'bg-emerald-50' : 'bg-red-50'
+                    }`}>
+                        <FontAwesomeIcon icon={icon} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">{label}</p>
+                        <div className="text-sm font-semibold text-gray-900 truncate">{displayValue}</div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onEdit}
+                        className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-emerald-600 bg-white hover:bg-emerald-50 border border-gray-200 hover:border-emerald-200 rounded-xl transition-all duration-150 flex-shrink-0"
+                    >
+                        <FontAwesomeIcon icon={faPen} className="text-[10px]" />
+                        Editează
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function passwordStrength(pwd) {
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    return score;
+}
+
 // ─── ProfilePage principal ────────────────────────────────────
 export default function ProfilePage({ session, onNavigate }) {
     const { t } = useLanguage();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [editing, setEditing] = useState(false);
+    const [editingField, setEditingField] = useState(null);
     const [productsCount, setProductsCount] = useState(0);
     const [showProducts, setShowProducts] = useState(false);
     const [myProducts, setMyProducts] = useState([]);
@@ -375,6 +439,16 @@ export default function ProfilePage({ session, onNavigate }) {
         full_name: '', phone: '', location: '', bio: ''
     });
 
+    // ── PASSWORD CHANGE STATE ─────────────────────────────────
+    const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordLoading, setPasswordLoading] = useState(false);
+    const [showCurrent, setShowCurrent] = useState(false);
+    const [showNew, setShowNew] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+
     useEffect(() => {
         if (session) {
             loadProfile();
@@ -387,7 +461,7 @@ export default function ProfilePage({ session, onNavigate }) {
 
     useEffect(() => {
         if (!session) onNavigate('home');
-    }, [session, onNavigate]);
+    }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (!session) return null;
 
@@ -572,27 +646,49 @@ export default function ProfilePage({ session, onNavigate }) {
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!formData.phone || !/^\+373\d{8}$/.test(formData.phone)) return toast.error('Phone must have the format: +373 + 8 digits');
-        if (!formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) return toast.error('Name can only contain letters and spaces');
-        if (formData.full_name.trim().length < 2) return toast.error('Name must be at least 2 characters');
-        try {
-            setLoading(true);
-            const { error } = await supabase.from('profiles').update({
-                full_name: formData.full_name.trim(), phone: formData.phone,
-                location: formData.location.trim(), bio: formData.bio.trim(),
-                company_name: formData.company_name?.trim() || null,
-                idno: formData.idno?.trim() || null,
-            }).eq('id', session.user.id);
-            if (error) throw error;
-            toast.success(t.profile.toastProfileSaved);
-            setEditing(false);
-            loadProfile();
-        } catch (error) {
-            toast.error('Error updating profile: ' + error.message);
-            setLoading(false);
+    const handleSaveField = async (field) => {
+        if (field === 'full_name') {
+            if (!formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name))
+                return toast.error('Numele poate conține doar litere și spații');
+            if (formData.full_name.trim().length < 2)
+                return toast.error('Numele trebuie să aibă minim 2 caractere');
         }
+        if (field === 'phone') {
+            if (!formData.phone || !/^\+373\d{8}$/.test(formData.phone))
+                return toast.error('Telefonul trebuie să fie în formatul +373 + 8 cifre');
+        }
+        try {
+            const updates = {};
+            if (field === 'full_name') updates.full_name = formData.full_name.trim();
+            if (field === 'phone') updates.phone = formData.phone;
+            if (field === 'location') updates.location = formData.location.trim();
+            if (field === 'bio') updates.bio = formData.bio.trim();
+            if (field === 'b2b') {
+                updates.company_name = formData.company_name?.trim() || null;
+                updates.idno = formData.idno?.trim() || null;
+            }
+            const { error } = await supabase.from('profiles')
+                .update(updates).eq('id', session.user.id);
+            if (error) throw error;
+            toast.success('Salvat!');
+            setEditingField(null);
+            loadProfile();
+        } catch (err) {
+            toast.error('Eroare: ' + err.message);
+        }
+    };
+
+    const handleCancelField = () => {
+        setFormData(prev => ({
+            ...prev,
+            full_name: profile?.full_name || '',
+            phone: profile?.phone || '',
+            location: profile?.location || '',
+            bio: profile?.bio || '',
+            company_name: profile?.company_name || '',
+            idno: profile?.idno || '',
+        }));
+        setEditingField(null);
     };
 
     const handleLogout = async () => {
@@ -601,14 +697,42 @@ export default function ProfilePage({ session, onNavigate }) {
         else toast.success('You have been signed out!');
     };
 
-    const nameInvalidLive = !!formData.full_name && !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name);
-    const nameValidLive = !!formData.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name) && formData.full_name.trim().length >= 2;
-    const phoneDigits = formData.phone ? formData.phone.replace('+373', '') : '';
-    const phoneComplete = formData.phone && formData.phone.length === 12;
-    const phoneValid = formData.phone && /^\+373\d{8}$/.test(formData.phone);
-    const profileNameInvalid = !!profile?.full_name && !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name);
-    const profilePhoneInvalid = !!profile?.phone && !/^\+373\d{8}$/.test(profile.phone);
-    const missingOrInvalidForAds = (!profile?.phone || !profile?.location || !profile?.full_name || !/^\+373\d{8}$/.test(profile?.phone || '') || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile?.full_name || ''));
+    const handleChangePassword = async () => {
+        if (newPassword.length < 8) {
+            toast.error(t.profile.passwordTooShort);
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            toast.error(t.profile.passwordMismatch);
+            return;
+        }
+
+        setPasswordLoading(true);
+        try {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: session.user.email,
+                password: currentPassword,
+            });
+            if (signInError) {
+                toast.error(t.profile.passwordWrongCurrent);
+                setPasswordLoading(false);
+                return;
+            }
+
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+            if (error) throw error;
+
+            toast.success(t.profile.passwordChanged);
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            setShowPasswordForm(false);
+        } catch (err) {
+            toast.error(t.profile.passwordChangeError);
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -711,333 +835,268 @@ export default function ProfilePage({ session, onNavigate }) {
                     {/* ── MAIN CONTENT ── */}
                     <div className="md:col-span-2">
                         <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-lg">
-                            <div className="flex justify-between items-center mb-8">
-                                <h2 className="text-2xl font-bold text-gray-900">{t.profile.myProfile}</h2>
-                                {!editing && (
-                                    <button onClick={() => setEditing(true)} size="sm" className="flex items-center gap-2">
-                                        <FontAwesomeIcon icon={faPenToSquare} />
-                                        {t.profile.editProfile}
-                                    </button>
-                                )}
+                            <h2 className="text-2xl font-bold text-gray-900 mb-8">Profilul meu</h2>
+
+                            <div className="space-y-1">
+
+                                {/* FULL NAME */}
+                                <ProfileFieldRow
+                                    icon={faUser}
+                                    label="Nume"
+                                    isEditing={editingField === 'full_name'}
+                                    isValid={!!(profile?.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name))}
+                                    onEdit={() => setEditingField('full_name')}
+                                    onSave={() => handleSaveField('full_name')}
+                                    onCancel={handleCancelField}
+                                    displayValue={profile?.full_name || <span className="text-red-400 italic">Necompletat</span>}
+                                >
+                                    <Input
+                                        value={formData.full_name}
+                                        onChange={e => setFormData(f => ({ ...f, full_name: e.target.value }))}
+                                        placeholder="Ex: Ion Popescu"
+                                        autoFocus
+                                    />
+                                    {formData.full_name && !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name) && (
+                                        <p className="text-xs text-red-500 mt-1">Doar litere și spații</p>
+                                    )}
+                                </ProfileFieldRow>
+
+                                {/* PHONE */}
+                                <ProfileFieldRow
+                                    icon={faPhone}
+                                    label="Telefon"
+                                    isEditing={editingField === 'phone'}
+                                    isValid={!!(profile?.phone && /^\+373\d{8}$/.test(profile.phone))}
+                                    onEdit={() => setEditingField('phone')}
+                                    onSave={() => handleSaveField('phone')}
+                                    onCancel={handleCancelField}
+                                    displayValue={profile?.phone || <span className="text-red-400 italic">Necompletat</span>}
+                                >
+                                    <div className="flex items-stretch rounded-xl overflow-hidden border border-gray-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-200 bg-white">
+                                        <div className="px-4 py-2.5 bg-gray-50 text-emerald-600 font-bold font-mono border-r border-gray-200 flex items-center text-sm">
+                                            +373
+                                        </div>
+                                        <input
+                                            type="tel"
+                                            value={formData.phone ? formData.phone.replace('+373', '') : ''}
+                                            onChange={e => {
+                                                const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                                                setFormData(f => ({ ...f, phone: value ? `+373${value}` : '' }));
+                                            }}
+                                            placeholder="12345678"
+                                            maxLength={8}
+                                            autoFocus
+                                            className="flex-1 px-4 py-2.5 bg-transparent text-gray-900 focus:outline-none font-mono tracking-wider placeholder:text-gray-400 text-sm"
+                                        />
+                                    </div>
+                                </ProfileFieldRow>
+
+                                {/* LOCATION */}
+                                <ProfileFieldRow
+                                    icon={faLocationDot}
+                                    label="Locație"
+                                    isEditing={editingField === 'location'}
+                                    isValid={!!profile?.location}
+                                    onEdit={() => setEditingField('location')}
+                                    onSave={() => handleSaveField('location')}
+                                    onCancel={handleCancelField}
+                                    displayValue={profile?.location || <span className="text-red-400 italic">Necompletat</span>}
+                                >
+                                    <Input
+                                        value={formData.location}
+                                        onChange={e => setFormData(f => ({ ...f, location: e.target.value }))}
+                                        placeholder="Chișinău, Moldova"
+                                        autoFocus
+                                    />
+                                </ProfileFieldRow>
+
+                                {/* BIO */}
+                                <ProfileFieldRow
+                                    icon={faFileLines}
+                                    label="Despre mine"
+                                    isEditing={editingField === 'bio'}
+                                    isValid={!!profile?.bio}
+                                    onEdit={() => setEditingField('bio')}
+                                    onSave={() => handleSaveField('bio')}
+                                    onCancel={handleCancelField}
+                                    displayValue={
+                                        profile?.bio
+                                            ? <span className="text-gray-700 text-sm leading-relaxed line-clamp-2">{profile.bio}</span>
+                                            : <span className="text-gray-300 italic text-sm">Nu ai adăugat o descriere</span>
+                                    }
+                                >
+                                    <textarea
+                                        value={formData.bio}
+                                        onChange={e => setFormData(f => ({ ...f, bio: e.target.value }))}
+                                        placeholder="Câteva cuvinte despre tine și activitatea ta..."
+                                        rows={3}
+                                        autoFocus
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                                    />
+                                </ProfileFieldRow>
+
                             </div>
 
-                            {editing ? (
-                                <form onSubmit={handleSubmit} className="space-y-6">
-                                    {/* Nume */}
-                                    <div>
-                                        <Input
-                                            label="Name (for listings)"
-                                            value={formData.full_name}
-                                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                            placeholder="e.g.: Maxim, Ion Popescu"
-                                            required
-                                            error={nameInvalidLive ? 'Letters and spaces only (no digits or symbols).' : ''}
-                                            className={nameValidLive ? 'border-emerald-500/60' : ''}
-                                        />
-                                        {nameInvalidLive && (
-                                            <Alert variant="danger" className="mt-3" title="Invalid name">
-                                                Name can only contain <strong>letters and spaces</strong>.
-                                                <div className="text-xs text-red-700 mt-2">✓ Examples: "Maxim", "Ion Popescu", "Maria Stefan"</div>
-                                            </Alert>
-                                        )}
-                                        {nameValidLive && <Alert variant="success" className="mt-3" title="Valid name">You can add listings with this name.</Alert>}
-                                    </div>
+                            {/* Profile incomplete warning */}
+                            {(!profile?.full_name || !profile?.phone || !profile?.location ||
+                                !/^\+373\d{8}$/.test(profile?.phone || '') ||
+                                !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile?.full_name || '')) && (
+                                <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-500 flex-shrink-0" />
+                                    <p className="text-sm text-amber-800 font-medium">
+                                        Completează profilul pentru a putea adăuga anunțuri
+                                    </p>
+                                </div>
+                            )}
 
-                                    {/* Telefon */}
-                                    <div>
-                                        <label className="block text-gray-700 text-sm font-medium mb-2">
-                                            Phone <span className="text-red-500">*</span>
-                                        </label>
-                                        <div className="relative">
-                                            <div className={`flex items-stretch rounded-xl overflow-hidden bg-white transition-colors border ${formData.phone && !phoneValid ? 'border-amber-300' : 'border-gray-200'} focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-200`}>
-                                                <div className="px-4 py-3 bg-gray-100 text-gray-700 font-mono flex items-center border-r border-gray-200">
-                                                    <span className="text-emerald-600 font-bold">+373</span>
-                                                </div>
+                            {/* B2B status card */}
+                            {(profileMarketType === 'b2b' || profileMarketType === 'both') && (
+                                <div className={`rounded-2xl border p-4 mt-4 ${b2bVerified ? 'bg-emerald-50 border-emerald-200' : b2bRequestedAt ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-100'}`}>
+                                    <div className="flex items-start gap-3">
+                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${b2bVerified ? 'bg-emerald-100' : b2bRequestedAt ? 'bg-amber-100' : 'bg-blue-100'}`}>
+                                            <FontAwesomeIcon
+                                                icon={b2bVerified ? faCircleCheck : b2bRequestedAt ? faHourglassHalf : faBuilding}
+                                                className={`text-sm ${b2bVerified ? 'text-emerald-600' : b2bRequestedAt ? 'text-amber-600' : 'text-blue-600'}`}
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900">
+                                                {b2bVerified ? t.profile.b2bStatusVerified : b2bRequestedAt ? t.profile.b2bStatusPending : t.profile.b2bStatusIncomplete}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {b2bVerified
+                                                    ? `${t.profile.b2bCompany}: ${profile?.company_name || '—'} · IDNO: ${profile?.idno || '—'}`
+                                                    : b2bRequestedAt ? t.profile.b2bPendingHint : t.profile.b2bIncompleteHint}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Change Password Section */}
+                            <div className="mt-6">
+                                <button
+                                    onClick={() => setShowPasswordForm(prev => !prev)}
+                                    type="button"
+                                    className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-emerald-600 transition-colors"
+                                >
+                                    <FontAwesomeIcon icon={faLock} className="text-xs" />
+                                    {t.profile.changePassword}
+                                    <FontAwesomeIcon
+                                        icon={faChevronDown}
+                                        style={{ transition: 'transform 300ms ease', transform: showPasswordForm ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                                        className="text-xs"
+                                    />
+                                </button>
+
+                                <div style={{
+                                    maxHeight: showPasswordForm ? '500px' : '0',
+                                    opacity: showPasswordForm ? 1 : 0,
+                                    overflow: 'hidden',
+                                    transition: 'max-height 300ms ease, opacity 300ms ease',
+                                }}>
+                                    <div className="mt-4 p-5 bg-gray-50 rounded-2xl border border-gray-200 space-y-4">
+
+                                        {/* Current password */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">
+                                                {t.profile.currentPassword}
+                                            </label>
+                                            <div className="relative">
                                                 <input
-                                                    type="tel"
-                                                    value={formData.phone ? formData.phone.replace('+373', '') : ''}
-                                                    onChange={(e) => {
-                                                        const value = e.target.value.replace(/\D/g, '').slice(0, 8);
-                                                        setFormData({ ...formData, phone: value ? `+373${value}` : '' });
-                                                    }}
-                                                    placeholder="12345678" maxLength={8}
-                                                    className="flex-1 px-4 py-3 bg-transparent text-gray-900 focus:outline-none font-mono text-lg tracking-wider placeholder:text-gray-400"
-                                                    required
+                                                    type={showCurrent ? 'text' : 'password'}
+                                                    value={currentPassword}
+                                                    onChange={e => setCurrentPassword(e.target.value)}
+                                                    placeholder="••••••••"
+                                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white pr-10"
                                                 />
-                                                {phoneComplete && (
-                                                    <div className="px-3 flex items-center">
-                                                        <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-600 text-xl" />
-                                                    </div>
-                                                )}
+                                                <button type="button" onClick={() => setShowCurrent(p => !p)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                                    <FontAwesomeIcon icon={showCurrent ? faEyeSlash : faEye} className="text-sm" />
+                                                </button>
                                             </div>
-                                            {formData.phone && formData.phone !== '+373' && (
-                                                <div className="mt-2">
-                                                    {phoneValid ? (
-                                                        <p className="text-emerald-600 text-sm flex items-center gap-2">
-                                                            <FontAwesomeIcon icon={faCircleCheck} />
-                                                            Complete and valid number: {formatPhoneDisplay(formData.phone)}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="text-amber-600 text-sm flex items-center gap-2">
-                                                            <FontAwesomeIcon icon={faHourglassHalf} />
-                                                            {8 - phoneDigits.length} more digits needed
-                                                        </p>
-                                                    )}
+                                        </div>
+
+                                        {/* New password */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">
+                                                {t.profile.newPassword}
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showNew ? 'text' : 'password'}
+                                                    value={newPassword}
+                                                    onChange={e => setNewPassword(e.target.value)}
+                                                    placeholder={t.profile.newPasswordPlaceholder}
+                                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white pr-10"
+                                                />
+                                                <button type="button" onClick={() => setShowNew(p => !p)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                                    <FontAwesomeIcon icon={showNew ? faEyeSlash : faEye} className="text-sm" />
+                                                </button>
+                                            </div>
+
+                                            {newPassword.length > 0 && (
+                                                <div className="mt-2 space-y-1">
+                                                    <div className="flex gap-1">
+                                                        {[1, 2, 3, 4].map(i => (
+                                                            <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${
+                                                                i <= passwordStrength(newPassword)
+                                                                    ? ['', 'bg-red-400', 'bg-amber-400', 'bg-emerald-400', 'bg-emerald-600'][i]
+                                                                    : 'bg-gray-200'
+                                                            }`} />
+                                                        ))}
+                                                    </div>
+                                                    <p className="text-xs text-gray-400">
+                                                        {['', t.profile.passwordStrengthVeryWeak, t.profile.passwordStrengthWeak, t.profile.passwordStrengthGood, t.profile.passwordStrengthStrong][passwordStrength(newPassword)]}
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-gray-500 text-xs mt-1">Example: +373 12 34 56 78</p>
-                                    </div>
 
-                                    <Input
-                                        label="Location" value={formData.location}
-                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        placeholder="Chisinau, Moldova" required
-                                    />
-
-                                    <div>
-                                        <label className="block text-gray-700 text-sm font-medium mb-2">About me</label>
-                                        <textarea
-                                            value={formData.bio}
-                                            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                            placeholder="Write a few words about yourself and your activity..."
-                                            rows={4}
-                                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-colors placeholder:text-gray-400"
-                                        />
-                                    </div>
-
-                                    {(profileMarketType === 'b2b' || profileMarketType === 'both') && (
-                                        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 space-y-4">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center">
-                                                    <FontAwesomeIcon icon={faBuilding} className="text-blue-600 text-sm" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-blue-900">{t.profile.b2bSectionTitle}</p>
-                                                    <p className="text-xs text-blue-600">{t.profile.b2bSectionSubtitle}</p>
-                                                </div>
-                                            </div>
-                                            <Input
-                                                label={t.profile.companyName}
-                                                value={formData.company_name}
-                                                onChange={e => setFormData(f => ({ ...f, company_name: e.target.value }))}
-                                                placeholder="Ex: SRL Fructe Proaspete"
-                                            />
-                                            <div>
-                                                <Input
-                                                    label={t.profile.idnoLabel}
-                                                    value={formData.idno}
-                                                    onChange={e => setFormData(f => ({ ...f, idno: e.target.value.replace(/\D/g, '').slice(0, 13) }))}
-                                                    placeholder="Ex: 1234567890123"
+                                        {/* Confirm password */}
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">
+                                                {t.profile.confirmNewPassword}
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showConfirm ? 'text' : 'password'}
+                                                    value={confirmPassword}
+                                                    onChange={e => setConfirmPassword(e.target.value)}
+                                                    placeholder={t.profile.confirmPasswordPlaceholder}
+                                                    className={`w-full border rounded-xl px-4 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 bg-white ${
+                                                        confirmPassword && newPassword !== confirmPassword
+                                                            ? 'border-red-300 focus:ring-red-300'
+                                                            : 'border-gray-200 focus:ring-emerald-400'
+                                                    }`}
                                                 />
-                                                <p className="text-xs text-gray-400 mt-1">{t.profile.idnoHint}</p>
+                                                <button type="button" onClick={() => setShowConfirm(p => !p)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                                    <FontAwesomeIcon icon={showConfirm ? faEyeSlash : faEye} className="text-sm" />
+                                                </button>
                                             </div>
+                                            {confirmPassword && newPassword !== confirmPassword && (
+                                                <p className="text-xs text-red-500 mt-1">{t.profile.passwordMismatch}</p>
+                                            )}
                                         </div>
-                                    )}
 
-                                    {(!formData.phone || !formData.location || !formData.full_name || !/^\+373\d{8}$/.test(formData.phone) || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) && (
-                                        <Alert variant="warning" title="To add listings you must complete:">
-                                            <ul className="text-amber-800 text-sm space-y-1">
-                                                {(!formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name)) && <li>• Valid official name</li>}
-                                                {(!formData.phone || !/^\+373\d{8}$/.test(formData.phone)) && <li>• Complete phone (+373 + 8 digits)</li>}
-                                                {!formData.location && <li>• Location</li>}
-                                            </ul>
-                                        </Alert>
-                                    )}
-
-                                    <div className="flex gap-3 pt-2">
-                                        <button type="submit"
-                                            disabled={loading || !formData.full_name || !/^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(formData.full_name) || !formData.phone || !/^\+373\d{8}$/.test(formData.phone) || !formData.location}
-                                            className="flex items-center gap-2 shadow-lg shadow-emerald-600/15">
-                                            <FontAwesomeIcon icon={faFloppyDisk} />
-                                            {loading ? t.common.loading : t.profile.save}
-                                        </button>
+                                        {/* Submit button */}
                                         <button
-                                            onClick={() => { setEditing(false); setFormData({ full_name: profile?.full_name || '', phone: profile?.phone || '', location: profile?.location || '', bio: profile?.bio || '' }); }}
-                                            type="button" className="flex items-center gap-2">
-                                            <FontAwesomeIcon icon={faBan} />
-                                            {t.profile.cancel}
+                                            type="button"
+                                            onClick={handleChangePassword}
+                                            disabled={passwordLoading || !currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 8}
+                                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+                                        >
+                                            {passwordLoading
+                                                ? <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                                                : <FontAwesomeIcon icon={faFloppyDisk} />
+                                            }
+                                            {passwordLoading ? t.profile.savingPassword : t.profile.savePassword}
                                         </button>
                                     </div>
-                                </form>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-                                            Profile Information
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {/* Name field */}
-                                            {(() => {
-                                                const isValid = profile?.full_name &&
-                                                    /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) &&
-                                                    profile.full_name.trim().length >= 2;
-                                                return (
-                                                    <div className="flex items-center gap-3 py-2 border-b border-gray-50">
-                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                                                            <FontAwesomeIcon icon={faUser} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t.profile.fullName}</p>
-                                                            <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
-                                                                {profile?.full_name || 'Not set'}
-                                                            </p>
-                                                        </div>
-                                                        {isValid ? (
-                                                            <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
-                                                        ) : (
-                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">MISSING</span>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
-
-                                            {/* Phone field */}
-                                            {(() => {
-                                                const isValid = profile?.phone && profile.phone.length >= 10;
-                                                return (
-                                                    <div className="flex items-center gap-3 py-2 border-b border-gray-50">
-                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                                                            <FontAwesomeIcon icon={faPhone} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t.profile.phone}</p>
-                                                            <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
-                                                                {profile?.phone || 'Not set'}
-                                                            </p>
-                                                        </div>
-                                                        {isValid ? (
-                                                            <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
-                                                        ) : (
-                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">MISSING</span>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
-
-                                            {/* Location field */}
-                                            {(() => {
-                                                const isValid = profile?.location && profile.location.trim().length > 0;
-                                                return (
-                                                    <div className="flex items-center gap-3 py-2 border-b border-gray-50">
-                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                                                            <FontAwesomeIcon icon={faLocationDot} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t.profile.location}</p>
-                                                            <p className={`text-sm font-semibold truncate ${isValid ? 'text-gray-900' : 'text-red-500'}`}>
-                                                                {profile?.location || 'Not set'}
-                                                            </p>
-                                                        </div>
-                                                        {isValid ? (
-                                                            <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 flex-shrink-0" />
-                                                        ) : (
-                                                            <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">MISSING</span>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
-
-                                            {/* Bio field */}
-                                            {(() => {
-                                                const isValid = profile?.bio && profile.bio.trim().length > 0;
-                                                return (
-                                                    <div className="flex items-start gap-3 py-2">
-                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-gray-50'}`}>
-                                                            <FontAwesomeIcon icon={faFileLines} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-gray-300'}`} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{t.profile.bio}</p>
-                                                            <p className={`text-sm leading-relaxed ${isValid ? 'text-gray-700' : 'text-gray-300 italic'}`}>
-                                                                {profile?.bio || "You haven't added a description yet."}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-
-                                    {/* B2B status card */}
-                                    {(profileMarketType === 'b2b' || profileMarketType === 'both') && (
-                                        <div className={`rounded-2xl border p-4 mt-2 ${b2bVerified ? 'bg-emerald-50 border-emerald-200' : b2bRequestedAt ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-100'}`}>
-                                            <div className="flex items-start gap-3">
-                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${b2bVerified ? 'bg-emerald-100' : b2bRequestedAt ? 'bg-amber-100' : 'bg-blue-100'}`}>
-                                                    <FontAwesomeIcon
-                                                        icon={b2bVerified ? faCircleCheck : b2bRequestedAt ? faHourglassHalf : faBuilding}
-                                                        className={`text-sm ${b2bVerified ? 'text-emerald-600' : b2bRequestedAt ? 'text-amber-600' : 'text-blue-600'}`}
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-gray-900">
-                                                        {b2bVerified ? t.profile.b2bStatusVerified : b2bRequestedAt ? t.profile.b2bStatusPending : t.profile.b2bStatusIncomplete}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 mt-0.5">
-                                                        {b2bVerified
-                                                            ? `${t.profile.b2bCompany}: ${profile?.company_name || '—'} · IDNO: ${profile?.idno || '—'}`
-                                                            : b2bRequestedAt ? t.profile.b2bPendingHint : t.profile.b2bIncompleteHint}
-                                                    </p>
-                                                </div>
-                                                {!b2bVerified && (
-                                                    <button
-                                                        onClick={() => setEditing(true)}
-                                                        className="text-xs text-blue-600 hover:text-blue-700 font-semibold bg-white border border-blue-200 px-3 py-1.5 rounded-xl transition flex-shrink-0"
-                                                    >
-                                                        {b2bRequestedAt ? t.profile.b2bEdit : t.profile.b2bComplete}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Incomplete profile alert */}
-                                    {getMissingFields(profile, t).length > 0 && (
-                                        <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
-                                            <div className="flex items-start gap-3 mb-4">
-                                                <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-500 text-sm" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-red-700 text-sm">You cannot add listings</h3>
-                                                    <p className="text-xs text-red-500 mt-0.5">Complete your profile to unlock this feature.</p>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2 mb-4">
-                                                {[
-                                                    {
-                                                        done: profile?.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) && profile.full_name.trim().length >= 2,
-                                                        label: 'Valid name (letters only)'
-                                                    },
-                                                    {
-                                                        done: profile?.phone && profile.phone.length >= 10,
-                                                        label: 'Phone number (+373...)'
-                                                    },
-                                                    {
-                                                        done: profile?.location && profile.location.trim().length > 0,
-                                                        label: 'Location'
-                                                    },
-                                                ].map((item, idx) => (
-                                                    <div key={idx} className="flex items-center gap-2.5">
-                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${item.done ? 'bg-emerald-500' : 'bg-white border-2 border-red-300'}`}>
-                                                            {item.done && <FontAwesomeIcon icon={faCheck} className="text-white text-[9px]" />}
-                                                        </div>
-                                                        <span className={`text-sm ${item.done ? 'text-emerald-700 line-through opacity-60' : 'text-red-600 font-medium'}`}>
-                                                            {item.label}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <button
-                                                onClick={() => setEditing(true)}
-                                                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <FontAwesomeIcon icon={faPen} className="text-xs" />
-                                                Complete Now
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
-                            )}
+                            </div>
                         </div>
 
                         {/* ── SETĂRI & PREFERINȚE ── */}
@@ -1179,7 +1238,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                                         }`}>
                                                         <ProductCard product={product} session={session} onViewDetails={handleViewDetails} onContactClick={handleContactClick} />
                                                         {/* Edit action bar */}
-                                                        <div className="px-4 pb-3 bg-white flex gap-2">
+                                                        <div className="px-4 pb-3 bg-white flex gap-2 rounded-b-2xl">
                                                             <button
                                                                 onClick={() => setEditingProductId(product.id)}
                                                                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs rounded-xl transition-all"
@@ -1205,7 +1264,6 @@ export default function ProfilePage({ session, onNavigate }) {
                                                                 className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110" title="Archive listing">
                                                                 <FontAwesomeIcon icon={faXmark} />
                                                             </button>
-                                                            <Toaster position="bottom-right" reverseOrder={false} />
                                                         </div>
                                                         {product.status === 'archived' && (
                                                             <div className="absolute top-16 right-4 z-10">

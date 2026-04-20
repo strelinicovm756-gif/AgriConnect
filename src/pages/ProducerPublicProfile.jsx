@@ -10,6 +10,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getCategoryName } from '../i18n/categoryTranslations';
 import {
     Star, MessageSquare, MapPin, Leaf, Package,
     ChevronDown, ChevronUp,
@@ -136,7 +137,7 @@ const PRODUCTS_PER_PAGE = 6;
 const REVIEWS_PER_PAGE = 4;
 
 export default function ProducerPublicProfile({ session, onNavigate }) {
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
     const { id: producerId } = useParams();
 
     const [producer, setProducer] = useState(null);
@@ -438,7 +439,7 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                             <select value={category} onChange={e => { setCategory(e.target.value); setProductPage(1); }}
                                                 className="pl-8 pr-7 py-2.5 bg-gray-50 border border-gray-200 hover:border-emerald-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-300 appearance-none cursor-pointer transition-all">
                                                 <option value="">All</option>
-                                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                                {categories.map(c => <option key={c} value={c}>{getCategoryName(c?.toLowerCase().replace(/ /g, '-'), lang)}</option>)}
                                             </select>
                                         </div>
                                     )}

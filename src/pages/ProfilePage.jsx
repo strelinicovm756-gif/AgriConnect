@@ -21,7 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import {
     Star, MessageSquare, Package,
-    ExternalLink, Pencil, Trash2, Calendar
+    ExternalLink, Pencil, Trash2, Calendar, Bell
 } from 'lucide-react';
 
 function LangPills() {
@@ -432,6 +432,9 @@ export default function ProfilePage({ session, onNavigate }) {
     const [profileMarketType, setProfileMarketType] = useState('b2c');
     const [b2bVerified, setB2bVerified] = useState(false);
     const [b2bRequestedAt, setB2bRequestedAt] = useState(null);
+    const [followedProducers, setFollowedProducers] = useState([]);
+    const [loadingFollowed, setLoadingFollowed] = useState(false);
+    const [showFollowed, setShowFollowed] = useState(false);
 
     // ── RATING STATE ──────────────────────────────────────────
     const [avgRating, setAvgRating] = useState(0);
@@ -775,6 +778,42 @@ export default function ProfilePage({ session, onNavigate }) {
             idno: profile?.idno || '',
         }));
         setEditingField(null);
+    };
+
+    const loadFollowedProducers = async () => {
+        setLoadingFollowed(true);
+        try {
+            const { data: follows, error: followsError } = await supabase
+                .from('producer_follows')
+                .select('producer_id, created_at')
+                .eq('follower_id', session.user.id)
+                .order('created_at', { ascending: false });
+            if (followsError) throw followsError;
+            if (!follows || follows.length === 0) { setFollowedProducers([]); return; }
+
+            const ids = follows.map(f => f.producer_id);
+            const { data: profiles, error: profilesError } = await supabase
+                .from('profiles')
+                .select('id, full_name, location, avatar_url, is_verified, market_type')
+                .in('id', ids);
+            if (profilesError) throw profilesError;
+
+            const profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+            setFollowedProducers(follows.map(f => ({ ...profileMap[f.producer_id], followedAt: f.created_at })).filter(p => p.id));
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingFollowed(false);
+        }
+    };
+
+    const handleUnfollow = async (producerId) => {
+        await supabase.from('producer_follows')
+            .delete()
+            .eq('follower_id', session.user.id)
+            .eq('producer_id', producerId);
+        setFollowedProducers(prev => prev.filter(p => p.id !== producerId));
+        toast.success('Ai încetat să urmărești acest producător');
     };
 
     const handleLogout = async () => {
@@ -1399,6 +1438,111 @@ export default function ProfilePage({ session, onNavigate }) {
 
                         {/* Recenzii lăsate */}
                         <MyReviewsSection session={session} onNavigate={onNavigate} />
+
+                        {/* ── PRODUCĂTORI URMĂRIȚI ── */}
+                        <div className="bg-white rounded-3xl border border-gray-200 shadow-lg overflow-hidden mt-8">
+                            <button
+                                onClick={() => {
+                                    if (!showFollowed && followedProducers.length === 0) loadFollowedProducers();
+                                    setShowFollowed(!showFollowed);
+                                }}
+                                className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center">
+                                        <Bell size={18} className="text-emerald-600" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="font-bold text-gray-900">Producători urmăriți</p>
+                                        <p className="text-gray-500 text-sm">
+                                            {loadingFollowed ? 'Se încarcă...' : `${followedProducers.length} producător${followedProducers.length !== 1 ? 'i' : ''}`}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {followedProducers.length > 0 && (
+                                        <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                                            {followedProducers.length}
+                                        </span>
+                                    )}
+                                    <FontAwesomeIcon
+                                        icon={faChevronDown}
+                                        className="text-gray-400 text-sm"
+                                        style={{
+                                            transform: showFollowed ? 'rotate(180deg)' : 'rotate(0deg)',
+                                            transition: 'transform 0.3s ease-in-out',
+                                        }}
+                                    />
+                                </div>
+                            </button>
+
+                            <div style={{
+                                overflow: 'hidden',
+                                maxHeight: showFollowed ? '2000px' : '0px',
+                                opacity: showFollowed ? 1 : 0,
+                                transition: 'max-height 0.4s ease-in-out, opacity 0.3s ease-in-out',
+                            }}>
+                                <div className="border-t border-gray-100 p-6">
+                                    {loadingFollowed ? (
+                                        <div className="flex justify-center py-8">
+                                            <Metronome size="30" speed="1.6" color="#059669" />
+                                        </div>
+                                    ) : followedProducers.length === 0 ? (
+                                        <div className="text-center py-10 text-gray-400">
+                                            <Bell size={40} className="mx-auto mb-3 opacity-30" />
+                                            <p className="font-medium text-gray-500">Nu urmărești niciun producător</p>
+                                            <p className="text-sm mt-1">Vizitează profilul unui producător și apasă "Urmărește"</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {followedProducers.map((producer) => (
+                                                <div key={producer.id}
+                                                    className="flex items-center gap-3 p-3 rounded-2xl border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all group">
+                                                    {/* Avatar */}
+                                                    <div
+                                                        className="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center text-white font-black text-base shadow-sm"
+                                                        style={{ background: getColorForName(producer.id || producer.full_name) }}
+                                                    >
+                                                        {(producer.full_name?.[0] || '?').toUpperCase()}
+                                                    </div>
+                                                    {/* Info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-bold text-gray-900 text-sm truncate">{producer.full_name || 'Producător'}</p>
+                                                            {producer.is_verified && (
+                                                                <FontAwesomeIcon icon={faCircleCheck} className="text-emerald-500 text-xs flex-shrink-0" />
+                                                            )}
+                                                        </div>
+                                                        {producer.location && (
+                                                            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                                                <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
+                                                                {producer.location}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    {/* Actions */}
+                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                        <button
+                                                            onClick={() => onNavigate('producator', producer.id)}
+                                                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors border border-emerald-200"
+                                                        >
+                                                            Vezi profil
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleUnfollow(producer.id)}
+                                                            className="text-xs font-semibold text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
+                                                            title="Dezabonează-te"
+                                                        >
+                                                            <FontAwesomeIcon icon={faXmark} className="text-xs" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
 
                         {/* ── ANUNȚURILE MELE ── */}
                         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mt-8">

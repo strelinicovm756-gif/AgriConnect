@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useFollow } from '../hooks/useFollow';
 import { getColorForName } from '../lib/utils';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
@@ -15,7 +16,7 @@ import {
     Star, MessageSquare, MapPin, Leaf, Package,
     ChevronDown, ChevronUp,
     Search, X, SlidersHorizontal, MessageCircle, Calendar,
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight, Bell, BellOff
 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBuilding } from '@fortawesome/free-solid-svg-icons';
@@ -155,6 +156,8 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
     const [reviewPage, setReviewPage] = useState(1);
     const [showChatModal, setShowChatModal] = useState(false);
 
+    const { isFollowing, followersCount, loading: followLoading, toggleFollow } = useFollow(session, producerId);
+
     useEffect(() => {
         const t = setTimeout(() => { setDebouncedQ(searchQuery); setProductPage(1); }, 300);
         return () => clearTimeout(t);
@@ -291,6 +294,30 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                 {!isOwnProfile ? (
                                     <>
                                         <button
+                                            onClick={async () => {
+                                                if (!session) { onNavigate('login'); return; }
+                                                const ok = await toggleFollow();
+                                                if (ok) {
+                                                    toast.success(isFollowing ? 'Ai încetat să urmărești acest producător' : 'Urmărești acest producător! Vei fi notificat despre produse noi.');
+                                                }
+                                            }}
+                                            disabled={followLoading}
+                                            className={`flex items-center gap-2 font-semibold px-5 py-2.5 rounded-xl transition-all text-sm border ${
+                                                isFollowing
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                                                    : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-sm'
+                                            }`}
+                                        >
+                                            {followLoading ? (
+                                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : isFollowing ? (
+                                                <BellOff size={14} />
+                                            ) : (
+                                                <Bell size={14} />
+                                            )}
+                                            {isFollowing ? 'Urmărești' : 'Urmărește'}
+                                        </button>
+                                        <button
                                             onClick={() => {
                                                 if (!session) { onNavigate('login'); return; }
                                                 setShowChatModal(true);
@@ -348,6 +375,14 @@ export default function ProducerPublicProfile({ session, onNavigate }) {
                                             </div>
                                         );
                                     })}
+                                </div>
+                            )}
+                            {followersCount > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+                                    <Bell size={12} className="text-emerald-600" />
+                                    <span className="text-xs text-gray-500">
+                                        <span className="font-bold text-gray-900">{followersCount}</span> abonat{followersCount !== 1 ? 'ți' : ''}
+                                    </span>
                                 </div>
                             )}
                         </div>

@@ -637,92 +637,123 @@ export default function EventsPage({ session, onNavigate }) {
 
           {/* ── Unified filter bar ── */}
           <div
-            className="bg-white rounded-2xl border border-gray-100 px-5 py-4 mb-6"
+            className=" group bg-white rounded-2xl border border-gray-100 px-5 py-3 mb-6 flex flex-wrap items-center gap-3"
             style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
           >
-            {/* Filter row: tabs LEFT + notify button RIGHT */}
-            <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  { key: 'events', label: t.events.tabEvents },
-                  { key: 'markets', label: t.events.tabMarkets },
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all border ${activeTab === tab.key
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-700'
-                      }`}>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
+            {/* Tab buttons */}
+            <div className="flex gap-1.5">
+              {[
+                { key: 'events', label: t.events.tabEvents },
+                { key: 'markets', label: t.events.tabMarkets },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${activeTab === tab.key
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-700'
+                    }`}>
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            {/* Period + location filter bar */}
-            <div className="flex items-center justify-between gap-4 flex-col sm:flex-row">
-              <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-0.5 w-full sm:w-auto">
-                {PERIOD_FILTERS.map(pf => (
-                  <button
-                    key={pf.key}
-                    onClick={() => setPeriodFilter(pf.key)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-1 sm:flex-none ${periodFilter === pf.key
-                      ? 'bg-white text-emerald-700 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                      }`}>
-                    {pf.label}
-                  </button>
-                ))}
-              </div>
+            {/* Divider */}
+            <div className="w-px h-6 bg-gray-200 hidden sm:block" />
 
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                {(periodFilter !== 'all' || locationFilter) && (
-                  <span className="text-xs text-gray-400 font-medium whitespace-nowrap">
-                    {filteredItems.length} {filteredItems.length === 1 ? t.events.eventSingular : t.events.eventPlural}
-                  </span>
-                )}
-                {uniqueLocations.length > 0 && (
-                  <div className="relative">
-                    <FontAwesomeIcon
-                      icon={faLocationDot}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"
-                    />
-                    <select
-                      value={locationFilter}
-                      onChange={e => setLocationFilter(e.target.value)}
-                      className="pl-8 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-700 hover:border-emerald-300 focus:ring-2 focus:ring-emerald-200 focus:outline-none appearance-none cursor-pointer transition-all font-medium">
-                      <option value="">{t.events.allLocations}</option>
-                      {uniqueLocations.map(loc => (
-                        <option key={loc} value={loc}>{loc}</option>
-                      ))}
-                    </select>
-                    <FontAwesomeIcon
-                      icon={faChevronDown}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"
-                    />
-                  </div>
-                )}
-              </div>
+            {/* Period filter pills */}
+            <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-0.5">
+              {PERIOD_FILTERS.map(pf => (
+                <button
+                  key={pf.key}
+                  onClick={() => setPeriodFilter(pf.key)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${periodFilter === pf.key
+                    ? 'bg-white text-emerald-700 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}>
+                  {pf.label}
+                </button>
+              ))}
             </div>
-          </div>{/* ── end unified filter bar ── */}
 
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Location dropdown */}
+            {uniqueLocations.length > 0 && (
+              <div className="relative group min-w-[180px]">
+                {/* Iconița Locație - Devine verde la focus */}
+                <FontAwesomeIcon
+                  icon={faLocationDot}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none 
+               group-hover:text-emerald-600 group-focus-within:text-emerald-600 
+               transition-colors duration-300"
+                />
+
+                <select
+                  value={locationFilter}
+                  onChange={e => setLocationFilter(e.target.value)}
+                  className="w-full pl-9 pr-10 py-2 bg-gray-100 border border-transparent rounded-xl text-xs font-semibold text-gray-700 
+                  appearance-none cursor-pointer transition-all duration-300 shadow-sm
+                  hover:bg-white hover:text-emerald-600 hover:shadow-md
+                   focus:outline-none">
+                  <option value="">{t.events.allLocations}</option>
+                  {uniqueLocations.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+
+
+
+                {/* Container Săgeată - Se rotește la focus-within */}
+                <div
+                  className="absolute right-3 inset-y-0 flex items-center pointer-events-none transition-transform duration-700 group-focus-within:rotate-180"
+                  style={{ transitionTimingFunction: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)' }}
+                >
+                  <FontAwesomeIcon
+                    icon={faChevronDown}
+                    className="text-gray-400 group-focus-within:text-emerald-600 text-[10px]"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── end unified filter bar ── */}
           {/* Event grid or empty state */}
           {filteredItems.length === 0 ? (
             <EmptyState isMarkets={activeTab === 'markets'} t={t} />
           ) : (
-            <div className="shadow-xl bg-emerald-600 rounded-2xl  px-5 py-4 mb-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
-              {filteredItems.map(ev => (
-                <EventCard
-                  key={ev.id}
-                  event={ev}
-                  typeConfig={TYPE_CONFIG}
-                  onNavigate={onNavigate}
-                  t={t}
-                  formatDate={formatDate}
-                />
-              ))}
+            <div
+              className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6"
+              style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+            >
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-emerald-600">
+                <span className="text-sm font-semibold text-white">
+                  {filteredItems.length} {filteredItems.length === 1 ? t.events.eventSingular : t.events.eventPlural}
+                </span>
+                {(periodFilter !== 'all' || locationFilter) && (
+                  <button
+                    onClick={() => { setPeriodFilter('all'); setLocationFilter(''); }}
+                    className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
+                  >
+                    <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                    Resetează filtrele
+                  </button>
+                )}
+              </div>
+              <div className="p-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredItems.map(ev => (
+                  <EventCard
+                    key={ev.id}
+                    event={ev}
+                    typeConfig={TYPE_CONFIG}
+                    onNavigate={onNavigate}
+                    t={t}
+                    formatDate={formatDate}
+                  />
+                ))}
+              </div>
             </div>
           )}
 

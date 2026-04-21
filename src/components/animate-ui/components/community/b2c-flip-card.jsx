@@ -6,6 +6,7 @@ import {
   faDrumstickBite, faEgg, faJar, faWheatAwn, faLeaf,
 } from '@fortawesome/free-solid-svg-icons';
 import { getColorForName } from '../../../../lib/utils';
+import { useLanguage } from '../../../../i18n/LanguageContext';
 
 const CATEGORY_ICON = {
   'Legume':   faCarrot,
@@ -25,6 +26,7 @@ function catIcon(cat) {
 }
 
 export function B2CFlipCard({ provider, onNavigate }) {
+  const { t } = useLanguage();
   const [isFlipped, setIsFlipped] = React.useState(false);
   const color = getColorForName(provider.id || provider.name);
 
@@ -81,7 +83,7 @@ export function B2CFlipCard({ provider, onNavigate }) {
             </span>
           )}
 
-          <p className="text-[10px] text-gray-300 mt-auto">Hover for details</p>
+          <p className="text-[10px] text-gray-300 mt-auto">{t.features.flipCardHoverHint}</p>
         </div>
 
         {/* ── BACK: întunecat cu categorii + buton ── */}
@@ -89,7 +91,7 @@ export function B2CFlipCard({ provider, onNavigate }) {
           {/* Categories */}
           <div className="flex-1">
             <p className="text-xs font-bold text-white uppercase tracking-wider mb-3">
-              Products Offered
+              {t.features.flipCardProductsOffered}
             </p>
             <ul className="space-y-2">
               {provider.categories?.slice(0, 4).map(cat => (
@@ -99,7 +101,7 @@ export function B2CFlipCard({ provider, onNavigate }) {
                 </li>
               ))}
               {(!provider.categories || provider.categories.length === 0) && (
-                <li className="text-sm text-gray-400 italic">General products</li>
+                <li className="text-xl font-bold text-gray-400 italic">{t.features.flipCardGeneralProducts}</li>
               )}
             </ul>
           </div>
@@ -108,14 +110,14 @@ export function B2CFlipCard({ provider, onNavigate }) {
           <div className="flex flex-col gap-2">
             {provider.productsCount > 0 && (
               <p className="text-center text-xs text-white font-medium">
-                <span className="text-white font-bold">{provider.productsCount}</span> active products
+                <span className="text-white text-xl font-bold">{provider.productsCount}</span> {t.features.flipCardActiveProducts}
               </p>
             )}
             <button
               onClick={(e) => { e.stopPropagation(); onNavigate(); }}
               className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              View Full Profile
+              {t.features.flipCardViewProfile}
             </button>
           </div>
         </div>

@@ -14,7 +14,8 @@ import {
   faTriangleExclamation, faCircleCheck,
   faLocationDot, faLocationCrosshairs, faMapMarkerAlt,
   faTractor, faFlask, faWrench, faDroplet,
-  faLeaf, faChevronDown
+  faLeaf, faChevronDown,
+  faShieldHalved, faArrowRight, faCheck, faXmark
 } from '@fortawesome/free-solid-svg-icons';
 
 // ── Icon map: DB string → FontAwesome component ─────────────────
@@ -168,6 +169,10 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   const [activeGroup, setActiveGroup] = useState('b2c'); // 'b2c' | 'b2b'
   const [expiresAt, setExpiresAt] = useState(product?.expires_at || '');
   const [b2bVerified, setB2bVerified] = useState(false);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [showPolicyBanner, setShowPolicyBanner] = useState(false);
+  const [policyChecked, setPolicyChecked] = useState(false);
+  const [profile, setProfile] = useState(null);
 
   // ── Categories from DB ─────────────────────────────────────
   const [categories, setCategories] = useState([]);
@@ -194,6 +199,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   const isB2B = activeGroup === 'b2b';
   const selectedCategoryData = categories.find(c => c.id === formData.category_id);
   const isB2BCategory = selectedCategoryData?.market_type === 'b2b';
+  const hasValidPhone = profile?.phone && /^\+373\d{8}$/.test(profile.phone);
   const availableUnits = useMemo(() => {
     if (!formData.category_id || categories.length === 0) return CATEGORY_UNITS['default'];
     const selectedCat = categories.find(c => c.id === formData.category_id);
@@ -263,6 +269,15 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   // Când schimbi grupul (B2C/B2B), selectează prima categorie din grup
   const handleGroupChange = (groupType) => {
     setActiveGroup(groupType);
+    if (groupType === 'b2b') {
+      setPolicyAccepted(true);
+      setShowPolicyBanner(false);
+    } else {
+      if (!profile?.policy_accepted_at) {
+        setPolicyAccepted(false);
+        setShowPolicyBanner(true);
+      }
+    }
     const firstCat = categories.find(c => c.market_type === groupType || c.market_type === 'both');
     if (firstCat) handleCategoryChange(firstCat);
   };
@@ -273,6 +288,19 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
       fetchCategories();
     }
   }, [isOpen, session]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPolicyChecked(false);
+      if (!profile?.policy_accepted_at) {
+        setPolicyAccepted(false);
+        setShowPolicyBanner(true);
+      } else {
+        setPolicyAccepted(true);
+        setShowPolicyBanner(false);
+      }
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -357,22 +385,27 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
   const checkProfile = async () => {
     try {
       setCheckingProfile(true);
-      const { data: profile, error } = await supabase
-        .from('profiles').select('phone, location, full_name, b2b_verified')
+      const { data: profileData, error } = await supabase
+        .from('profiles').select('phone, location, full_name, b2b_verified, policy_accepted_at')
         .eq('id', session.user.id).maybeSingle();
       if (error) throw error;
-      if (!profile) { toast.error('Profile is incomplete.'); onClose(); return; }
-      const isNameValid = profile.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profile.full_name) && profile.full_name.trim().length >= 2;
-      if (!profile.phone || !profile.location || !isNameValid) {
+      if (!profileData) { toast.error('Profile is incomplete.'); onClose(); return; }
+      const isNameValid = profileData.full_name && /^[a-zA-ZăâîșțĂÂÎȘȚ\s]+$/.test(profileData.full_name) && profileData.full_name.trim().length >= 2;
+      if (!profileData.phone || !profileData.location || !isNameValid) {
         const missing = [];
         if (!isNameValid) missing.push('valid name');
-        if (!profile.phone) missing.push('phone');
-        if (!profile.location) missing.push('location');
+        if (!profileData.phone) missing.push('phone');
+        if (!profileData.location) missing.push('location');
         toast.error(`Please complete in your profile: ${missing.join(', ')}`, { duration: 6000 });
         onClose(); return;
       }
-      setFormData(prev => ({ ...prev, location: profile.location }));
-      setB2bVerified(!!profile.b2b_verified);
+      setProfile(profileData);
+      setFormData(prev => ({ ...prev, location: profileData.location }));
+      setB2bVerified(!!profileData.b2b_verified);
+      if (profileData.policy_accepted_at) {
+        setPolicyAccepted(true);
+        setShowPolicyBanner(false);
+      }
     } catch (err) {
       toast.error('Eroare: ' + err.message); onClose();
     } finally {
@@ -431,6 +464,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
+    if (!isB2B && !policyAccepted) { setShowPolicyBanner(true); return; }
     if (isB2BCategory && !b2bVerified) { toast.error(t.features.b2bNotVerifiedError); return; }
     if (!validateForm()) { toast.error(t.features.fillFieldsCorrectly); return; }
     if (galleryImages.some(img => img.isUploading)) { toast.error(t.features.waitForUpload); return; }
@@ -489,11 +523,186 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
         .custom-scroll { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
         .custom-scroll:hover { scrollbar-color: #10b981 transparent; }
       `}</style>
-      <div className="bg-white overflow-hidden rounded-b-3xl rounded-3xl max-w-3xl w-full shadow-2xl flex flex-col" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+      <div className="bg-white overflow-hidden rounded-b-3xl rounded-3xl max-w-3xl w-full shadow-2xl flex flex-col relative" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+
+        {/* ── Policy Agreement Banner (B2C only, Step 0) ── */}
+        {showPolicyBanner && (
+          <div className="absolute inset-0 z-50 bg-white rounded-2xl flex flex-col overflow-hidden">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <FontAwesomeIcon icon={faShieldHalved} className="text-emerald-600 text-lg" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900 text-base">
+                    {t.features.policyTitle ?? 'Politica Platformei'}
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    {t.features.policySubtitle ?? 'Citește și acceptă înainte de a posta'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition"
+              >
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4 custom-scroll">
+
+              {/* Phone warning — only if phone is missing/invalid */}
+              {!hasValidPhone && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-red-500 text-sm" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-red-700 text-sm">
+                      {t.features.phoneRequiredTitle ?? 'Număr de telefon necesar'}
+                    </p>
+                    <p className="text-xs text-red-600 mt-0.5">
+                      {t.features.phoneRequiredDesc ?? 'Pentru a posta produse alimentare, trebuie să ai un număr de telefon valid (+373XXXXXXXX) în profilul tău. Cumpărătorii îl vor folosi pentru a te contacta.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); onNavigate?.('profil'); }}
+                      className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-red-600 hover:text-red-800 transition"
+                    >
+                      <FontAwesomeIcon icon={faArrowRight} className="text-[10px]" />
+                      {t.features.goToProfile ?? 'Mergi la profil pentru a adăuga telefonul →'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Rules list */}
+              <div className="bg-gray-50 rounded-2xl p-5 space-y-3">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
+                  {t.features.platformRules ?? 'Regulile Platformei'}
+                </p>
+
+                {[
+                  {
+                    icon: faCircleCheck,
+                    color: 'text-emerald-600',
+                    bg: 'bg-emerald-50',
+                    title: t.features.rule1Title ?? 'Calitatea produsului',
+                    desc: t.features.rule1Desc ?? 'Îmi asum responsabilitatea pentru calitatea și autenticitatea produselor pe care le postez.',
+                  },
+                  {
+                    icon: faCircleCheck,
+                    color: 'text-emerald-600',
+                    bg: 'bg-emerald-50',
+                    title: t.features.rule2Title ?? 'Informații corecte',
+                    desc: t.features.rule2Desc ?? 'Prețurile, locația și descrierea produsului trebuie să fie reale și actualizate.',
+                  },
+                  {
+                    icon: faCircleCheck,
+                    color: 'text-emerald-600',
+                    bg: 'bg-emerald-50',
+                    title: t.features.rule3Title ?? 'Produse permise',
+                    desc: t.features.rule3Desc ?? 'Pot posta doar produse alimentare proprii sau produse din propria gospodărie.',
+                  },
+                  {
+                    icon: faCircleCheck,
+                    color: 'text-emerald-600',
+                    bg: 'bg-emerald-50',
+                    title: t.features.rule4Title ?? 'Contact valid',
+                    desc: t.features.rule4Desc ?? 'Numărul de telefon trebuie să fie real și activ.',
+                  },
+                  {
+                    icon: faTriangleExclamation,
+                    color: 'text-amber-600',
+                    bg: 'bg-amber-50',
+                    title: t.features.rule5Title ?? 'Consecințe',
+                    desc: t.features.rule5Desc ?? 'Nerespectarea regulilor poate duce la ștergerea anunțului și suspendarea contului fără preaviz.',
+                  },
+                ].map((rule, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${rule.bg}`}>
+                      <FontAwesomeIcon icon={rule.icon} className={`text-xs ${rule.color}`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{rule.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{rule.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Legal note */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                <p className="text-xs text-blue-700 leading-relaxed">
+                  {t.features.policyLegalNote ?? 'Prin acceptarea acestei politici, confirmi că ai citit și înțeles regulile platformei Sezon și ești de acord cu Termenii și Condițiile de utilizare.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Footer with checkbox + button */}
+            <div className="flex-shrink-0 px-6 py-4 border-t border-gray-100 bg-white space-y-3">
+
+              {/* Checkbox */}
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div
+                  onClick={() => setPolicyChecked(p => !p)}
+                  className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                    policyChecked
+                      ? 'bg-emerald-600 border-emerald-600'
+                      : 'border-gray-300 group-hover:border-emerald-400'
+                  }`}
+                >
+                  {policyChecked && <FontAwesomeIcon icon={faCheck} className="text-white text-[10px]" />}
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {t.features.policyCheckboxLabel ?? 'Am citit și accept Politica Platformei. Îmi asum responsabilitatea pentru calitatea și autenticitatea produselor pe care le postez.'}
+                </p>
+              </label>
+
+              {/* Accept button */}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!policyChecked) {
+                    toast.error(t.features.policyMustAccept ?? 'Trebuie să accepți politica platformei pentru a continua');
+                    return;
+                  }
+                  if (!hasValidPhone) {
+                    toast.error(t.features.phoneRequiredToast ?? 'Adaugă un număr de telefon valid în profil înainte de a posta');
+                    return;
+                  }
+                  const { error } = await supabase
+                    .from('profiles')
+                    .update({ policy_accepted_at: new Date().toISOString() })
+                    .eq('id', session.user.id);
+                  if (error) {
+                    console.error('Error saving policy acceptance:', error);
+                  }
+                  setProfile(prev => prev ? { ...prev, policy_accepted_at: new Date().toISOString() } : prev);
+                  setPolicyAccepted(true);
+                  setShowPolicyBanner(false);
+                }}
+                disabled={!policyChecked || !hasValidPhone}
+                className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                  policyChecked && hasValidPhone
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <FontAwesomeIcon icon={faShieldHalved} />
+                {t.features.policyAcceptBtn ?? 'Accept și continuă'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-5 flex justify-between items-center rounded-t-3xl flex-shrink-0">
-          <div>
+          <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-gray-900">{t.features.addNewProduct}</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">

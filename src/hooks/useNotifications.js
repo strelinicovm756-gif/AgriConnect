@@ -57,11 +57,11 @@ export function useNotifications(session) {
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'notifications',
         filter: `user_id=eq.${session.user.id}`,
-      }, fetchAll)
+      }, () => fetchAll())
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'annonce_notifications',
         filter: `id_profiles=eq.${session.user.id}`,
-      }, fetchAll)
+      }, () => fetchAll())
       .subscribe();
 
     return () => supabase.removeChannel(channel);

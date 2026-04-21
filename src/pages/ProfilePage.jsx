@@ -17,7 +17,7 @@ import {
     faRightFromBracket, faImages, faRotateRight,
     faCheck, faPen, faStar, faFileLines, faGear, faGlobe, faBell,
     faCarrot, faTractor, faUsers, faStore, faBuilding,
-    faLock, faEye, faEyeSlash, faSpinner,
+    faLock, faEye, faEyeSlash, faSpinner, faPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import {
     Star, MessageSquare, Package,
@@ -350,7 +350,7 @@ const getMissingFields = (profile, t) => {
 function ProfileFieldRow({ icon, label, isEditing, isValid, onEdit, onSave, onCancel, displayValue, children }) {
     return (
         <div className={`group rounded-2xl transition-all duration-200 ${isEditing
-                ? 'bg-gray-50 border border-emerald-200 p-5'
+                ? 'bg-gray-50 p-5'
                 : 'border border-transparent hover:border-gray-100 hover:bg-gray-50/50 p-4'
             }`}>
             {isEditing ? (
@@ -425,6 +425,10 @@ export default function ProfilePage({ session, onNavigate }) {
     const [dismissedBanner, setDismissedBanner] = useState(false);
     const [dismissedExpiryBanner, setDismissedExpiryBanner] = useState(false);
     const [notifyEvents, setNotifyEvents] = useState(false);
+    const [notificationLocations, setNotificationLocations] = useState([]);
+    const [newLocationInput, setNewLocationInput] = useState('');
+    const [locationSaving, setLocationSaving] = useState(false);
+    const [notificationLocationsCoords, setNotificationLocationsCoords] = useState([]);
     const [profileMarketType, setProfileMarketType] = useState('b2c');
     const [b2bVerified, setB2bVerified] = useState(false);
     const [b2bRequestedAt, setB2bRequestedAt] = useState(null);
@@ -489,6 +493,8 @@ export default function ProfilePage({ session, onNavigate }) {
             if (!data) { await createProfile(); return; }
             setProfile(data);
             setNotifyEvents(!!data.notify_events);
+            setNotificationLocations(data.notification_locations || []);
+            setNotificationLocationsCoords(data.notification_locations_coords || []);
             setProfileMarketType(data.market_type || 'b2c');
             setB2bVerified(!!data.b2b_verified);
             setB2bRequestedAt(data.b2b_requested_at || null);
@@ -627,6 +633,88 @@ export default function ProfilePage({ session, onNavigate }) {
             toast.success(t.profile.settingsSaved);
         } catch {
             setNotifyEvents(!next);
+        }
+    };
+
+    const handleAddNotificationLocation = async () => {
+        const loc = newLocationInput.trim();
+        if (!loc) return;
+        if (notificationLocations.length >= 5) {
+            toast.error(t.profile.maxLocationsReached ?? 'Poți adăuga maxim 5 localități');
+            return;
+        }
+        if (notificationLocations.includes(loc)) {
+            toast.error(t.profile.locationAlreadyAdded ?? 'Această localitate este deja adăugată');
+            return;
+        }
+
+        setLocationSaving(true);
+        try {
+            // Geocodează locația nouă folosind Mapbox
+            const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+            let coords = null;
+            try {
+                const res = await fetch(
+                    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(loc)}.json?access_token=${MAPBOX_TOKEN}&country=md,ro&language=ro&limit=1`
+                );
+                const data = await res.json();
+                if (data.features?.length > 0) {
+                    const [lon, lat] = data.features[0].center;
+                    coords = { lat, lon };
+                }
+            } catch (e) {
+                console.error('Geocode error:', e);
+            }
+
+            const updatedLocations = [...notificationLocations, loc];
+            const updatedCoords = [
+                ...notificationLocationsCoords,
+                { name: loc, lat: coords?.lat ?? null, lon: coords?.lon ?? null }
+            ];
+
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    notification_locations: updatedLocations,
+                    notification_locations_coords: updatedCoords,
+                })
+                .eq('id', session.user.id);
+
+            if (error) throw error;
+
+            setNotificationLocations(updatedLocations);
+            setNotificationLocationsCoords(updatedCoords);
+            setNewLocationInput('');
+
+            if (coords) {
+                toast.success(`${loc} adăugat (${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)})`);
+            } else {
+                toast.success(`${loc} adăugat (coordonate negăsite)`);
+            }
+        } catch {
+            toast.error(t.profile.toastProfileError);
+        } finally {
+            setLocationSaving(false);
+        }
+    };
+
+    const handleRemoveNotificationLocation = async (locToRemove) => {
+        const updated = notificationLocations.filter(l => l !== locToRemove);
+        const updatedCoords = notificationLocationsCoords.filter(c => c.name !== locToRemove);
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    notification_locations: updated,
+                    notification_locations_coords: updatedCoords,
+                })
+                .eq('id', session.user.id);
+            if (error) throw error;
+            setNotificationLocations(updated);
+            setNotificationLocationsCoords(updatedCoords);
+            toast.success(t.profile.settingsSaved);
+        } catch {
+            toast.error(t.profile.toastProfileError);
         }
     };
 
@@ -1181,6 +1269,82 @@ export default function ProfilePage({ session, onNavigate }) {
                                                 <span>20 km</span>
                                                 <span>35 km</span>
                                             </div>
+                                        </div>
+
+                                        {/* Additional notification locations */}
+                                        <div className="py-4 border-b border-gray-100">
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                                    <FontAwesomeIcon icon={faLocationDot} className="text-emerald-600 text-sm" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-semibold text-gray-900">
+                                                        {t.profile.notificationLocations ?? 'Localități suplimentare'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {t.profile.notificationLocationsHint ?? 'Primești notificări și pentru evenimente din aceste localități (max. 5)'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {notificationLocations.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mb-3">
+                                                    {notificationLocations.map(loc => (
+                                                        <span
+                                                            key={loc}
+                                                            className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full"
+                                                        >
+                                                            <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
+                                                            {loc}
+                                                            <button
+                                                                onClick={() => handleRemoveNotificationLocation(loc)}
+                                                                className="ml-1 text-emerald-400 hover:text-red-500 transition"
+                                                            >
+                                                                <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {notificationLocations.length < 5 ? (
+                                                <div className="flex gap-2">
+                                                    <div className="relative flex-1">
+                                                        <FontAwesomeIcon
+                                                            icon={faLocationDot}
+                                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={newLocationInput}
+                                                            onChange={e => setNewLocationInput(e.target.value)}
+                                                            onKeyDown={e => e.key === 'Enter' && handleAddNotificationLocation()}
+                                                            placeholder={t.profile.notificationLocationPlaceholder ?? 'Ex: Cahul, Bălți, Orhei...'}
+                                                            className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={handleAddNotificationLocation}
+                                                        disabled={!newLocationInput.trim() || locationSaving}
+                                                        className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors flex-shrink-0"
+                                                    >
+                                                        {locationSaving
+                                                            ? <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
+                                                            : <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                                                        }
+                                                        {t.common.add ?? 'Adaugă'}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 flex items-center gap-2">
+                                                    <FontAwesomeIcon icon={faTriangleExclamation} className="text-[10px]" />
+                                                    {t.profile.maxLocationsReached ?? 'Ai atins limita de 5 localități. Șterge una pentru a adăuga alta.'}
+                                                </p>
+                                            )}
+
+                                            <p className="text-[10px] text-gray-400 mt-2 text-right">
+                                                {notificationLocations.length}/5 {t.profile.locationsAdded ?? 'localități adăugate'}
+                                            </p>
                                         </div>
                                     </div>
                                 )}

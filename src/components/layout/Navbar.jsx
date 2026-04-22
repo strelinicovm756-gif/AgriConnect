@@ -792,7 +792,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
 
           {!isSearching && hasResults && (
             <div className="flex h-[60vh]">
-              <div className="w-1/4 border-r border-gray-100 overflow-y-auto flex-shrink-0">
+              <div className="w-1/4 border-r border-gray-100 overflow-y-auto flex-shrink-0 mega-scroll">
                 <div className="p-5">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
                     {t.nav.products} ({matchedCategories.length})
@@ -840,7 +840,7 @@ export function Navbar({ session, onNavigate, notifications = [], unreadCount = 
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto mega-scroll">
                 <div className="p-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {filteredResults.map(product => {
                     const prodSlug = product.categories?.slug ?? product.category?.toLowerCase().replace(/ /g, '-');

@@ -86,8 +86,6 @@ export default function AIAssistant({ session }) {
           <div className="flex-1 min-w-0">
             <p className="text-white font-bold text-sm">Asistent Sezon</p>
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse" />
-              <p className="text-emerald-200 text-xs">Activ acum · GitHub Models</p>
             </div>
           </div>
           <div className="flex items-center gap-1">

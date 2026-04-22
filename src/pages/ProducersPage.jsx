@@ -200,8 +200,8 @@ function ProducerFilterSidebar({ filters, updateFilters, clearAllFilters, t }) {
               key={opt.key}
               onClick={() => updateFilters({ marketType: opt.key })}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${filters.marketType === opt.key
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'text-gray-600 hover:bg-gray-50 border border-transparent'
                 }`}
             >
               <FontAwesomeIcon icon={opt.icon} className="text-xs flex-shrink-0" />
@@ -247,9 +247,13 @@ function ProducerFilterSidebar({ filters, updateFilters, clearAllFilters, t }) {
                 t.producers.filterRatingAll
               ) : (
                 <span className="flex items-center gap-1">
-                  {`${t.producers.filterRating.split(' ')[0]} `}
+                  {/* Am eliminat linia cu t.producers.filterRating */}
                   {[...Array(r)].map((_, i) => (
-                    <FontAwesomeIcon key={i} icon={faStar} className="text-yellow-400 text-[11px]" />
+                    <FontAwesomeIcon
+                      key={i}
+                      icon={faStar}
+                      className="text-yellow-400 text-[11px]"
+                    />
                   ))}
                 </span>
               )}
@@ -259,7 +263,7 @@ function ProducerFilterSidebar({ filters, updateFilters, clearAllFilters, t }) {
       </div>
 
       {/* Verified only */}
-      <div className="px-5 py-4 border-b border-gray-50">
+      {/* <div className="px-5 py-4 border-b border-gray-50">
         <button
           onClick={() => updateFilters({ verifiedOnly: !filters.verifiedOnly })}
           className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${filters.verifiedOnly
@@ -275,10 +279,10 @@ function ProducerFilterSidebar({ filters, updateFilters, clearAllFilters, t }) {
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${filters.verifiedOnly ? 'translate-x-5' : 'translate-x-0'}`} />
           </span>
         </button>
-      </div>
+      </div> */}
 
       {/* B2B Verified only */}
-      <div className="px-5 py-4">
+      {/* <div className="px-5 py-4">
         <button
           onClick={() => updateFilters({ b2bVerified: !filters.b2bVerified })}
           className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
@@ -295,7 +299,7 @@ function ProducerFilterSidebar({ filters, updateFilters, clearAllFilters, t }) {
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${filters.b2bVerified ? 'translate-x-5' : 'translate-x-0'}`} />
           </span>
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }
@@ -307,23 +311,23 @@ export default function ProducersPage({ session, onNavigate }) {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const filters = {
-    search:       searchParams.get('cautare') || '',
-    marketType:   searchParams.get('tip') || '',
-    location:     searchParams.get('locatie') || '',
-    minRating:    parseInt(searchParams.get('rating') || '0', 10),
+    search: searchParams.get('cautare') || '',
+    marketType: searchParams.get('tip') || '',
+    location: searchParams.get('locatie') || '',
+    minRating: parseInt(searchParams.get('rating') || '0', 10),
     verifiedOnly: searchParams.get('verificat') === 'true',
-    b2bVerified:  searchParams.get('b2bVerificat') === 'true',
-    page:         parseInt(searchParams.get('pagina') || '1', 10),
+    b2bVerified: searchParams.get('b2bVerificat') === 'true',
+    page: parseInt(searchParams.get('pagina') || '1', 10),
   };
 
   const PARAM_MAP = {
-    search:       'cautare',
-    marketType:   'tip',
-    location:     'locatie',
-    minRating:    'rating',
+    search: 'cautare',
+    marketType: 'tip',
+    location: 'locatie',
+    minRating: 'rating',
     verifiedOnly: 'verificat',
-    b2bVerified:  'b2bVerificat',
-    page:         'pagina',
+    b2bVerified: 'b2bVerificat',
+    page: 'pagina',
   };
 
   const DEFAULTS = {
@@ -575,8 +579,8 @@ export default function ProducersPage({ session, onNavigate }) {
                   if (show) return (
                     <button key={p} onClick={() => updateFilters({ page: p })}
                       className={`w-9 h-9 rounded-xl text-sm font-bold transition-all duration-200 ${filters.page === p
-                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200/50 scale-110'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50'
+                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200/50 scale-110'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50'
                         }`}>
                       {p}
                     </button>

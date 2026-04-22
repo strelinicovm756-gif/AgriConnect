@@ -52,7 +52,7 @@ export function useAIAssistant(session) {
           const typeLabel = p.market_type === 'b2b' ? 'Servicii & Utilaje'
                           : p.market_type === 'both' ? 'Alimentar & Servicii'
                           : 'Produse Alimentare';
-          context += `- ${p.full_name || '—'}${p.company_name ? ` (${p.company_name})` : ''}: ${p.location || '—'}, tip: ${typeLabel}${p.is_verified ? ' ✓verificat' : ''}${p.b2b_verified ? ' ✓prestator verificat' : ''}\n`;
+          context += `- ${p.full_name || '—'}${p.company_name ? ` (${p.company_name})` : ''}: ${p.location || '—'}, tip: ${typeLabel}\n`;
         });
       }
 

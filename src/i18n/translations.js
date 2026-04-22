@@ -643,7 +643,7 @@ export const translations = {
       rule3Title: 'Produse permise',
       rule3Desc: 'Pot posta doar produse alimentare proprii. Este interzisă revânzarea produselor de la terți.',
       rule4Title: 'Contact valid',
-      rule4Desc: 'Numărul de telefon trebuie să fie real și activ. Cumpărătorii îl vor folosi pentru a mă contacta direct.',
+      rule4Desc: 'Numărul de telefon trebuie să fie real și activ.',
       rule5Title: 'Consecințe',
       rule5Desc: 'Nerespectarea regulilor poate duce la ștergerea anunțului și suspendarea contului fără preaviz.',
       policyLegalNote: 'Prin acceptarea acestei politici, confirmi că ai citit regulile platformei Sezon și ești de acord cu Termenii de utilizare.',

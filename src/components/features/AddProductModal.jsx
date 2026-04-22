@@ -41,7 +41,7 @@ const CATEGORY_UNITS = {
     { value: 'kg', label: 'Kilogram (kg)' },
   ],
   'oua': [
-    { value: 'bucată', label: '10 Pieces' },
+    { value: 'bucată', label: '10 bucați' },
   ],
   'miere': [
     { value: 'kg', label: 'Kilogram (kg)' },
@@ -55,11 +55,11 @@ const CATEGORY_UNITS = {
   ],
   'default': [
     { value: 'kg', label: 'Kilogram (kg)' },
-    { value: 'litru', label: 'Litre (L)' },
-    { value: 'bucată', label: 'Piece' },
-    { value: 'borcan', label: 'Jar' },
-    { value: 'cutie', label: 'Box' },
-    { value: 'pachet', label: '10 Pieces' },
+    { value: 'litru', label: 'Litru (L)' },
+    
+    { value: 'borcan', label: 'borcan' },
+    { value: 'cutie', label: 'cutie' },
+    { value: 'pachet', label: '10 bucați' },
   ],
 };
 
@@ -1091,7 +1091,7 @@ export default function AddProductModal({ isOpen, onClose, session, onSuccess, p
           </form>
 
           {/* Submit — outside form, stays fixed at bottom */}
-          <div className="bg-white border-t border-gray-100 px-6 py-4 flex gap-3 rounded-b-3xl flex-shrink-0">
+          <div className="bg-white border-t border-gray-100 px-6 py-4 flex gap-3 flex-shrink-0">
             <button type="button" onClick={handleSubmit} disabled={loading || hasUploadingImages || (isB2BCategory && !b2bVerified)}
               className={`flex-1 font-semibold py-3.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-white
                 ${isB2B ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}>

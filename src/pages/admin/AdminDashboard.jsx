@@ -12,7 +12,7 @@ import {
   faCheck, faXmark, faChevronRight, faSpinner, faSearch,
   faUserShield, faUser, faBan, faUnlock, faArrowRight, faArrowLeft,
   faPlus, faTrash, faPen, faFloppyDisk,
-  faCircleCheck, faTriangleExclamation, faShoppingCart, faBoxOpen, faFileImage,
+  faCircleCheck, faTriangleExclamation, faBoxOpen, faFileImage,
   faLocationDot, faCrown,
   faIndustry, faCalendarDays, faBell, faBuilding,
   faEye, faChevronLeft
@@ -1300,7 +1300,7 @@ function EventManagement() {
           {t.admin.publishedEvents}
         </p>
         <div className="flex items-center gap-2">
-          <button
+          {/* <button
             onClick={async () => {
               try {
                 const res = await fetch(
@@ -1323,7 +1323,7 @@ function EventManagement() {
           >
             <FontAwesomeIcon icon={faBell} />
             {t.admin.subscribersCount}
-          </button>
+          </button> */}
           <button
             onClick={openCreate}
             className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-md"

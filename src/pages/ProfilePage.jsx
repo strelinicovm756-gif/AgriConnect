@@ -1256,9 +1256,9 @@ export default function ProfilePage({ session, onNavigate }) {
                                     <div className="py-4 border-b border-gray-100 space-y-4">
                                         {/* Partea de sus: Iconiță și Text */}
                                         <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                            {/* <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                                                 <FontAwesomeIcon icon={faBell} className="text-blue-500 text-sm" />
-                                            </div>
+                                            </div> */}
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-center">
                                                     <p className="text-sm font-semibold text-gray-900">{t.profile.notificationRadius}</p>
@@ -1610,7 +1610,7 @@ export default function ProfilePage({ session, onNavigate }) {
                                                                 Edit
                                                             </button>
                                                         </div>
-                                                        <div className="absolute top-4 right-4 flex gap-2 z-10">
+                                                        <div className="absolute top-4 left-4 flex gap-2 z-10">
                                                             {product.status === 'rejected' ? (
                                                                 <button onClick={() => handleResubmit(product.id)}
                                                                     className="bg-orange-500 hover:bg-orange-600 text-white w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-lg hover:scale-110"

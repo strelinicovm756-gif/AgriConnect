@@ -380,7 +380,7 @@ function ProfileFieldRow({ icon, label, isEditing, isValid, onEdit, onSave, onCa
                 </div>
             ) : (
                 <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-emerald-50' : 'bg-red-50'
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isValid ? 'bg-white' : 'bg-white/50'
                         }`}>
                         <FontAwesomeIcon icon={icon} className={`text-sm ${isValid ? 'text-emerald-600' : 'text-red-400'}`} />
                     </div>
